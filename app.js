@@ -1,11 +1,15 @@
+
+/**
+ * Gyansify HRMS
+ * Express + EJS + MongoDB + Mongoose
+ * Production-ready session configuration for Render
+ */
+
 // =====================================================
 // ENVIRONMENT
 // =====================================================
 
-const dotenv = require("dotenv");
-
-dotenv.config();
-
+require("dotenv").config();
 
 // =====================================================
 // CORE
@@ -13,14 +17,8 @@ dotenv.config();
 
 const express = require("express");
 const path = require("path");
-
-
-// =====================================================
-// EJS LAYOUT
-// =====================================================
-
-const expressLayouts = require("express-ejs-layouts");
-
+const session = require("express-session");
+const MongoStore = require("connect-mongo");
 
 // =====================================================
 // DATABASE
@@ -28,126 +26,73 @@ const expressLayouts = require("express-ejs-layouts");
 
 const connectDB = require("./config/db");
 
-
-// =====================================================
-// SESSION
-// =====================================================
-
-const session = require("express-session");
-
-
 // =====================================================
 // ROUTES
 // =====================================================
 
-const authRoutes =
-    require("./routes/authRoutes");
-
-const dashboardRoutes =
-    require("./routes/dashboardRoutes");
-
-const employeeRoutes =
-    require("./routes/employeeRoutes");
-
-const organizationRoutes =
-    require("./routes/organizationRoutes");
-
-const documentRoutes =
-    require("./routes/documentRoutes");
-
-const attendanceRoutes =
-    require("./routes/attendanceRoutes");
-
-const leaveRoutes =
-    require("./routes/leaveRoutes");
-
-const leaveAdminRoutes =
-    require("./routes/leaveAdminRoutes");
-
-const payrollRoutes =
-    require("./routes/payrollRoutes");
-
-const assetRoutes =
-    require("./routes/assetRoutes");
-
-const trainingRoutes =
-    require("./routes/trainingRoutes");
-
-const performanceRoutes =
-    require("./routes/performanceRoutes");
-
-const recruitmentRoutes =
-    require("./routes/recruitmentRoutes");
-
-
-const settingsRoutes =
-    require("./routes/settingsRoutes");
-
-const reportsRoutes =
-    require("./routes/reportsRoutes");
-
-
-
+const authRoutes = require("./routes/authRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
+const employeeRoutes = require("./routes/employeeRoutes");
+const organizationRoutes = require("./routes/organizationRoutes");
+const documentRoutes = require("./routes/documentRoutes");
+const attendanceRoutes = require("./routes/attendanceRoutes");
+const leaveRoutes = require("./routes/leaveRoutes");
+const leaveAdminRoutes = require("./routes/leaveAdminRoutes");
+const payrollRoutes = require("./routes/payrollRoutes");
+const assetRoutes = require("./routes/assetRoutes");
+const trainingRoutes = require("./routes/trainingRoutes");
+const performanceRoutes = require("./routes/performanceRoutes");
+const recruitmentRoutes = require("./routes/recruitmentRoutes");
+const settingsRoutes = require("./routes/settingsRoutes");
+const reportsRoutes = require("./routes/reportsRoutes");
 
 // =====================================================
-// APP
+// APP CONFIGURATION
 // =====================================================
 
 const app = express();
 
+const PORT = process.env.PORT || 3000;
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
+
+// Trust Render's HTTPS reverse proxy.
+if (IS_PRODUCTION) {
+    app.set("trust proxy", 1);
+}
 
 // =====================================================
-// DATABASE
+// VALIDATE ENVIRONMENT
 // =====================================================
 
-connectDB();
+if (IS_PRODUCTION && !process.env.SESSION_SECRET) {
+    throw new Error(
+        "SESSION_SECRET must be configured in Render Environment."
+    );
+}
 
+// Use the same MongoDB URI variable as config/db.js.
+const MONGODB_URI =
+    process.env.MONGODB_URI ||
+    process.env.MONGO_URI;
+
+if (!MONGODB_URI) {
+    throw new Error(
+        "MONGODB_URI or MONGO_URI is missing from environment variables."
+    );
+}
 
 // =====================================================
 // VIEW ENGINE
 // =====================================================
 
-app.set(
-    "view engine",
-    "ejs"
-);
-
-app.set(
-    "views",
-    path.join(__dirname, "views")
-);
-
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
 
 // =====================================================
-// EJS LAYOUT
-// =====================================================
-//
-// This enables:
-//
-// views/layout.ejs
-//
-// and:
-//
-// <%- body %>
-//
-// inside layout.ejs.
-//
-
-// app.use(expressLayouts);
-
-// app.set(
-//     "layout",
-//     "layouts/layout"
-// );
-
-
-// =====================================================
-// BODY PARSER
+// REQUEST PARSING
 // =====================================================
 
-app.use(
-    express.json()
-);
+app.use(express.json());
 
 app.use(
     express.urlencoded({
@@ -155,25 +100,9 @@ app.use(
     })
 );
 
-
 // =====================================================
 // STATIC FILES
 // =====================================================
-//
-// Everything inside:
-//
-// public/
-//
-// will be available from:
-//
-// /
-//
-// Example:
-//
-// public/css/output.css
-//       ↓
-// /css/output.css
-//
 
 app.use(
     express.static(
@@ -181,340 +110,199 @@ app.use(
     )
 );
 
-
 // =====================================================
-// SESSION
+// SESSION CONFIGURATION
 // =====================================================
 
 app.use(
     session({
+        name: "gyansify.sid",
 
         secret:
             process.env.SESSION_SECRET ||
-            "gyansify_hrms_secret_key",
+            "gyansify_local_development_secret",
 
         resave: false,
 
         saveUninitialized: false,
 
+        rolling: true,
+
+        store: MongoStore.create({
+            mongoUrl: MONGODB_URI,
+            collectionName: "sessions",
+            ttl: 24 * 60 * 60
+        }),
+
         cookie: {
-
-            maxAge:
-                1000 *
-                60 *
-                60 *
-                24,
-
             httpOnly: true,
-
-            secure:
-                process.env.NODE_ENV === "production"
-
+            secure: IS_PRODUCTION,
+            sameSite: "lax",
+            maxAge: 24 * 60 * 60 * 1000
         }
-
     })
 );
 
-
 // =====================================================
-// GLOBAL VIEW LOCALS
-// =====================================================
-//
-// These variables are automatically available
-// inside every EJS page.
-//
-
-app.use(
-    (req, res, next) => {
-
-        // Logged-in user
-        res.locals.user =
-            req.session?.user || null;
-
-
-        // Current request
-        res.locals.req =
-            req;
-
-
-        // Application name
-        res.locals.appName =
-            "Gyansify HRMS";
-
-
-        // Current year
-        res.locals.currentYear =
-            new Date().getFullYear();
-
-
-        next();
-
-    }
-);
-
-
-// =====================================================
-// HOME PAGE
+// GLOBAL EJS LOCALS
 // =====================================================
 
-app.get(
-    "/",
-    (req, res) => {
+app.use((req, res, next) => {
+    res.locals.user = req.session?.user || null;
+    res.locals.req = req;
+    res.locals.appName = "Gyansify HRMS";
+    res.locals.currentYear = new Date().getFullYear();
 
-        return res.render(
-            "index",
-            {
-                title: "Gyansify HRMS"
-            }
-        );
+    next();
+});
 
-    }
-);
+// =====================================================
+// HOME
+// =====================================================
 
+app.get("/", (req, res) => {
+    res.render("index", {
+        title: "Gyansify HRMS"
+    });
+});
 
 // =====================================================
 // AUTHENTICATION
 // =====================================================
 
-app.use( "/", authRoutes );
+app.use("/", authRoutes);
 
 // =====================================================
 // DASHBOARD
 // =====================================================
 
-app.use(
-    "/dashboard",
-    dashboardRoutes
-);
-
+app.use("/dashboard", dashboardRoutes);
 
 // =====================================================
-// EMPLOYEES
+// EMPLOYEES & DOCUMENTS
 // =====================================================
 
-app.use(
-    "/employees",
-    employeeRoutes
-);
-
-
-// =====================================================
-// EMPLOYEE DOCUMENTS
-// =====================================================
-
-app.use(
-    "/employees",
-    documentRoutes
-);
-
+app.use("/employees", employeeRoutes);
+app.use("/employees", documentRoutes);
 
 // =====================================================
 // ORGANIZATION
 // =====================================================
 
-app.use(
-    "/organization",
-    organizationRoutes
-);
-
+app.use("/organization", organizationRoutes);
 
 // =====================================================
 // ATTENDANCE
 // =====================================================
 
-app.use(
-    "/attendance",
-    attendanceRoutes
-);
-
+app.use("/attendance", attendanceRoutes);
 
 // =====================================================
 // LEAVE
 // =====================================================
 
-app.use(
-    "/leave",
-    leaveRoutes
-);
-
-
-// =====================================================
-// LEAVE ADMIN
-// =====================================================
-
-app.use(
-    "/leave/admin",
-    leaveAdminRoutes
-);
-
+app.use("/leave", leaveRoutes);
+app.use("/leave/admin", leaveAdminRoutes);
 
 // =====================================================
 // PAYROLL
 // =====================================================
 
-app.use(
-    "/payroll",
-    payrollRoutes
-);
-
+app.use("/payroll", payrollRoutes);
 
 // =====================================================
 // ASSETS
 // =====================================================
 
-app.use(
-    "/assets",
-    assetRoutes
-);
-
+app.use("/assets", assetRoutes);
 
 // =====================================================
 // TRAINING
 // =====================================================
 
-app.use(
-    "/training",
-    trainingRoutes
-);
-
-
+app.use("/training", trainingRoutes);
 
 // =====================================================
 // PERFORMANCE
 // =====================================================
 
-app.use(
-    "/performance",
-    performanceRoutes
-);
-
+app.use("/performance", performanceRoutes);
 
 // =====================================================
 // RECRUITMENT
 // =====================================================
 
-app.use(
-    "/recruitment",
-    recruitmentRoutes
-);
-
+app.use("/recruitment", recruitmentRoutes);
 
 // =====================================================
 // SETTINGS
 // =====================================================
 
-app.use(
-    "/settings",
-    settingsRoutes
-);
-
+app.use("/settings", settingsRoutes);
 
 // =====================================================
 // REPORTS
 // =====================================================
 
-app.use(
-    "/reports",
-    reportsRoutes
-);
+app.use("/reports", reportsRoutes);
 
 // =====================================================
-// 404
+// 404 HANDLER
 // =====================================================
-//
-// MUST ALWAYS BE LAST
-//
 
-app.use(
-    (req, res) => {
+app.use((req, res) => {
+    console.log(
+        `404 - ${req.method} ${req.originalUrl}`
+    );
 
-        console.log(
-            `404 - ${req.method} ${req.originalUrl}`
-        );
-
-        return res.status(404).send(
-            "Gyansify HRMS - Page Not Found"
-        );
-
-    }
-);
-
+    res.status(404).send(
+        "Gyansify HRMS - Page Not Found"
+    );
+});
 
 // =====================================================
 // GLOBAL ERROR HANDLER
 // =====================================================
 
-app.use(
-    (err, req, res, next) => {
+app.use((err, req, res, next) => {
+    console.error("GYANSIFY HRMS SERVER ERROR:", err);
 
-        console.error(
-            "===================================="
-        );
-
-        console.error(
-            "GYANSIFY HRMS SERVER ERROR"
-        );
-
-        console.error(
-            "===================================="
-        );
-
-        console.error(err);
-
-
-        // If headers are already sent,
-        // let Express handle the error.
-        if (res.headersSent) {
-            return next(err);
-        }
-
-
-        return res.status(500).send(
-            "Gyansify HRMS - Internal Server Error"
-        );
-
+    if (res.headersSent) {
+        return next(err);
     }
-);
 
+    res.status(500).send(
+        "Gyansify HRMS - Internal Server Error"
+    );
+});
 
 // =====================================================
-// SERVER
+// START SERVER AFTER DATABASE CONNECTION
 // =====================================================
 
-const PORT =
-    process.env.PORT || 3000;
+async function startServer() {
+    try {
+        await connectDB();
 
-
-app.listen(
-    PORT,
-    () => {
-
-        console.log(
-            "===================================="
+        app.listen(PORT, () => {
+            console.log("====================================");
+            console.log("       GYANSIFY HRMS SERVER");
+            console.log("====================================");
+            console.log(`Port: ${PORT}`);
+            console.log(
+                `Environment: ${process.env.NODE_ENV || "development"}`
+            );
+            console.log("MongoDB connected; server started.");
+            console.log("====================================");
+        });
+    } catch (error) {
+        console.error(
+            "Failed to start Gyansify HRMS:",
+            error.message
         );
 
-        console.log(
-            "       GYANSIFY HRMS SERVER"
-        );
-
-        console.log(
-            "===================================="
-        );
-
-        console.log(
-            `Server running at: http://localhost:${PORT}`
-        );
-
-        console.log(
-            `Environment: ${
-                process.env.NODE_ENV ||
-                "development"
-            }`
-        );
-
-        console.log(
-            "===================================="
-        );
-
+        process.exit(1);
     }
-);
+}
+
+startServer();
