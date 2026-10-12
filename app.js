@@ -262,7 +262,7 @@ app.get(
     (req, res) => {
 
         return res.render(
-            "home/index",
+            "index",
             {
                 title: "Gyansify HRMS"
             }
