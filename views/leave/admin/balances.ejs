@@ -1,0 +1,748 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Leave Balances | Gyansify HRMS
+    </title>
+
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        body {
+
+            margin: 0;
+
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+
+            background:
+                #f5f7fb;
+
+            color:
+                #1f2937;
+
+        }
+
+
+        .container {
+
+            max-width:
+                1400px;
+
+            margin:
+                auto;
+
+            padding:
+                30px;
+
+        }
+
+
+        .header {
+
+            display:
+                flex;
+
+            justify-content:
+                space-between;
+
+            align-items:
+                center;
+
+            margin-bottom:
+                25px;
+
+        }
+
+
+        h1 {
+
+            margin:
+                0;
+
+        }
+
+
+        .subtitle {
+
+            margin-top:
+                6px;
+
+            color:
+                #6b7280;
+
+        }
+
+
+        .card {
+
+            background:
+                white;
+
+            border:
+                1px solid #e5e7eb;
+
+            border-radius:
+                12px;
+
+            padding:
+                25px;
+
+            margin-bottom:
+                25px;
+
+        }
+
+
+        .form-grid {
+
+            display:
+                grid;
+
+            grid-template-columns:
+                repeat(5, 1fr);
+
+            gap:
+                15px;
+
+            align-items:
+                end;
+
+        }
+
+
+        .field {
+
+            display:
+                flex;
+
+            flex-direction:
+                column;
+
+            gap:
+                7px;
+
+        }
+
+
+        label {
+
+            font-size:
+                13px;
+
+            font-weight:
+                600;
+
+        }
+
+
+        input,
+        select {
+
+            width:
+                100%;
+
+            padding:
+                11px;
+
+            border:
+                1px solid #d1d5db;
+
+            border-radius:
+                7px;
+
+            font-size:
+                14px;
+
+            background:
+                white;
+
+        }
+
+
+        button {
+
+            border:
+                none;
+
+            padding:
+                11px 18px;
+
+            border-radius:
+                7px;
+
+            background:
+                #2563eb;
+
+            color:
+                white;
+
+            font-weight:
+                600;
+
+            cursor:
+                pointer;
+
+        }
+
+
+        button:hover {
+
+            opacity:
+                0.9;
+
+        }
+
+
+        table {
+
+            width:
+                100%;
+
+            border-collapse:
+                collapse;
+
+        }
+
+
+        th,
+        td {
+
+            padding:
+                14px;
+
+            border-bottom:
+                1px solid #edf0f3;
+
+            text-align:
+                left;
+
+        }
+
+
+        th {
+
+            background:
+                #f9fafb;
+
+            color:
+                #6b7280;
+
+            font-size:
+                13px;
+
+        }
+
+
+        .employee {
+
+            font-weight:
+                600;
+
+        }
+
+
+        .employee-id {
+
+            color:
+                #6b7280;
+
+            font-size:
+                12px;
+
+            margin-top:
+                3px;
+
+        }
+
+
+        .available {
+
+            font-weight:
+                700;
+
+        }
+
+
+        .empty {
+
+            padding:
+                40px;
+
+            text-align:
+                center;
+
+            color:
+                #6b7280;
+
+        }
+
+
+        @media(max-width:1100px) {
+
+            .form-grid {
+
+                grid-template-columns:
+                    repeat(2, 1fr);
+
+            }
+
+        }
+
+
+        @media(max-width:600px) {
+
+            .container {
+
+                padding:
+                    15px;
+
+            }
+
+
+            .header {
+
+                display:
+                    block;
+
+            }
+
+
+            .form-grid {
+
+                grid-template-columns:
+                    1fr;
+
+            }
+
+
+            .table-wrapper {
+
+                overflow-x:
+                    auto;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+    <!-- ================================================= -->
+    <!-- HEADER -->
+    <!-- ================================================= -->
+
+    <div class="header">
+
+        <div>
+
+            <h1>
+                Leave Balances
+            </h1>
+
+            <div class="subtitle">
+
+                Manage employee leave allocations for
+                <strong><%= year %></strong>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- ASSIGN BALANCE -->
+    <!-- ================================================= -->
+
+    <div class="card">
+
+        <h2>
+            Assign Leave Balance
+        </h2>
+
+        <p class="subtitle">
+            Allocate annual leave to an employee.
+        </p>
+
+
+        <form
+            method="POST"
+            action="/leave/admin/balances"
+        >
+
+            <div class="form-grid">
+
+
+                <!-- EMPLOYEE -->
+
+                <div class="field">
+
+                    <label>
+                        Employee
+                    </label>
+
+                    <select
+                        name="employee"
+                        required
+                    >
+
+                        <option value="">
+                            Select Employee
+                        </option>
+
+
+                        <% employees.forEach(employee => { %>
+
+                            <option
+                                value="<%= employee._id %>"
+                            >
+
+                                <%= employee.firstName %>
+
+                                <%= employee.lastName || "" %>
+
+                                -
+                                <%= employee.employeeId || "" %>
+
+                            </option>
+
+                        <% }) %>
+
+                    </select>
+
+                </div>
+
+
+                <!-- LEAVE TYPE -->
+
+                <div class="field">
+
+                    <label>
+                        Leave Type
+                    </label>
+
+                    <select
+                        name="leaveType"
+                        required
+                    >
+
+                        <option value="">
+                            Select Leave Type
+                        </option>
+
+
+                        <% leaveTypes.forEach(type => { %>
+
+                            <option
+                                value="<%= type._id %>"
+                            >
+
+                                <%= type.name %>
+
+                                (<%= type.code %>)
+
+                            </option>
+
+                        <% }) %>
+
+                    </select>
+
+                </div>
+
+
+                <!-- YEAR -->
+
+                <div class="field">
+
+                    <label>
+                        Year
+                    </label>
+
+                    <input
+                        type="number"
+                        name="year"
+                        value="<%= year %>"
+                        min="2020"
+                        max="2100"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- ALLOCATED -->
+
+                <div class="field">
+
+                    <label>
+                        Allocated Days
+                    </label>
+
+                    <input
+                        type="number"
+                        name="allocated"
+                        min="0"
+                        step="0.5"
+                        value="0"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- CARRY FORWARD -->
+
+                <div class="field">
+
+                    <label>
+                        Carry Forward
+                    </label>
+
+                    <input
+                        type="number"
+                        name="carriedForward"
+                        min="0"
+                        step="0.5"
+                        value="0"
+                    >
+
+                </div>
+
+
+            </div>
+
+
+            <br>
+
+
+            <button
+                type="submit"
+            >
+                Save Leave Balance
+            </button>
+
+        </form>
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- EXISTING BALANCES -->
+    <!-- ================================================= -->
+
+    <div class="card">
+
+        <h2>
+            Employee Leave Balances
+        </h2>
+
+        <br>
+
+
+        <% if (balances.length > 0) { %>
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Employee
+                            </th>
+
+                            <th>
+                                Leave Type
+                            </th>
+
+                            <th>
+                                Year
+                            </th>
+
+                            <th>
+                                Allocated
+                            </th>
+
+                            <th>
+                                Carry Forward
+                            </th>
+
+                            <th>
+                                Used
+                            </th>
+
+                            <th>
+                                Available
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        <% balances.forEach(balance => { %>
+
+                            <tr>
+
+
+                                <!-- EMPLOYEE -->
+
+                                <td>
+
+                                    <% if (balance.employee) { %>
+
+                                        <div class="employee">
+
+                                            <%= balance.employee.firstName %>
+
+                                            <%= balance.employee.lastName || "" %>
+
+                                        </div>
+
+
+                                        <div class="employee-id">
+
+                                            <%= balance.employee.employeeId || "" %>
+
+                                        </div>
+
+                                    <% } else { %>
+
+                                        Employee Removed
+
+                                    <% } %>
+
+                                </td>
+
+
+                                <!-- LEAVE TYPE -->
+
+                                <td>
+
+                                    <%= balance.leaveType?.name ||
+                                        "Leave" %>
+
+                                </td>
+
+
+                                <!-- YEAR -->
+
+                                <td>
+
+                                    <%= balance.year %>
+
+                                </td>
+
+
+                                <!-- ALLOCATED -->
+
+                                <td>
+
+                                    <%= balance.allocated || 0 %>
+
+                                </td>
+
+
+                                <!-- CARRY -->
+
+                                <td>
+
+                                    <%= balance.carriedForward || 0 %>
+
+                                </td>
+
+
+                                <!-- USED -->
+
+                                <td>
+
+                                    <%= balance.used || 0 %>
+
+                                </td>
+
+
+                                <!-- AVAILABLE -->
+
+                                <td>
+
+                                    <span class="available">
+
+                                        <%=
+
+                                            (
+                                                (balance.allocated || 0) +
+
+                                                (balance.carriedForward || 0) -
+
+                                                (balance.used || 0)
+                                            )
+
+                                        %>
+
+                                    </span>
+
+                                </td>
+
+
+                            </tr>
+
+                        <% }) %>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        <% } else { %>
+
+            <div class="empty">
+
+                No leave balances have been assigned
+                for <%= year %> yet.
+
+            </div>
+
+        <% } %>
+
+    </div>
+
+
+</div>
+
+
+</body>
+
+</html>

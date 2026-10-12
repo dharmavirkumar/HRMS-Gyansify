@@ -1,0 +1,921 @@
+<%
+const currentUser =
+    typeof user !== "undefined" && user
+        ? user
+        : {};
+
+const formDataValue =
+    typeof formData !== "undefined" && formData
+        ? formData
+        : {};
+
+const errorMessage =
+    typeof error !== "undefined" && error
+        ? error
+        : null;
+%>
+
+
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Create Training | Gyansify HRMS
+    </title>
+
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #f5f7fb;
+            color: #1f2937;
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Arial,
+                sans-serif;
+        }
+
+        .page {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px;
+        }
+
+
+        /* =========================================
+           HEADER
+        ========================================= */
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+
+        .header-left h1 {
+            margin: 0 0 7px;
+            font-size: 30px;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .header-left p {
+            margin: 0;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 10px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background: #fff;
+            color: #374151;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .back-btn:hover {
+            background: #f9fafb;
+        }
+
+
+        /* =========================================
+           ERROR
+        ========================================= */
+
+        .error-box {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #b91c1c;
+            padding: 14px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+
+        /* =========================================
+           FORM CARD
+        ========================================= */
+
+        .form-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .section {
+            padding: 28px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        .section-title {
+            margin-bottom: 20px;
+        }
+
+        .section-title h2 {
+            margin: 0 0 5px;
+            font-size: 19px;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .section-title p {
+            margin: 0;
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+
+        /* =========================================
+           GRID
+        ========================================= */
+
+        .form-grid {
+            display: grid;
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+
+        /* =========================================
+           LABEL
+        ========================================= */
+
+        label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 7px;
+        }
+
+        .required {
+            color: #dc2626;
+        }
+
+
+        /* =========================================
+           INPUT
+        ========================================= */
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 11px 13px;
+            font-family: inherit;
+            font-size: 14px;
+            color: #111827;
+            background: #fff;
+            outline: none;
+            transition: border-color .15s,
+                        box-shadow .15s;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: #111827;
+            box-shadow:
+                0 0 0 3px
+                rgba(17, 24, 39, .08);
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .help-text {
+            margin-top: 6px;
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+
+        /* =========================================
+           ACTIONS
+        ========================================= */
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 22px 28px;
+            background: #fafafa;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 8px;
+            padding: 11px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-secondary {
+            background: #fff;
+            border: 1px solid #d1d5db;
+            color: #374151;
+        }
+
+        .btn-primary {
+            background: #111827;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #000;
+        }
+
+
+        /* =========================================
+           RESPONSIVE
+        ========================================= */
+
+        @media (max-width: 768px) {
+
+            .page {
+                padding: 20px;
+            }
+
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 18px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .full-width {
+                grid-column: auto;
+            }
+
+            .section {
+                padding: 20px;
+            }
+
+            .form-actions {
+                padding: 18px 20px;
+                flex-direction: column-reverse;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="page">
+
+
+    <!-- =========================================
+         PAGE HEADER
+    ========================================= -->
+
+    <div class="page-header">
+
+        <div class="header-left">
+
+            <h1>
+                Create Training Program
+            </h1>
+
+            <p>
+                Create a new employee training
+                and development program.
+            </p>
+
+        </div>
+
+
+        <a
+            href="/training"
+            class="back-btn"
+        >
+            ← Back to Training
+        </a>
+
+    </div>
+
+
+    <!-- =========================================
+         ERROR
+    ========================================= -->
+
+    <% if (errorMessage) { %>
+
+        <div class="error-box">
+            <%= errorMessage %>
+        </div>
+
+    <% } %>
+
+
+    <!-- =========================================
+         FORM
+    ========================================= -->
+
+    <form
+        action="/training/create"
+        method="POST"
+        id="trainingForm"
+    >
+
+
+        <div class="form-card">
+
+
+            <!-- =====================================
+                 BASIC INFORMATION
+            ===================================== -->
+
+            <div class="section">
+
+                <div class="section-title">
+
+                    <h2>
+                        Training Information
+                    </h2>
+
+                    <p>
+                        Define the basic details of
+                        the training program.
+                    </p>
+
+                </div>
+
+
+                <div class="form-grid">
+
+
+                    <!-- Training Name -->
+
+                    <div class="form-group full-width">
+
+                        <label for="title">
+                            Training Program Name
+                            <span class="required">*</span>
+                        </label>
+
+                        <input
+                            type="text"
+                            id="title"
+                            name="title"
+                            placeholder="e.g. Advanced Excel Training"
+                            value="<%= formDataValue.title || "" %>"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- Category -->
+
+                    <div class="form-group">
+
+                        <label for="category">
+                            Training Category
+                            <span class="required">*</span>
+                        </label>
+
+                        <select
+                            id="category"
+                            name="category"
+                            required
+                        >
+
+                            <option value="">
+                                Select Category
+                            </option>
+
+                            <option
+                                value="TECHNICAL"
+                                <%= formDataValue.category === "TECHNICAL" ? "selected" : "" %>
+                            >
+                                Technical Skills
+                            </option>
+
+                            <option
+                                value="SOFT_SKILLS"
+                                <%= formDataValue.category === "SOFT_SKILLS" ? "selected" : "" %>
+                            >
+                                Soft Skills
+                            </option>
+
+                            <option
+                                value="LEADERSHIP"
+                                <%= formDataValue.category === "LEADERSHIP" ? "selected" : "" %>
+                            >
+                                Leadership
+                            </option>
+
+                            <option
+                                value="COMPLIANCE"
+                                <%= formDataValue.category === "COMPLIANCE" ? "selected" : "" %>
+                            >
+                                Compliance
+                            </option>
+
+                            <option
+                                value="ONBOARDING"
+                                <%= formDataValue.category === "ONBOARDING" ? "selected" : "" %>
+                            >
+                                Onboarding
+                            </option>
+
+                            <option
+                                value="OTHER"
+                                <%= formDataValue.category === "OTHER" ? "selected" : "" %>
+                            >
+                                Other
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- Training Type -->
+
+                    <div class="form-group">
+
+                        <label for="trainingType">
+                            Training Type
+                            <span class="required">*</span>
+                        </label>
+
+                        <select
+                            id="trainingType"
+                            name="trainingType"
+                            required
+                        >
+
+                            <option value="">
+                                Select Type
+                            </option>
+
+                            <option
+                                value="IN_PERSON"
+                                <%= formDataValue.trainingType === "IN_PERSON" ? "selected" : "" %>
+                            >
+                                In Person
+                            </option>
+
+                            <option
+                                value="ONLINE"
+                                <%= formDataValue.trainingType === "ONLINE" ? "selected" : "" %>
+                            >
+                                Online
+                            </option>
+
+                            <option
+                                value="HYBRID"
+                                <%= formDataValue.trainingType === "HYBRID" ? "selected" : "" %>
+                            >
+                                Hybrid
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- Trainer -->
+
+                    <div class="form-group">
+
+                        <label for="trainer">
+                            Trainer / Instructor
+                        </label>
+
+                        <input
+                            type="text"
+                            id="trainer"
+                            name="trainer"
+                            placeholder="Trainer name"
+                            value="<%= formDataValue.trainer || "" %>"
+                        >
+
+                    </div>
+
+
+                    <!-- Provider -->
+
+                    <div class="form-group">
+
+                        <label for="provider">
+                            Training Provider
+                        </label>
+
+                        <input
+                            type="text"
+                            id="provider"
+                            name="provider"
+                            placeholder="Company / Institution"
+                            value="<%= formDataValue.provider || "" %>"
+                        >
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =====================================
+                 SCHEDULE
+            ===================================== -->
+
+            <div class="section">
+
+                <div class="section-title">
+
+                    <h2>
+                        Schedule
+                    </h2>
+
+                    <p>
+                        Set the training schedule
+                        and duration.
+                    </p>
+
+                </div>
+
+
+                <div class="form-grid">
+
+
+                    <div class="form-group">
+
+                        <label for="startDate">
+                            Start Date
+                            <span class="required">*</span>
+                        </label>
+
+                        <input
+                            type="date"
+                            id="startDate"
+                            name="startDate"
+                            value="<%= formDataValue.startDate || "" %>"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="endDate">
+                            End Date
+                            <span class="required">*</span>
+                        </label>
+
+                        <input
+                            type="date"
+                            id="endDate"
+                            name="endDate"
+                            value="<%= formDataValue.endDate || "" %>"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="startTime">
+                            Start Time
+                        </label>
+
+                        <input
+                            type="time"
+                            id="startTime"
+                            name="startTime"
+                            value="<%= formDataValue.startTime || "" %>"
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="endTime">
+                            End Time
+                        </label>
+
+                        <input
+                            type="time"
+                            id="endTime"
+                            name="endTime"
+                            value="<%= formDataValue.endTime || "" %>"
+                        >
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =====================================
+                 TRAINING DETAILS
+            ===================================== -->
+
+            <div class="section">
+
+                <div class="section-title">
+
+                    <h2>
+                        Training Details
+                    </h2>
+
+                    <p>
+                        Add information about what
+                        employees will learn.
+                    </p>
+
+                </div>
+
+
+                <div class="form-grid">
+
+
+                    <div class="form-group full-width">
+
+                        <label for="description">
+                            Description
+                        </label>
+
+                        <textarea
+                            id="description"
+                            name="description"
+                            placeholder="Describe the training program, objectives and expected outcomes..."
+                        ><%= formDataValue.description || "" %></textarea>
+
+                    </div>
+
+
+                    <div class="form-group full-width">
+
+                        <label for="objectives">
+                            Learning Objectives
+                        </label>
+
+                        <textarea
+                            id="objectives"
+                            name="objectives"
+                            placeholder="What should employees be able to do after completing this training?"
+                        ><%= formDataValue.objectives || "" %></textarea>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="location">
+                            Location
+                        </label>
+
+                        <input
+                            type="text"
+                            id="location"
+                            name="location"
+                            placeholder="Training location / meeting link"
+                            value="<%= formDataValue.location || "" %>"
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="capacity">
+                            Maximum Participants
+                        </label>
+
+                        <input
+                            type="number"
+                            id="capacity"
+                            name="capacity"
+                            min="1"
+                            placeholder="e.g. 30"
+                            value="<%= formDataValue.capacity || "" %>"
+                        >
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =====================================
+                 STATUS
+            ===================================== -->
+
+            <div class="section">
+
+                <div class="section-title">
+
+                    <h2>
+                        Program Status
+                    </h2>
+
+                    <p>
+                        Choose the current status
+                        of this training program.
+                    </p>
+
+                </div>
+
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+
+                        <label for="status">
+                            Status
+                        </label>
+
+                        <select
+                            id="status"
+                            name="status"
+                        >
+
+                            <option
+                                value="DRAFT"
+                                <%= formDataValue.status === "DRAFT" || !formDataValue.status ? "selected" : "" %>
+                            >
+                                Draft
+                            </option>
+
+                            <option
+                                value="ACTIVE"
+                                <%= formDataValue.status === "ACTIVE" ? "selected" : "" %>
+                            >
+                                Active
+                            </option>
+
+                            <option
+                                value="COMPLETED"
+                                <%= formDataValue.status === "COMPLETED" ? "selected" : "" %>
+                            >
+                                Completed
+                            </option>
+
+                            <option
+                                value="CANCELLED"
+                                <%= formDataValue.status === "CANCELLED" ? "selected" : "" %>
+                            >
+                                Cancelled
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =====================================
+                 ACTIONS
+            ===================================== -->
+
+            <div class="form-actions">
+
+                <a
+                    href="/training"
+                    class="btn btn-secondary"
+                >
+                    Cancel
+                </a>
+
+
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                    id="submitBtn"
+                >
+                    Create Training
+                </button>
+
+            </div>
+
+
+        </div>
+
+    </form>
+
+
+</div>
+
+
+<script>
+
+document
+    .getElementById("trainingForm")
+    .addEventListener("submit", function () {
+
+        const button =
+            document.getElementById("submitBtn");
+
+        button.disabled = true;
+
+        button.textContent =
+            "Creating...";
+
+    });
+
+
+// Prevent end date before start date
+
+const startDate =
+    document.getElementById("startDate");
+
+const endDate =
+    document.getElementById("endDate");
+
+
+startDate.addEventListener(
+    "change",
+    function () {
+
+        endDate.min = this.value;
+
+        if (
+            endDate.value &&
+            endDate.value < this.value
+        ) {
+
+            endDate.value = this.value;
+
+        }
+
+    }
+);
+
+</script>
+
+
+</body>
+
+</html>

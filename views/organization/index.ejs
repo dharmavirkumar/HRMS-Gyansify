@@ -1,0 +1,651 @@
+<style>
+
+    .org-page {
+        padding: 30px;
+    }
+
+    .org-header {
+        margin-bottom: 25px;
+    }
+
+    .org-header h1 {
+        font-size: 23px;
+        margin: 0;
+    }
+
+    .org-header p {
+        color: #6b7280;
+        font-size: 13px;
+        margin-top: 5px;
+    }
+
+    .org-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+
+    .org-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 22px;
+    }
+
+    .org-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 18px;
+    }
+
+    .org-card-header h3 {
+        font-size: 15px;
+        margin: 0;
+    }
+
+    .count {
+        background: #f3f4f6;
+        padding: 5px 9px;
+        border-radius: 20px;
+        font-size: 10px;
+        color: #374151;
+    }
+
+    .add-form {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .add-form input,
+    .add-form select {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid #dfe3e8;
+        border-radius: 7px;
+        padding: 9px;
+        font-size: 11px;
+        outline: none;
+        background: #ffffff;
+    }
+
+    .add-form input:focus,
+    .add-form select:focus {
+        border-color: #9ca3af;
+    }
+
+    .add-form button {
+        border: 0;
+        background: #111827;
+        color: #ffffff;
+        border-radius: 7px;
+        cursor: pointer;
+        font-size: 11px;
+        min-height: 34px;
+        transition: 0.2s;
+    }
+
+    .add-form button:hover {
+        background: #1f2937;
+    }
+
+    .org-list {
+        border-top: 1px solid #f0f1f3;
+    }
+
+    .org-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 15px;
+        padding: 12px 0;
+        border-bottom: 1px solid #f0f1f3;
+    }
+
+    .org-item:last-child {
+        border-bottom: 0;
+    }
+
+    .org-item strong {
+        display: block;
+        font-size: 12px;
+        color: #111827;
+    }
+
+    .org-item small {
+        display: block;
+        color: #9ca3af;
+        font-size: 10px;
+        margin-top: 3px;
+    }
+
+    .badge {
+        flex-shrink: 0;
+        font-size: 9px;
+        background: #ecfdf5;
+        color: #047857;
+        padding: 4px 8px;
+        border-radius: 20px;
+    }
+
+    .empty {
+        padding: 20px 0;
+        text-align: center;
+        color: #9ca3af;
+        font-size: 11px;
+    }
+
+
+    /* ==============================
+       RESPONSIVE
+    ============================== */
+
+    @media (max-width: 1000px) {
+
+        .org-grid {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+
+    @media (max-width: 800px) {
+
+        .org-page {
+            padding: 20px;
+        }
+
+        .add-form {
+            grid-template-columns: 1fr;
+        }
+
+    }
+
+
+    @media (max-width: 500px) {
+
+        .org-page {
+            padding: 15px;
+        }
+
+        .org-card {
+            padding: 16px;
+        }
+
+        .org-header h1 {
+            font-size: 20px;
+        }
+
+        .org-item {
+            align-items: flex-start;
+        }
+
+    }
+
+</style>
+
+
+<section class="org-page">
+
+
+    <!-- PAGE HEADER -->
+
+    <div class="org-header">
+
+        <h1>
+            Organization Setup
+        </h1>
+
+        <p>
+            Configure departments, designations,
+            branches and work locations.
+        </p>
+
+    </div>
+
+
+
+    <div class="org-grid">
+
+
+        <!-- =========================================
+             DEPARTMENTS
+        ========================================== -->
+
+        <div class="org-card">
+
+            <div class="org-card-header">
+
+                <h3>
+                    Departments
+                </h3>
+
+                <span class="count">
+                    <%= Array.isArray(departments)
+                        ? departments.length
+                        : 0
+                    %>
+                </span>
+
+            </div>
+
+
+            <form
+                class="add-form"
+                action="/organization/departments"
+                method="POST"
+            >
+
+                <input
+                    type="text"
+                    name="name"
+                    placeholder="Department name"
+                    required
+                >
+
+                <input
+                    type="text"
+                    name="code"
+                    placeholder="Code e.g. HR"
+                    required
+                >
+
+                <input
+                    type="text"
+                    name="description"
+                    placeholder="Description"
+                >
+
+                <button type="submit">
+                    Add
+                </button>
+
+            </form>
+
+
+            <div class="org-list">
+
+                <% if (Array.isArray(departments) && departments.length) { %>
+
+                    <% departments.forEach(item => { %>
+
+                        <div class="org-item">
+
+                            <div>
+
+                                <strong>
+                                    <%= item?.name || "-" %>
+                                </strong>
+
+                                <small>
+                                    <%= item?.code || "-" %>
+                                </small>
+
+                            </div>
+
+                            <span class="badge">
+                                <%= item?.status || "ACTIVE" %>
+                            </span>
+
+                        </div>
+
+                    <% }) %>
+
+                <% } else { %>
+
+                    <div class="empty">
+                        No departments added yet.
+                    </div>
+
+                <% } %>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- =========================================
+             DESIGNATIONS
+        ========================================== -->
+
+        <div class="org-card">
+
+            <div class="org-card-header">
+
+                <h3>
+                    Designations
+                </h3>
+
+                <span class="count">
+                    <%= Array.isArray(designations)
+                        ? designations.length
+                        : 0
+                    %>
+                </span>
+
+            </div>
+
+
+            <form
+                class="add-form"
+                action="/organization/designations"
+                method="POST"
+            >
+
+                <input
+                    type="text"
+                    name="name"
+                    placeholder="Designation"
+                    required
+                >
+
+                <input
+                    type="text"
+                    name="code"
+                    placeholder="Code"
+                    required
+                >
+
+                <select name="level">
+
+                    <option value="Intern">
+                        Intern
+                    </option>
+
+                    <option value="Junior">
+                        Junior
+                    </option>
+
+                    <option
+                        value="Mid Level"
+                        selected
+                    >
+                        Mid Level
+                    </option>
+
+                    <option value="Senior">
+                        Senior
+                    </option>
+
+                    <option value="Lead">
+                        Lead
+                    </option>
+
+                    <option value="Manager">
+                        Manager
+                    </option>
+
+                    <option value="Director">
+                        Director
+                    </option>
+
+                </select>
+
+
+                <button type="submit">
+                    Add
+                </button>
+
+            </form>
+
+
+            <div class="org-list">
+
+                <% if (Array.isArray(designations) && designations.length) { %>
+
+                    <% designations.forEach(item => { %>
+
+                        <div class="org-item">
+
+                            <div>
+
+                                <strong>
+                                    <%= item?.name || "-" %>
+                                </strong>
+
+                                <small>
+
+                                    <%= item?.code || "-" %>
+
+                                    ·
+
+                                    <%= item?.level || "-" %>
+
+                                </small>
+
+                            </div>
+
+                            <span class="badge">
+                                <%= item?.status || "ACTIVE" %>
+                            </span>
+
+                        </div>
+
+                    <% }) %>
+
+                <% } else { %>
+
+                    <div class="empty">
+                        No designations added yet.
+                    </div>
+
+                <% } %>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- =========================================
+             BRANCHES
+        ========================================== -->
+
+        <div class="org-card">
+
+            <div class="org-card-header">
+
+                <h3>
+                    Branches
+                </h3>
+
+                <span class="count">
+                    <%= Array.isArray(branches)
+                        ? branches.length
+                        : 0
+                    %>
+                </span>
+
+            </div>
+
+
+            <form
+                class="add-form"
+                action="/organization/branches"
+                method="POST"
+            >
+
+                <input
+                    type="text"
+                    name="name"
+                    placeholder="Branch name"
+                    required
+                >
+
+                <input
+                    type="text"
+                    name="code"
+                    placeholder="Branch code"
+                    required
+                >
+
+                <input
+                    type="text"
+                    name="city"
+                    placeholder="City"
+                    required
+                >
+
+                <input
+                    type="text"
+                    name="state"
+                    placeholder="State"
+                >
+
+                <button type="submit">
+                    Add
+                </button>
+
+            </form>
+
+
+            <div class="org-list">
+
+                <% if (Array.isArray(branches) && branches.length) { %>
+
+                    <% branches.forEach(item => { %>
+
+                        <div class="org-item">
+
+                            <div>
+
+                                <strong>
+                                    <%= item?.name || "-" %>
+                                </strong>
+
+                                <small>
+
+                                    <%= item?.code || "-" %>
+
+                                    ·
+
+                                    <%= item?.city || "-" %>
+
+                                </small>
+
+                            </div>
+
+                            <span class="badge">
+                                <%= item?.status || "ACTIVE" %>
+                            </span>
+
+                        </div>
+
+                    <% }) %>
+
+                <% } else { %>
+
+                    <div class="empty">
+                        No branches added yet.
+                    </div>
+
+                <% } %>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- =========================================
+             WORK LOCATIONS
+        ========================================== -->
+
+        <div class="org-card">
+
+            <div class="org-card-header">
+
+                <h3>
+                    Work Locations
+                </h3>
+
+                <span class="count">
+                    <%= Array.isArray(locations)
+                        ? locations.length
+                        : 0
+                    %>
+                </span>
+
+            </div>
+
+
+            <form
+                class="add-form"
+                action="/organization/locations"
+                method="POST"
+            >
+
+                <input
+                    type="text"
+                    name="name"
+                    placeholder="Location name"
+                    required
+                >
+
+                <input
+                    type="text"
+                    name="city"
+                    placeholder="City"
+                    required
+                >
+
+                <input
+                    type="text"
+                    name="address"
+                    placeholder="Address"
+                >
+
+                <button type="submit">
+                    Add
+                </button>
+
+            </form>
+
+
+            <div class="org-list">
+
+                <% if (Array.isArray(locations) && locations.length) { %>
+
+                    <% locations.forEach(item => { %>
+
+                        <div class="org-item">
+
+                            <div>
+
+                                <strong>
+                                    <%= item?.name || "-" %>
+                                </strong>
+
+                                <small>
+                                    <%= item?.city || "-" %>
+                                </small>
+
+                            </div>
+
+                            <span class="badge">
+                                <%= item?.status || "ACTIVE" %>
+                            </span>
+
+                        </div>
+
+                    <% }) %>
+
+                <% } else { %>
+
+                    <div class="empty">
+                        No work locations added yet.
+                    </div>
+
+                <% } %>
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+</section>

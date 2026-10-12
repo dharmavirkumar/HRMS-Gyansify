@@ -1,0 +1,89 @@
+
+<%
+    const headerUser =
+        typeof user !== "undefined" && user ? user : {};
+
+    const headerName =
+        headerUser.name ||
+        headerUser.fullName ||
+        headerUser.email ||
+        "User";
+
+    const headerRawRole =
+        headerUser.role ||
+        headerUser.roles?.[0]?.code ||
+        headerUser.roles?.[0]?.name ||
+        "EMPLOYEE";
+
+    const headerRole = String(
+        typeof headerRawRole === "object"
+            ? headerRawRole.code || headerRawRole.name || "EMPLOYEE"
+            : headerRawRole
+    ).replace(/_/g, " ").toUpperCase();
+
+    const headerInitial =
+        String(headerName).trim().charAt(0).toUpperCase() || "U";
+
+    const headerTitle =
+        typeof title !== "undefined" && title
+            ? title
+            : "Dashboard";
+%>
+
+<header class="hrms-header">
+    <div class="hrms-header-left">
+        <button
+            type="button"
+            class="hrms-mobile-button"
+            id="hrmsMobileMenuButton"
+            aria-label="Open navigation menu"
+            aria-controls="hrmsSidebar"
+            aria-expanded="false"
+        >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 6h16"></path>
+                <path d="M4 12h16"></path>
+                <path d="M4 18h16"></path>
+            </svg>
+        </button>
+
+        <div class="hrms-header-heading">
+            <h1 class="hrms-page-title"><%= headerTitle %></h1>
+            <p class="hrms-page-description">
+                Gyansify Human Resource Management System
+            </p>
+        </div>
+    </div>
+
+    <div class="hrms-header-right">
+        <button
+            type="button"
+            class="hrms-notification"
+            id="hrmsNotificationButton"
+            aria-label="Notifications"
+            title="Notifications"
+        >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
+                <path d="M10 21h4"></path>
+            </svg>
+            <span class="hrms-notification-dot" aria-hidden="true"></span>
+        </button>
+
+        <a href="/settings" class="hrms-header-profile"
+           aria-label="Open account settings">
+            <span class="hrms-header-profile-info">
+                <span class="hrms-header-profile-name">
+                    <%= headerName %>
+                </span>
+                <span class="hrms-header-profile-role">
+                    <%= headerRole %>
+                </span>
+            </span>
+
+            <span class="hrms-header-avatar" aria-hidden="true">
+                <%= headerInitial %>
+            </span>
+        </a>
+    </div>
+</header>

@@ -1,0 +1,1178 @@
+<%
+/* =========================================================
+   SAFE LOCALS
+========================================================= */
+
+const reportUser =
+    typeof user !== "undefined" && user
+        ? user
+        : {};
+
+const attendanceReport =
+    typeof report !== "undefined" && report
+        ? report
+        : {};
+
+const reportStats =
+    typeof stats !== "undefined" && stats
+        ? stats
+        : {
+            totalEmployees: 0,
+            present: 0,
+            absent: 0,
+            late: 0,
+            halfDay: 0,
+            onLeave: 0,
+            attendancePercentage: 0
+        };
+
+const attendanceRecords =
+    typeof records !== "undefined" && Array.isArray(records)
+        ? records
+        : (
+            typeof attendance !== "undefined" &&
+            Array.isArray(attendance)
+                ? attendance
+                : []
+        );
+
+const reportTitle =
+    typeof title !== "undefined"
+        ? title
+        : "Attendance Report";
+
+const reportDate =
+    attendanceReport.date ||
+    attendanceReport.fromDate ||
+    "";
+
+const reportFromDate =
+    attendanceReport.fromDate ||
+    "";
+
+const reportToDate =
+    attendanceReport.toDate ||
+    "";
+
+const organizationName =
+    attendanceReport.organizationName ||
+    "Gyansify";
+
+const formatDate = (date) => {
+
+    if (!date) return "-";
+
+    try {
+
+        return new Date(date).toLocaleDateString(
+            "en-IN",
+            {
+                day: "2-digit",
+                month: "short",
+                year: "numeric"
+            }
+        );
+
+    } catch (error) {
+
+        return date;
+
+    }
+};
+
+const formatTime = (time) => {
+
+    if (!time) return "-";
+
+    try {
+
+        return new Date(time).toLocaleTimeString(
+            "en-IN",
+            {
+                hour: "2-digit",
+                minute: "2-digit"
+            }
+        );
+
+    } catch (error) {
+
+        return time;
+
+    }
+};
+
+const getEmployeeName = (record) => {
+
+    if (!record) return "Unknown Employee";
+
+    if (
+        record.employee &&
+        typeof record.employee === "object"
+    ) {
+
+        return (
+            record.employee.name ||
+            record.employee.fullName ||
+            `${record.employee.firstName || ""} ${record.employee.lastName || ""}`.trim() ||
+            "Unknown Employee"
+        );
+
+    }
+
+    return (
+        record.employeeName ||
+        record.name ||
+        "Unknown Employee"
+    );
+
+};
+
+const getEmployeeId = (record) => {
+
+    if (!record) return "-";
+
+    if (
+        record.employee &&
+        typeof record.employee === "object"
+    ) {
+
+        return (
+            record.employee.employeeId ||
+            record.employee.empId ||
+            "-"
+        );
+
+    }
+
+    return (
+        record.employeeId ||
+        record.empId ||
+        "-"
+    );
+
+};
+
+const getStatusClass = (status) => {
+
+    const normalized =
+        String(status || "")
+            .toUpperCase()
+            .trim();
+
+    if (
+        normalized === "PRESENT" ||
+        normalized === "APPROVED"
+    ) {
+
+        return "status-present";
+
+    }
+
+    if (
+        normalized === "ABSENT" ||
+        normalized === "REJECTED"
+    ) {
+
+        return "status-absent";
+
+    }
+
+    if (
+        normalized === "LATE"
+    ) {
+
+        return "status-late";
+
+    }
+
+    if (
+        normalized === "HALF_DAY" ||
+        normalized === "HALFDAY"
+    ) {
+
+        return "status-halfday";
+
+    }
+
+    if (
+        normalized === "LEAVE" ||
+        normalized === "ON_LEAVE"
+    ) {
+
+        return "status-leave";
+
+    }
+
+    return "status-default";
+
+};
+
+const getInitial = (name) => {
+
+    return String(name || "U")
+        .charAt(0)
+        .toUpperCase();
+
+};
+%>
+
+<style>
+
+/* =========================================================
+   ATTENDANCE REPORT
+========================================================= */
+
+.attendance-report-page {
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+/* HEADER */
+
+.attendance-report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.attendance-report-title h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -0.5px;
+}
+
+.attendance-report-title p {
+    margin: 7px 0 0;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.attendance-report-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.attendance-btn {
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    color: #374151;
+    text-decoration: none;
+    padding: 10px 15px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: 0.2s ease;
+}
+
+.attendance-btn:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+}
+
+.attendance-btn-primary {
+    background: #111827;
+    border-color: #111827;
+    color: #ffffff;
+}
+
+.attendance-btn-primary:hover {
+    background: #1f2937;
+    color: #ffffff;
+}
+
+/* FILTER */
+
+.attendance-filter-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.attendance-filter-grid {
+    display: grid;
+    grid-template-columns:
+        minmax(160px, 1fr)
+        minmax(160px, 1fr)
+        minmax(160px, 1fr)
+        auto;
+    gap: 14px;
+    align-items: end;
+}
+
+.attendance-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.attendance-field label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #4b5563;
+}
+
+.attendance-field input,
+.attendance-field select {
+    width: 100%;
+    height: 42px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 0 12px;
+    background: #ffffff;
+    color: #111827;
+    font-size: 13px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.attendance-field input:focus,
+.attendance-field select:focus {
+    border-color: #111827;
+    box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+}
+
+/* STAT CARDS */
+
+.attendance-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 22px;
+}
+
+.attendance-stat-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 13px;
+    padding: 17px;
+    min-height: 105px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.035);
+}
+
+.attendance-stat-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #6b7280;
+    margin-bottom: 9px;
+}
+
+.attendance-stat-value {
+    font-size: 26px;
+    line-height: 1;
+    font-weight: 800;
+    color: #111827;
+}
+
+.attendance-stat-sub {
+    margin-top: 8px;
+    font-size: 11px;
+    color: #9ca3af;
+}
+
+.stat-present {
+    border-top: 3px solid #16a34a;
+}
+
+.stat-absent {
+    border-top: 3px solid #dc2626;
+}
+
+.stat-late {
+    border-top: 3px solid #f59e0b;
+}
+
+.stat-halfday {
+    border-top: 3px solid #8b5cf6;
+}
+
+.stat-leave {
+    border-top: 3px solid #0ea5e9;
+}
+
+.stat-total {
+    border-top: 3px solid #111827;
+}
+
+/* MAIN CARD */
+
+.attendance-table-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.attendance-table-header {
+    padding: 18px 20px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.attendance-table-header h2 {
+    margin: 0;
+    font-size: 16px;
+    color: #111827;
+    font-weight: 800;
+}
+
+.attendance-table-header span {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+/* TABLE */
+
+.attendance-table-wrapper {
+    overflow-x: auto;
+}
+
+.attendance-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 900px;
+}
+
+.attendance-table th {
+    text-align: left;
+    background: #f8fafc;
+    color: #6b7280;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-weight: 800;
+    padding: 13px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    white-space: nowrap;
+}
+
+.attendance-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #374151;
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+.attendance-table tbody tr:hover {
+    background: #fafafa;
+}
+
+.attendance-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* EMPLOYEE */
+
+.attendance-employee {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.attendance-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    background: #111827;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+.attendance-employee-name {
+    font-weight: 700;
+    color: #111827;
+}
+
+.attendance-employee-id {
+    font-size: 11px;
+    color: #9ca3af;
+    margin-top: 2px;
+}
+
+/* STATUS */
+
+.attendance-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.status-present {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-absent {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.status-late {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-halfday {
+    background: #ede9fe;
+    color: #6d28d9;
+}
+
+.status-leave {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.status-default {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+/* EMPTY */
+
+.attendance-empty {
+    padding: 55px 20px;
+    text-align: center;
+}
+
+.attendance-empty-icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 14px;
+    background: #f3f4f6;
+    margin: 0 auto 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 23px;
+}
+
+.attendance-empty h3 {
+    margin: 0;
+    color: #111827;
+    font-size: 15px;
+}
+
+.attendance-empty p {
+    margin: 6px 0 0;
+    color: #9ca3af;
+    font-size: 12px;
+}
+
+/* FOOTER */
+
+.attendance-report-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    margin-top: 16px;
+    color: #9ca3af;
+    font-size: 11px;
+}
+
+/* PRINT */
+
+@media print {
+
+    .attendance-report-actions,
+    .attendance-filter-card,
+    .attendance-report-footer {
+        display: none !important;
+    }
+
+    .attendance-report-page {
+        max-width: none;
+    }
+
+    .attendance-table-card,
+    .attendance-stat-card {
+        box-shadow: none;
+    }
+
+    .attendance-stat-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 1250px) {
+
+    .attendance-stat-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+}
+
+@media (max-width: 900px) {
+
+    .attendance-filter-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .attendance-report-header {
+        flex-direction: column;
+    }
+
+}
+
+@media (max-width: 600px) {
+
+    .attendance-stat-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .attendance-filter-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .attendance-report-title h1 {
+        font-size: 23px;
+    }
+
+    .attendance-report-actions {
+        width: 100%;
+    }
+
+    .attendance-btn {
+        flex: 1;
+        justify-content: center;
+    }
+
+}
+
+</style>
+
+
+<div class="attendance-report-page">
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <div class="attendance-report-header">
+
+        <div class="attendance-report-title">
+
+            <h1>
+                Attendance Report
+            </h1>
+
+            <p>
+                Monitor employee attendance, absences, late arrivals and leave records.
+            </p>
+
+        </div>
+
+
+        <div class="attendance-report-actions">
+
+            <a
+                href="/attendance"
+                class="attendance-btn"
+            >
+                ← Attendance
+            </a>
+
+            <button
+                type="button"
+                class="attendance-btn"
+                onclick="window.print()"
+            >
+                🖨 Print Report
+            </button>
+
+            <a
+                href="/reports/attendance/export"
+                class="attendance-btn attendance-btn-primary"
+            >
+                ↓ Export
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         FILTER
+    ====================================================== -->
+
+    <div class="attendance-filter-card">
+
+        <form
+            method="GET"
+            action="/reports/attendance"
+        >
+
+            <div class="attendance-filter-grid">
+
+                <div class="attendance-field">
+
+                    <label for="fromDate">
+                        From Date
+                    </label>
+
+                    <input
+                        type="date"
+                        id="fromDate"
+                        name="fromDate"
+                        value="<%= reportFromDate %>"
+                    >
+
+                </div>
+
+
+                <div class="attendance-field">
+
+                    <label for="toDate">
+                        To Date
+                    </label>
+
+                    <input
+                        type="date"
+                        id="toDate"
+                        name="toDate"
+                        value="<%= reportToDate %>"
+                    >
+
+                </div>
+
+
+                <div class="attendance-field">
+
+                    <label for="status">
+                        Attendance Status
+                    </label>
+
+                    <select
+                        id="status"
+                        name="status"
+                    >
+
+                        <option value="">
+                            All Status
+                        </option>
+
+                        <option value="PRESENT">
+                            Present
+                        </option>
+
+                        <option value="ABSENT">
+                            Absent
+                        </option>
+
+                        <option value="LATE">
+                            Late
+                        </option>
+
+                        <option value="HALF_DAY">
+                            Half Day
+                        </option>
+
+                        <option value="LEAVE">
+                            On Leave
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="attendance-btn attendance-btn-primary"
+                >
+                    Apply Filter
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+
+    <!-- =====================================================
+         STATISTICS
+    ====================================================== -->
+
+    <div class="attendance-stat-grid">
+
+        <div class="attendance-stat-card stat-total">
+
+            <div class="attendance-stat-label">
+                Total Employees
+            </div>
+
+            <div class="attendance-stat-value">
+                <%= Number(reportStats.totalEmployees || 0).toLocaleString("en-IN") %>
+            </div>
+
+            <div class="attendance-stat-sub">
+                Workforce
+            </div>
+
+        </div>
+
+
+        <div class="attendance-stat-card stat-present">
+
+            <div class="attendance-stat-label">
+                Present
+            </div>
+
+            <div class="attendance-stat-value">
+                <%= Number(reportStats.present || 0).toLocaleString("en-IN") %>
+            </div>
+
+            <div class="attendance-stat-sub">
+                Checked in
+            </div>
+
+        </div>
+
+
+        <div class="attendance-stat-card stat-absent">
+
+            <div class="attendance-stat-label">
+                Absent
+            </div>
+
+            <div class="attendance-stat-value">
+                <%= Number(reportStats.absent || 0).toLocaleString("en-IN") %>
+            </div>
+
+            <div class="attendance-stat-sub">
+                No attendance
+            </div>
+
+        </div>
+
+
+        <div class="attendance-stat-card stat-late">
+
+            <div class="attendance-stat-label">
+                Late
+            </div>
+
+            <div class="attendance-stat-value">
+                <%= Number(reportStats.late || 0).toLocaleString("en-IN") %>
+            </div>
+
+            <div class="attendance-stat-sub">
+                Late arrivals
+            </div>
+
+        </div>
+
+
+        <div class="attendance-stat-card stat-halfday">
+
+            <div class="attendance-stat-label">
+                Half Day
+            </div>
+
+            <div class="attendance-stat-value">
+                <%= Number(reportStats.halfDay || 0).toLocaleString("en-IN") %>
+            </div>
+
+            <div class="attendance-stat-sub">
+                Partial attendance
+            </div>
+
+        </div>
+
+
+        <div class="attendance-stat-card stat-leave">
+
+            <div class="attendance-stat-label">
+                On Leave
+            </div>
+
+            <div class="attendance-stat-value">
+                <%= Number(reportStats.onLeave || 0).toLocaleString("en-IN") %>
+            </div>
+
+            <div class="attendance-stat-sub">
+                Approved leave
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         ATTENDANCE TABLE
+    ====================================================== -->
+
+    <div class="attendance-table-card">
+
+        <div class="attendance-table-header">
+
+            <div>
+
+                <h2>
+                    Attendance Records
+                </h2>
+
+                <span>
+                    <%= organizationName %>
+                    <% if (reportFromDate || reportToDate) { %>
+                        · <%= reportFromDate || "-" %>
+                        to
+                        <%= reportToDate || "-" %>
+                    <% } %>
+                </span>
+
+            </div>
+
+            <span>
+                <%= attendanceRecords.length %> record(s)
+            </span>
+
+        </div>
+
+
+        <% if (attendanceRecords.length > 0) { %>
+
+            <div class="attendance-table-wrapper">
+
+                <table class="attendance-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Employee
+                            </th>
+
+                            <th>
+                                Date
+                            </th>
+
+                            <th>
+                                Check In
+                            </th>
+
+                            <th>
+                                Check Out
+                            </th>
+
+                            <th>
+                                Work Hours
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                Remarks
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        <% attendanceRecords.forEach((record) => { %>
+
+                            <%
+                                const employeeName =
+                                    getEmployeeName(record);
+
+                                const employeeId =
+                                    getEmployeeId(record);
+
+                                const recordStatus =
+                                    record.status ||
+                                    record.attendanceStatus ||
+                                    "N/A";
+
+                                const checkIn =
+                                    record.checkIn ||
+                                    record.checkInTime ||
+                                    record.inTime ||
+                                    null;
+
+                                const checkOut =
+                                    record.checkOut ||
+                                    record.checkOutTime ||
+                                    record.outTime ||
+                                    null;
+
+                                const workHours =
+                                    record.workHours ||
+                                    record.totalHours ||
+                                    record.hours ||
+                                    "-";
+
+                                const remarks =
+                                    record.remarks ||
+                                    record.remark ||
+                                    record.note ||
+                                    "-";
+                            %>
+
+                            <tr>
+
+                                <td>
+
+                                    <div class="attendance-employee">
+
+                                        <div class="attendance-avatar">
+
+                                            <%= getInitial(employeeName) %>
+
+                                        </div>
+
+                                        <div>
+
+                                            <div class="attendance-employee-name">
+                                                <%= employeeName %>
+                                            </div>
+
+                                            <div class="attendance-employee-id">
+                                                <%= employeeId %>
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </td>
+
+
+                                <td>
+
+                                    <%= formatDate(
+                                        record.date ||
+                                        record.attendanceDate ||
+                                        record.createdAt
+                                    ) %>
+
+                                </td>
+
+
+                                <td>
+
+                                    <%= formatTime(checkIn) %>
+
+                                </td>
+
+
+                                <td>
+
+                                    <%= formatTime(checkOut) %>
+
+                                </td>
+
+
+                                <td>
+
+                                    <%= workHours %>
+
+                                </td>
+
+
+                                <td>
+
+                                    <span
+                                        class="attendance-status <%= getStatusClass(recordStatus) %>"
+                                    >
+
+                                        <%= String(recordStatus)
+                                            .replace(/_/g, " ")
+                                            .toUpperCase() %>
+
+                                    </span>
+
+                                </td>
+
+
+                                <td>
+
+                                    <%= remarks %>
+
+                                </td>
+
+                            </tr>
+
+                        <% }); %>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        <% } else { %>
+
+            <div class="attendance-empty">
+
+                <div class="attendance-empty-icon">
+                    📊
+                </div>
+
+                <h3>
+                    No attendance records found
+                </h3>
+
+                <p>
+                    Try changing the date range or attendance status filter.
+                </p>
+
+            </div>
+
+        <% } %>
+
+    </div>
+
+
+    <!-- =====================================================
+         FOOTER
+    ====================================================== -->
+
+    <div class="attendance-report-footer">
+
+        <span>
+            <%= organizationName %> · Attendance Management
+        </span>
+
+        <span>
+            Generated on <%= new Date().toLocaleDateString("en-IN") %>
+        </span>
+
+    </div>
+
+</div>

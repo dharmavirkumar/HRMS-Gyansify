@@ -1,0 +1,518 @@
+<%
+const recruitmentOffers =
+    typeof offers !== "undefined" &&
+    Array.isArray(offers)
+        ? offers
+        : [];
+
+const offerStats =
+    typeof stats !== "undefined" && stats
+        ? stats
+        : {
+            total: recruitmentOffers.length,
+            pending: 0,
+            accepted: 0,
+            rejected: 0
+        };
+%>
+
+
+<style>
+
+.offer-page {
+    width: 100%;
+}
+
+.offer-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 28px;
+}
+
+.offer-breadcrumb {
+    display: flex;
+    gap: 8px;
+    font-size: 12px;
+    color: #94a3b8;
+    margin-bottom: 12px;
+}
+
+.offer-title {
+    font-size: 28px;
+    font-weight: 750;
+    color: #111827;
+}
+
+.offer-subtitle {
+    margin-top: 6px;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.offer-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 40px;
+    padding: 0 16px;
+    border-radius: 8px;
+    background: #4f46e5;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.offer-btn:hover {
+    background: #4338ca;
+}
+
+.offer-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.offer-stat {
+    background: #fff;
+    border: 1px solid #e7eaf0;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.offer-stat-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.offer-stat-number {
+    margin-top: 7px;
+    font-size: 27px;
+    font-weight: 750;
+    color: #111827;
+}
+
+.offer-card {
+    background: #fff;
+    border: 1px solid #e7eaf0;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.offer-card-header {
+    padding: 20px 22px;
+    border-bottom: 1px solid #edf0f4;
+}
+
+.offer-card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #172033;
+}
+
+.offer-card-subtitle {
+    margin-top: 4px;
+    color: #94a3b8;
+    font-size: 11px;
+}
+
+.offer-table-wrapper {
+    overflow-x: auto;
+}
+
+.offer-table {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: collapse;
+}
+
+.offer-table th {
+    text-align: left;
+    padding: 13px 18px;
+    background: #fafbfc;
+    border-bottom: 1px solid #edf0f4;
+    color: #7b8798;
+    font-size: 10px;
+    font-weight: 750;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.offer-table td {
+    padding: 16px 18px;
+    border-bottom: 1px solid #f0f2f5;
+    color: #475569;
+    font-size: 12px;
+}
+
+.offer-table tbody tr:hover {
+    background: #fafbff;
+}
+
+.offer-candidate {
+    font-weight: 650;
+    color: #1e293b;
+}
+
+.offer-email {
+    margin-top: 3px;
+    color: #94a3b8;
+    font-size: 10px;
+}
+
+.offer-amount {
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.offer-badge {
+    display: inline-flex;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 650;
+}
+
+.offer-pending {
+    background: #fff7ed;
+    color: #c2410c;
+}
+
+.offer-accepted {
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.offer-rejected {
+    background: #fff1f2;
+    color: #e11d48;
+}
+
+.offer-draft {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.offer-empty {
+    padding: 70px 20px;
+    text-align: center;
+}
+
+.offer-empty-icon {
+    width: 58px;
+    height: 58px;
+    margin: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #f1f5f9;
+    font-size: 25px;
+}
+
+.offer-empty-title {
+    margin-top: 15px;
+    color: #1e293b;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.offer-empty-text {
+    margin-top: 5px;
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+@media(max-width: 950px) {
+    .offer-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media(max-width: 650px) {
+    .offer-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .offer-stats {
+        grid-template-columns: 1fr;
+    }
+}
+
+</style>
+
+
+<div class="offer-page">
+
+    <div class="offer-header">
+
+        <div>
+
+            <div class="offer-breadcrumb">
+
+                <a href="/dashboard">
+                    Dashboard
+                </a>
+
+                <span>/</span>
+
+                <a href="/recruitment">
+                    Recruitment
+                </a>
+
+                <span>/</span>
+
+                <span>
+                    Offers
+                </span>
+
+            </div>
+
+            <h1 class="offer-title">
+                Job Offers
+            </h1>
+
+            <p class="offer-subtitle">
+                Manage offers issued to selected candidates.
+            </p>
+
+        </div>
+
+        <a
+            href="/recruitment/offers/create"
+            class="offer-btn"
+        >
+            + Create Offer
+        </a>
+
+    </div>
+
+
+    <!-- STATS -->
+
+    <div class="offer-stats">
+
+        <div class="offer-stat">
+
+            <div class="offer-stat-label">
+                Total Offers
+            </div>
+
+            <div class="offer-stat-number">
+                <%= offerStats.total || 0 %>
+            </div>
+
+        </div>
+
+
+        <div class="offer-stat">
+
+            <div class="offer-stat-label">
+                Pending
+            </div>
+
+            <div class="offer-stat-number">
+                <%= offerStats.pending || 0 %>
+            </div>
+
+        </div>
+
+
+        <div class="offer-stat">
+
+            <div class="offer-stat-label">
+                Accepted
+            </div>
+
+            <div class="offer-stat-number">
+                <%= offerStats.accepted || 0 %>
+            </div>
+
+        </div>
+
+
+        <div class="offer-stat">
+
+            <div class="offer-stat-label">
+                Rejected
+            </div>
+
+            <div class="offer-stat-number">
+                <%= offerStats.rejected || 0 %>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- OFFERS -->
+
+    <div class="offer-card">
+
+        <div class="offer-card-header">
+
+            <div class="offer-card-title">
+                Job Offers
+            </div>
+
+            <div class="offer-card-subtitle">
+                Track candidate offers and their current status.
+            </div>
+
+        </div>
+
+
+        <% if (recruitmentOffers.length === 0) { %>
+
+            <div class="offer-empty">
+
+                <div class="offer-empty-icon">
+                    📄
+                </div>
+
+                <div class="offer-empty-title">
+                    No offers yet
+                </div>
+
+                <div class="offer-empty-text">
+                    Offers created for selected candidates will appear here.
+                </div>
+
+            </div>
+
+        <% } else { %>
+
+            <div class="offer-table-wrapper">
+
+                <table class="offer-table">
+
+                    <thead>
+
+                        <tr>
+                            <th>Candidate</th>
+                            <th>Position</th>
+                            <th>Offer Amount</th>
+                            <th>Joining Date</th>
+                            <th>Issued Date</th>
+                            <th>Status</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        <% recruitmentOffers.forEach(function(offer) { %>
+
+                            <%
+                            const offerStatus =
+                                String(offer.status || "PENDING").toUpperCase();
+
+                            let offerClass = "offer-pending";
+
+                            if (offerStatus === "ACCEPTED") {
+                                offerClass = "offer-accepted";
+                            }
+
+                            if (offerStatus === "REJECTED") {
+                                offerClass = "offer-rejected";
+                            }
+
+                            if (offerStatus === "DRAFT") {
+                                offerClass = "offer-draft";
+                            }
+                            %>
+
+                            <tr>
+
+                                <td>
+
+                                    <div class="offer-candidate">
+
+                                        <%= offer.candidateName ||
+                                            offer.candidate?.name ||
+                                            "Candidate" %>
+
+                                    </div>
+
+                                    <div class="offer-email">
+
+                                        <%= offer.email ||
+                                            offer.candidate?.email ||
+                                            "" %>
+
+                                    </div>
+
+                                </td>
+
+
+                                <td>
+
+                                    <%= offer.position ||
+                                        offer.jobTitle ||
+                                        "Not specified" %>
+
+                                </td>
+
+
+                                <td>
+
+                                    <div class="offer-amount">
+
+                                        <%= offer.salary
+                                            ? "₹ " + Number(offer.salary).toLocaleString("en-IN")
+                                            : offer.offerAmount
+                                                ? "₹ " + Number(offer.offerAmount).toLocaleString("en-IN")
+                                                : "—" %>
+
+                                    </div>
+
+                                </td>
+
+
+                                <td>
+
+                                    <%= offer.joiningDate
+                                        ? new Date(offer.joiningDate).toLocaleDateString("en-IN")
+                                        : "—" %>
+
+                                </td>
+
+
+                                <td>
+
+                                    <%= offer.issuedDate
+                                        ? new Date(offer.issuedDate).toLocaleDateString("en-IN")
+                                        : "—" %>
+
+                                </td>
+
+
+                                <td>
+
+                                    <span class="offer-badge <%= offerClass %>">
+                                        <%= offerStatus %>
+                                    </span>
+
+                                </td>
+
+                            </tr>
+
+                        <% }); %>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        <% } %>
+
+    </div>
+
+</div>

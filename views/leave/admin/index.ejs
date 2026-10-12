@@ -1,0 +1,695 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title><%= title || "Leave Management" %> - Gyansify HRMS</title>
+
+    <link rel="stylesheet" href="/css/dashboard.css">
+
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background: #f5f7fb;
+            color: #172033;
+            font-family: Inter, -apple-system, BlinkMacSystemFont,
+                "Segoe UI", sans-serif;
+        }
+
+        .leave-page {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+        .page-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 26px;
+        }
+
+        .page-heading h1 {
+            margin: 0 0 7px;
+            font-size: 27px;
+            letter-spacing: -.7px;
+        }
+
+        .page-heading p {
+            margin: 0;
+            color: #778197;
+            font-size: 14px;
+        }
+
+        .primary-btn, .secondary-btn, .action-btn {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            border: 0;
+            border-radius: 9px;
+            padding: 10px 14px;
+            font: inherit;
+            font-size: 13px;
+            font-weight: 650;
+            text-decoration: none;
+            cursor: pointer;
+            transition: .2s ease;
+        }
+
+        .primary-btn {
+            background: #2563eb;
+            color: white;
+        }
+
+        .primary-btn:hover { background: #1d4ed8; }
+
+        .secondary-btn {
+            background: white;
+            color: #344054;
+            border: 1px solid #e2e7ef;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 18px;
+            margin-bottom: 26px;
+        }
+
+        .stat-card {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 22px;
+            background: white;
+            border: 1px solid #e9edf4;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(16, 24, 40, .025);
+        }
+
+        .stat-icon {
+            display: grid;
+            place-items: center;
+            width: 48px;
+            height: 48px;
+            flex-shrink: 0;
+            border-radius: 13px;
+            font-size: 22px;
+        }
+
+        .icon-pending { background: #fff4db; }
+        .icon-approved { background: #dcfce7; }
+        .icon-rejected { background: #fee2e2; }
+
+        .stat-label {
+            color: #7b8498;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+
+        .stat-number {
+            font-size: 27px;
+            font-weight: 750;
+            line-height: 1.2;
+        }
+
+        .panel {
+            overflow: hidden;
+            background: white;
+            border: 1px solid #e8ecf3;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(16, 24, 40, .025);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            flex-wrap: wrap;
+            padding: 22px 24px;
+            border-bottom: 1px solid #edf0f5;
+        }
+
+        .panel-header h2 {
+            margin: 0 0 5px;
+            font-size: 17px;
+        }
+
+        .panel-header p {
+            margin: 0;
+            color: #858da0;
+            font-size: 12px;
+        }
+
+        .filters {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filters select, .filters input {
+            min-height: 40px;
+            padding: 9px 12px;
+            border: 1px solid #e0e5ed;
+            border-radius: 9px;
+            background: white;
+            color: #344054;
+            font: inherit;
+            font-size: 13px;
+        }
+
+        .table-wrap { overflow-x: auto; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            white-space: nowrap;
+        }
+
+        th {
+            padding: 14px 17px;
+            background: #fafbfe;
+            color: #788297;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 750;
+            text-transform: uppercase;
+            letter-spacing: .55px;
+        }
+
+        td {
+            padding: 16px 17px;
+            border-bottom: 1px solid #f0f2f6;
+            font-size: 13px;
+            vertical-align: middle;
+        }
+
+        tbody tr:last-child td { border-bottom: 0; }
+        tbody tr:hover { background: #fbfcff; }
+
+        .employee-cell {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+        }
+
+        .avatar {
+            display: grid;
+            place-items: center;
+            width: 39px;
+            height: 39px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            background: #e8efff;
+            color: #2858bd;
+            font-size: 12px;
+            font-weight: 750;
+        }
+
+        .employee-name {
+            font-weight: 700;
+            color: #273249;
+        }
+
+        .muted {
+            margin-top: 4px;
+            color: #8a93a5;
+            font-size: 11px;
+        }
+
+        .leave-type {
+            font-weight: 650;
+        }
+
+        .leave-code {
+            display: inline-block;
+            margin-top: 5px;
+            padding: 3px 7px;
+            background: #f1f4fa;
+            color: #65718a;
+            border-radius: 5px;
+            font-size: 10px;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 30px;
+            font-size: 11px;
+            font-weight: 750;
+        }
+
+        .status::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .status-pending { background: #fff4d8; color: #a16207; }
+        .status-approved { background: #dcfce7; color: #15803d; }
+        .status-rejected { background: #fee2e2; color: #b91c1c; }
+        .status-cancelled { background: #eef0f5; color: #667085; }
+
+        .action-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .action-btn {
+            padding: 8px 10px;
+            font-size: 11px;
+        }
+
+        .approve-btn { background: #dcfce7; color: #166534; }
+        .reject-btn { background: #fee2e2; color: #b91c1c; }
+        .revert-btn { background: #eef2ff; color: #4338ca; }
+
+        .action-btn:hover { filter: brightness(.96); }
+
+        .empty-state {
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .empty-icon {
+            display: grid;
+            place-items: center;
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 15px;
+            border-radius: 18px;
+            background: #f0f4ff;
+            font-size: 27px;
+        }
+
+        .empty-state h3 {
+            margin: 0 0 7px;
+            font-size: 16px;
+        }
+
+        .empty-state p {
+            margin: 0;
+            color: #8790a2;
+            font-size: 13px;
+        }
+
+        .reason-cell {
+            max-width: 210px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 800px) {
+            .leave-page { padding: 18px 12px; }
+            .stats-grid { grid-template-columns: 1fr; gap: 12px; }
+            .page-heading h1 { font-size: 23px; }
+            .panel-header { padding: 18px; }
+        }
+    </style>
+</head>
+
+<body>
+
+<main class="leave-page">
+
+    <!-- PAGE HEADING -->
+    <header class="page-heading">
+        <div>
+            <h1>Leave Management</h1>
+            <p>Review employee leave applications and manage approvals.</p>
+        </div>
+
+        <div class="filters">
+            <a href="/leave/admin/types" class="secondary-btn">
+                Manage Leave Types
+            </a>
+
+            <a href="/leave/admin/balances" class="primary-btn">
+                + Leave Balances
+            </a>
+        </div>
+    </header>
+
+    <!-- STATISTICS -->
+    <section class="stats-grid">
+
+        <article class="stat-card">
+            <div class="stat-icon icon-pending">◷</div>
+            <div>
+                <div class="stat-label">Pending Requests</div>
+                <div class="stat-number">
+                    <%= stats?.pending ?? 0 %>
+                </div>
+            </div>
+        </article>
+
+        <article class="stat-card">
+            <div class="stat-icon icon-approved">✓</div>
+            <div>
+                <div class="stat-label">Approved Requests</div>
+                <div class="stat-number">
+                    <%= stats?.approved ?? 0 %>
+                </div>
+            </div>
+        </article>
+
+        <article class="stat-card">
+            <div class="stat-icon icon-rejected">×</div>
+            <div>
+                <div class="stat-label">Rejected Requests</div>
+                <div class="stat-number">
+                    <%= stats?.rejected ?? 0 %>
+                </div>
+            </div>
+        </article>
+
+    </section>
+
+    <!-- REQUESTS PANEL -->
+    <section class="panel">
+
+        <div class="panel-header">
+            <div>
+                <h2>Leave Applications</h2>
+                <p>View and process employee leave requests.</p>
+            </div>
+
+            <form method="GET" action="/leave/admin" class="filters">
+
+                <input
+                    type="search"
+                    id="searchInput"
+                    placeholder="Search employee..."
+                    aria-label="Search employee"
+                >
+
+                <select
+                    name="status"
+                    aria-label="Filter by status"
+                    onchange="this.form.submit()"
+                >
+                    <option value="Pending"
+                        <%= status === "Pending" ? "selected" : "" %>>
+                        Pending
+                    </option>
+
+                    <option value="Approved"
+                        <%= status === "Approved" ? "selected" : "" %>>
+                        Approved
+                    </option>
+
+                    <option value="Rejected"
+                        <%= status === "Rejected" ? "selected" : "" %>>
+                        Rejected
+                    </option>
+
+                    <option value="Cancelled"
+                        <%= status === "Cancelled" ? "selected" : "" %>>
+                        Cancelled
+                    </option>
+
+                    <option value="All"
+                        <%= status === "All" ? "selected" : "" %>>
+                        All Requests
+                    </option>
+                </select>
+
+            </form>
+        </div>
+
+        <% if (requests && requests.length > 0) { %>
+
+            <div class="table-wrap">
+                <table id="requestsTable">
+
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Leave Type</th>
+                            <th>Leave Dates</th>
+                            <th>Days</th>
+                            <th>Reason</th>
+                            <th>Applied On</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                    <% requests.forEach(function(request) {
+                        const employee = request.employee || {};
+                        const leaveType = request.leaveType || {};
+
+                        const employeeName =
+                            [employee.firstName, employee.lastName]
+                                .filter(Boolean).join(" ") || "Employee";
+
+                        const employeeInitials =
+                            employeeName.split(/\s+/)
+                                .map(function(part) {
+                                    return part.charAt(0);
+                                })
+                                .join("")
+                                .substring(0, 2)
+                                .toUpperCase();
+
+                        const startValue =
+                            request.startDate || request.fromDate;
+
+                        const endValue =
+                            request.endDate || request.toDate || startValue;
+
+                        const startDate = startValue
+                            ? new Date(startValue)
+                            : null;
+
+                        const endDate = endValue
+                            ? new Date(endValue)
+                            : null;
+
+                        const appliedDate = request.createdAt
+                            ? new Date(request.createdAt)
+                            : null;
+
+                        const validDate = function(date) {
+                            return date && !Number.isNaN(date.getTime());
+                        };
+
+                        const formatDate = function(date) {
+                            return validDate(date)
+                                ? date.toLocaleDateString("en-IN", {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                    timeZone: "Asia/Kolkata"
+                                })
+                                : "—";
+                        };
+
+                        const requestStatus =
+                            String(request.status || "Pending").toLowerCase();
+                    %>
+
+                        <tr class="request-row">
+                            <td>
+                                <div class="employee-cell">
+                                    <div class="avatar">
+                                        <%= employeeInitials || "EM" %>
+                                    </div>
+
+                                    <div>
+                                        <div class="employee-name employee-search">
+                                            <%= employeeName %>
+                                        </div>
+
+                                        <div class="muted">
+                                            <%= employee.employeeId || employee.email || "—" %>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td>
+                                <div class="leave-type">
+                                    <%= leaveType.name || "Leave Type" %>
+                                </div>
+
+                                <span class="leave-code">
+                                    <%= leaveType.code || "—" %>
+                                </span>
+                            </td>
+
+                            <td>
+                                <div><%= formatDate(startDate) %></div>
+                                <div class="muted">
+                                    to <%= formatDate(endDate) %>
+                                </div>
+                            </td>
+
+                            <td>
+                                <strong>
+                                    <%= request.days ?? request.totalDays ?? "—" %>
+                                </strong>
+                            </td>
+
+                            <td>
+                                <div
+                                    class="reason-cell"
+                                    title="<%= request.reason || "No reason provided" %>"
+                                >
+                                    <%= request.reason || "—" %>
+                                </div>
+                            </td>
+
+                            <td><%= formatDate(appliedDate) %></td>
+
+                            <td>
+                                <span class="status status-<%= requestStatus %>">
+                                    <%= request.status || "Pending" %>
+                                </span>
+                            </td>
+
+                            <td>
+                                <div class="action-group">
+
+                                    <% if (request.status === "Pending") { %>
+
+                                        <form
+                                            method="POST"
+                                            action="/leave/admin/approve/<%= request._id %>"
+                                            onsubmit="return confirm('Approve this leave request?');"
+                                        >
+                                            <button
+                                                type="submit"
+                                                class="action-btn approve-btn"
+                                            >
+                                                Approve
+                                            </button>
+                                        </form>
+
+                                        <form
+                                            method="POST"
+                                            action="/leave/admin/reject/<%= request._id %>"
+                                            onsubmit="return confirm('Reject this leave request?');"
+                                        >
+                                            <button
+                                                type="submit"
+                                                class="action-btn reject-btn"
+                                            >
+                                                Reject
+                                            </button>
+                                        </form>
+
+                                    <% } else if (request.status === "Approved") { %>
+
+                                        <form
+                                            method="POST"
+                                            action="/leave/admin/revert/<%= request._id %>"
+                                            onsubmit="return confirm('Revert this approval and restore the leave balance?');"
+                                        >
+                                            <button
+                                                type="submit"
+                                                class="action-btn revert-btn"
+                                            >
+                                                Revert
+                                            </button>
+                                        </form>
+
+                                    <% } else { %>
+
+                                        <span class="muted">No actions</span>
+
+                                    <% } %>
+
+                                </div>
+                            </td>
+                        </tr>
+
+                    <% }); %>
+                    </tbody>
+
+                </table>
+            </div>
+
+            <div
+                id="noSearchResults"
+                class="empty-state"
+                style="display:none"
+            >
+                <div class="empty-icon">⌕</div>
+                <h3>No matching employees</h3>
+                <p>Try a different employee name or ID.</p>
+            </div>
+
+        <% } else { %>
+
+            <div class="empty-state">
+                <div class="empty-icon">📅</div>
+                <h3>No leave requests found</h3>
+                <p>
+                    There are no requests for this status.
+                    New employee applications will appear here.
+                </p>
+            </div>
+
+        <% } %>
+
+    </section>
+
+</main>
+
+<script>
+    const searchInput = document.getElementById("searchInput");
+    const requestRows = document.querySelectorAll(".request-row");
+    const noResults = document.getElementById("noSearchResults");
+
+    if (searchInput) {
+        searchInput.addEventListener("input", function () {
+            const query = this.value.trim().toLowerCase();
+            let visibleCount = 0;
+
+            requestRows.forEach(function (row) {
+                const employeeCell =
+                    row.querySelector(".employee-search");
+
+                const employeeName =
+                    employeeCell?.textContent.toLowerCase() || "";
+
+                const employeeInfo =
+                    row.cells[0]?.textContent.toLowerCase() || "";
+
+                const matches =
+                    employeeName.includes(query) ||
+                    employeeInfo.includes(query);
+
+                row.style.display = matches ? "" : "none";
+
+                if (matches) visibleCount++;
+            });
+
+            if (noResults) {
+                noResults.style.display =
+                    visibleCount === 0 && requestRows.length > 0
+                        ? "block"
+                        : "none";
+            }
+        });
+    }
+</script>
+
+</body>
+</html>

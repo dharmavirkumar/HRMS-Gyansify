@@ -1,0 +1,2581 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Salary Details - Gyansify HRMS
+    </title>
+
+    <style>
+
+        :root {
+            --primary: #111827;
+            --primary-hover: #1f2937;
+            --white: #ffffff;
+            --bg: #f7f8fa;
+
+            --border: #e5e7eb;
+            --border-light: #f0f1f3;
+
+            --text: #111827;
+            --text-secondary: #374151;
+            --text-muted: #6b7280;
+            --text-light: #9ca3af;
+
+            --green-bg: #ecfdf5;
+            --green-text: #047857;
+
+            --blue-bg: #eff6ff;
+            --blue-text: #1d4ed8;
+
+            --yellow-bg: #fffbeb;
+            --yellow-text: #b45309;
+
+            --red-bg: #fef2f2;
+            --red-text: #b91c1c;
+
+            --gray-bg: #f3f4f6;
+            --gray-text: #6b7280;
+
+            --sidebar-width: 245px;
+
+            --radius: 12px;
+
+            --shadow-sm:
+                0 1px 2px rgba(0, 0, 0, 0.04);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+
+            background: var(--bg);
+
+            color: var(--text);
+
+            font-family:
+                Inter,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Roboto,
+                Helvetica,
+                Arial,
+                sans-serif;
+
+            font-size: 14px;
+
+            line-height: 1.5;
+        }
+
+        a {
+            color: inherit;
+        }
+
+        button,
+        input,
+        select {
+            font: inherit;
+        }
+
+
+        /* =========================================
+           APP
+        ========================================= */
+
+        .app {
+            min-height: 100vh;
+
+            display: flex;
+        }
+
+
+        /* =========================================
+           SIDEBAR
+        ========================================= */
+
+        .sidebar {
+            position: fixed;
+
+            top: 0;
+            left: 0;
+            bottom: 0;
+
+            width: var(--sidebar-width);
+
+            background: #fff;
+
+            border-right:
+                1px solid var(--border);
+
+            display: flex;
+
+            flex-direction: column;
+
+            z-index: 100;
+        }
+
+        .brand {
+            height: 74px;
+
+            padding: 0 22px;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 11px;
+
+            border-bottom:
+                1px solid var(--border-light);
+        }
+
+        .brand-logo {
+            width: 37px;
+            height: 37px;
+
+            border-radius: 9px;
+
+            background: var(--primary);
+
+            color: #fff;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            font-size: 18px;
+
+            font-weight: 700;
+        }
+
+        .brand-name {
+            font-size: 16px;
+
+            line-height: 18px;
+
+            font-weight: 700;
+
+            color: var(--text);
+        }
+
+        .brand-subtitle {
+            margin-top: 2px;
+
+            font-size: 9px;
+
+            line-height: 12px;
+
+            color: var(--text-muted);
+
+            letter-spacing: 1.5px;
+
+            text-transform: uppercase;
+        }
+
+        .menu-title {
+            padding:
+                24px
+                20px
+                8px;
+
+            color: var(--text-light);
+
+            font-size: 9px;
+
+            font-weight: 700;
+
+            letter-spacing: 1px;
+
+            text-transform: uppercase;
+        }
+
+        .sidebar-menu {
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 2px;
+
+            padding: 0 10px;
+        }
+
+        .menu-item {
+            min-height: 42px;
+
+            padding: 0 12px;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+
+            border-radius: 8px;
+
+            color: var(--text-secondary);
+
+            text-decoration: none;
+
+            font-size: 12px;
+
+            font-weight: 500;
+
+            transition:
+                background .15s ease,
+                color .15s ease;
+        }
+
+        .menu-item span {
+            width: 20px;
+
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-size: 15px;
+
+            flex-shrink: 0;
+        }
+
+        .menu-item:hover {
+            background: #f3f4f6;
+
+            color: var(--text);
+        }
+
+        .menu-item.active {
+            background: var(--primary);
+
+            color: #fff;
+        }
+
+        .menu-item.active:hover {
+            background: var(--primary-hover);
+
+            color: #fff;
+        }
+
+        .sidebar-bottom {
+            margin-top: auto;
+
+            padding: 15px;
+
+            border-top:
+                1px solid var(--border-light);
+        }
+
+        .logout {
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+            padding: 11px 12px;
+
+            border-radius: 8px;
+
+            color: var(--text-muted);
+
+            text-decoration: none;
+
+            font-size: 12px;
+
+            font-weight: 500;
+        }
+
+        .logout:hover {
+            background: #fef2f2;
+
+            color: #dc2626;
+        }
+
+
+        /* =========================================
+           MAIN
+        ========================================= */
+
+        .main {
+            width:
+                calc(100% - var(--sidebar-width));
+
+            margin-left:
+                var(--sidebar-width);
+
+            min-height: 100vh;
+        }
+
+
+        /* =========================================
+           HEADER
+        ========================================= */
+
+        .header {
+            height: 74px;
+
+            padding: 0 30px;
+
+            background: #fff;
+
+            border-bottom:
+                1px solid var(--border);
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            position: sticky;
+
+            top: 0;
+
+            z-index: 50;
+        }
+
+        .header-left {
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+        }
+
+        .page-title {
+            font-size: 17px;
+
+            font-weight: 700;
+
+            color: var(--text);
+        }
+
+        .page-subtitle {
+            margin-top: 2px;
+
+            color: var(--text-muted);
+
+            font-size: 11px;
+        }
+
+        .header-right {
+            display: flex;
+
+            align-items: center;
+        }
+
+        .mobile-menu {
+            display: none;
+
+            width: 38px;
+            height: 38px;
+
+            border: 0;
+
+            border-radius: 8px;
+
+            background: transparent;
+
+            cursor: pointer;
+
+            font-size: 20px;
+        }
+
+        .mobile-menu:hover {
+            background: #f3f4f6;
+        }
+
+        .profile {
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+        }
+
+        .profile-avatar {
+            width: 36px;
+            height: 36px;
+
+            border-radius: 50%;
+
+            background: var(--primary);
+
+            color: #fff;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            font-size: 13px;
+
+            font-weight: 700;
+        }
+
+        .profile-info {
+            display: flex;
+
+            flex-direction: column;
+        }
+
+        .profile-info strong {
+            font-size: 12px;
+
+            line-height: 16px;
+        }
+
+        .profile-info small {
+            font-size: 10px;
+
+            line-height: 14px;
+
+            color: var(--text-muted);
+        }
+
+
+        /* =========================================
+           PAGE
+        ========================================= */
+
+        .page {
+            padding: 30px;
+
+            max-width: 1500px;
+        }
+
+        .breadcrumb {
+            display: flex;
+
+            align-items: center;
+
+            gap: 7px;
+
+            margin-bottom: 18px;
+
+            color: var(--text-muted);
+
+            font-size: 11px;
+        }
+
+        .breadcrumb a {
+            color: var(--text-muted);
+
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            color: var(--text);
+
+            text-decoration: underline;
+        }
+
+        .breadcrumb-current {
+            color: var(--text-secondary);
+
+            font-weight: 500;
+        }
+
+
+        /* =========================================
+           EMPLOYEE HEADER
+        ========================================= */
+
+        .employee-card {
+            background: #fff;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: var(--radius);
+
+            padding: 25px;
+
+            margin-bottom: 20px;
+
+            box-shadow: var(--shadow-sm);
+        }
+
+        .employee-header {
+            display: flex;
+
+            align-items: center;
+
+            gap: 18px;
+        }
+
+        .employee-avatar {
+            width: 68px;
+            height: 68px;
+
+            min-width: 68px;
+
+            border-radius: 50%;
+
+            background: var(--primary);
+
+            color: #fff;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            font-size: 21px;
+
+            font-weight: 700;
+        }
+
+        .employee-info {
+            min-width: 0;
+        }
+
+        .employee-info h1 {
+            margin: 0;
+
+            font-size: 21px;
+
+            line-height: 28px;
+
+            font-weight: 700;
+        }
+
+        .employee-info p {
+            margin: 4px 0 0;
+
+            color: var(--text-muted);
+
+            font-size: 12px;
+        }
+
+        .employee-meta {
+            display: flex;
+
+            flex-wrap: wrap;
+
+            gap: 7px;
+
+            margin-top: 9px;
+        }
+
+        .meta-pill {
+            display: inline-flex;
+
+            align-items: center;
+
+            padding: 4px 9px;
+
+            background: #f3f4f6;
+
+            color: #4b5563;
+
+            border-radius: 20px;
+
+            font-size: 10px;
+
+            font-weight: 500;
+        }
+
+        .status {
+            display: inline-flex;
+
+            align-items: center;
+
+            gap: 5px;
+
+            padding: 4px 9px;
+
+            border-radius: 20px;
+
+            background: var(--green-bg);
+
+            color: var(--green-text);
+
+            font-size: 10px;
+
+            font-weight: 600;
+        }
+
+        .status::before {
+            content: "";
+
+            width: 5px;
+            height: 5px;
+
+            border-radius: 50%;
+
+            background: currentColor;
+        }
+
+
+        /* =========================================
+           BUTTONS
+        ========================================= */
+
+        .employee-actions {
+            margin-left: auto;
+
+            display: flex;
+
+            gap: 8px;
+        }
+
+        .button {
+            min-height: 38px;
+
+            padding:
+                9px
+                15px;
+
+            border-radius: 7px;
+
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            gap: 6px;
+
+            text-decoration: none;
+
+            font-size: 12px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+        }
+
+        .button-primary {
+            background: var(--primary);
+
+            color: #fff;
+
+            border: 1px solid var(--primary);
+        }
+
+        .button-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .button-secondary {
+            background: #fff;
+
+            color: var(--text-secondary);
+
+            border:
+                1px solid #d1d5db;
+        }
+
+        .button-secondary:hover {
+            background: #f9fafb;
+        }
+
+
+        /* =========================================
+           GRID
+        ========================================= */
+
+        .salary-grid {
+            display: grid;
+
+            grid-template-columns:
+                minmax(0, 2fr)
+                minmax(280px, 1fr);
+
+            gap: 20px;
+
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: #fff;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: var(--radius);
+
+            padding: 24px;
+
+            box-shadow: var(--shadow-sm);
+        }
+
+        .card-title {
+            margin: 0;
+
+            padding-bottom: 14px;
+
+            border-bottom:
+                1px solid var(--border-light);
+
+            font-size: 14px;
+
+            font-weight: 700;
+        }
+
+        .card-subtitle {
+            margin:
+                4px
+                0
+                20px;
+
+            color: var(--text-muted);
+
+            font-size: 11px;
+        }
+
+
+        /* =========================================
+           SALARY SUMMARY
+        ========================================= */
+
+        .salary-summary {
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, minmax(0, 1fr));
+
+            gap: 12px;
+
+            margin-bottom: 22px;
+        }
+
+        .summary-box {
+            padding: 16px;
+
+            border:
+                1px solid var(--border-light);
+
+            border-radius: 9px;
+
+            background: #fafafa;
+        }
+
+        .summary-label {
+            display: block;
+
+            margin-bottom: 5px;
+
+            color: var(--text-light);
+
+            font-size: 9px;
+
+            font-weight: 700;
+
+            text-transform: uppercase;
+
+            letter-spacing: .5px;
+        }
+
+        .summary-value {
+            color: var(--text);
+
+            font-size: 19px;
+
+            font-weight: 700;
+        }
+
+        .summary-value.green {
+            color: var(--green-text);
+        }
+
+        .summary-value.blue {
+            color: var(--blue-text);
+        }
+
+
+        /* =========================================
+           SALARY COMPONENTS
+        ========================================= */
+
+        .salary-list {
+            display: flex;
+
+            flex-direction: column;
+        }
+
+        .salary-row {
+            min-height: 48px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            gap: 20px;
+
+            border-bottom:
+                1px solid var(--border-light);
+        }
+
+        .salary-row:last-child {
+            border-bottom: 0;
+        }
+
+        .salary-name {
+            color: var(--text-secondary);
+
+            font-size: 12px;
+
+            font-weight: 500;
+        }
+
+        .salary-value {
+            color: var(--text);
+
+            font-size: 12px;
+
+            font-weight: 600;
+
+            text-align: right;
+        }
+
+        .salary-row.total {
+            margin-top: 8px;
+
+            padding-top: 8px;
+
+            border-top:
+                1px solid var(--border);
+
+            border-bottom: 0;
+        }
+
+        .salary-row.total .salary-name,
+        .salary-row.total .salary-value {
+            font-size: 13px;
+
+            font-weight: 700;
+        }
+
+
+        /* =========================================
+           SIDE INFORMATION
+        ========================================= */
+
+        .detail-list {
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 0;
+        }
+
+        .detail-item {
+            display: flex;
+
+            justify-content: space-between;
+
+            gap: 20px;
+
+            padding: 13px 0;
+
+            border-bottom:
+                1px solid var(--border-light);
+        }
+
+        .detail-item:last-child {
+            border-bottom: 0;
+        }
+
+        .detail-label {
+            color: var(--text-muted);
+
+            font-size: 11px;
+        }
+
+        .detail-value {
+            color: var(--text-secondary);
+
+            font-size: 11px;
+
+            font-weight: 600;
+
+            text-align: right;
+
+            word-break: break-word;
+        }
+
+
+        /* =========================================
+           PAYROLL TABLE
+        ========================================= */
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        .payroll-table {
+            width: 100%;
+
+            border-collapse: collapse;
+
+            min-width: 650px;
+        }
+
+        .payroll-table th {
+            padding:
+                11px
+                10px;
+
+            background: #f9fafb;
+
+            border-bottom:
+                1px solid var(--border);
+
+            color: var(--text-muted);
+
+            font-size: 9px;
+
+            font-weight: 700;
+
+            text-transform: uppercase;
+
+            letter-spacing: .5px;
+
+            text-align: left;
+        }
+
+        .payroll-table td {
+            padding:
+                13px
+                10px;
+
+            border-bottom:
+                1px solid var(--border-light);
+
+            color: var(--text-secondary);
+
+            font-size: 11px;
+        }
+
+        .payroll-table tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .amount {
+            font-weight: 600;
+
+            color: var(--text);
+        }
+
+        .paid {
+            display: inline-flex;
+
+            padding: 4px 9px;
+
+            border-radius: 20px;
+
+            background: var(--green-bg);
+
+            color: var(--green-text);
+
+            font-size: 9px;
+
+            font-weight: 600;
+        }
+
+        .pending {
+            display: inline-flex;
+
+            padding: 4px 9px;
+
+            border-radius: 20px;
+
+            background: var(--yellow-bg);
+
+            color: var(--yellow-text);
+
+            font-size: 9px;
+
+            font-weight: 600;
+        }
+
+
+        /* =========================================
+           EMPTY
+        ========================================= */
+
+        .empty {
+            padding: 35px 20px;
+
+            text-align: center;
+
+            color: var(--text-muted);
+
+            font-size: 12px;
+        }
+
+
+        /* =========================================
+           FOOTER
+        ========================================= */
+
+        .page-footer {
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            gap: 20px;
+
+            padding:
+                10px
+                2px
+                25px;
+
+            color: var(--text-light);
+
+            font-size: 10px;
+        }
+
+
+        /* =========================================
+           SIDEBAR OVERLAY
+        ========================================= */
+
+        .sidebar-overlay {
+            display: none;
+
+            position: fixed;
+
+            inset: 0;
+
+            background:
+                rgba(15, 23, 42, .35);
+
+            z-index: 90;
+        }
+
+        .sidebar-overlay.show {
+            display: block;
+        }
+
+
+        /* =========================================
+           RESPONSIVE
+        ========================================= */
+
+        @media (max-width: 1100px) {
+
+            .page {
+                padding: 25px;
+            }
+
+            .header {
+                padding: 0 25px;
+            }
+
+            .salary-grid {
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+
+        @media (max-width: 800px) {
+
+            .sidebar {
+                transform:
+                    translateX(-100%);
+
+                transition:
+                    transform .25s ease;
+
+                box-shadow:
+                    10px 0 30px rgba(0, 0, 0, .08);
+            }
+
+            .sidebar.show {
+                transform:
+                    translateX(0);
+            }
+
+            .main {
+                width: 100%;
+
+                margin-left: 0;
+            }
+
+            .mobile-menu {
+                display: inline-flex;
+
+                align-items: center;
+
+                justify-content: center;
+            }
+
+            .page {
+                padding: 20px;
+            }
+
+            .header {
+                padding: 0 20px;
+            }
+
+            .employee-header {
+                flex-wrap: wrap;
+            }
+
+            .employee-actions {
+                width: 100%;
+
+                margin-left: 0;
+
+                margin-top: 10px;
+            }
+
+            .employee-actions a {
+                flex: 1;
+            }
+
+        }
+
+
+        @media (max-width: 650px) {
+
+            .salary-summary {
+                grid-template-columns: 1fr;
+            }
+
+            .employee-card,
+            .card {
+                padding: 19px;
+            }
+
+            .employee-avatar {
+                width: 58px;
+                height: 58px;
+
+                min-width: 58px;
+
+                font-size: 18px;
+            }
+
+            .employee-info h1 {
+                font-size: 18px;
+            }
+
+            .profile-info {
+                display: none;
+            }
+
+            .page-footer {
+                flex-direction: column;
+
+                align-items: flex-start;
+
+                gap: 5px;
+            }
+
+        }
+
+
+        @media (max-width: 450px) {
+
+            .page {
+                padding: 15px;
+            }
+
+            .header {
+                height: 65px;
+
+                padding: 0 15px;
+            }
+
+            .employee-card,
+            .card {
+                padding: 16px;
+            }
+
+            .employee-actions {
+                flex-direction: column;
+            }
+
+            .employee-actions a {
+                width: 100%;
+            }
+
+        }
+
+
+        @media print {
+
+            .sidebar,
+            .header,
+            .breadcrumb,
+            .employee-actions,
+            .page-footer {
+                display: none !important;
+            }
+
+            .main {
+                width: 100%;
+
+                margin: 0;
+            }
+
+            .page {
+                padding: 0;
+
+                max-width: none;
+            }
+
+            .card,
+            .employee-card {
+                box-shadow: none;
+
+                break-inside: avoid;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<%
+
+    const currentEmployee =
+        locals.employee || {};
+
+    const currentUser =
+        locals.user || {};
+
+    const currentPath =
+        locals.req?.originalUrl || "/employees";
+
+    const firstName =
+        currentEmployee.firstName || "";
+
+    const lastName =
+        currentEmployee.lastName || "";
+
+    const employeeName =
+        `${firstName} ${lastName}`.trim()
+        || currentEmployee.name
+        || "Employee";
+
+    const employeeInitials =
+        employeeName
+            .split(/\s+/)
+            .filter(Boolean)
+            .slice(0, 2)
+            .map(
+                part =>
+                    part.charAt(0).toUpperCase()
+            )
+            .join("")
+        || "E";
+
+    const userName =
+        currentUser.name
+        || currentUser.fullName
+        || currentUser.email
+        || "Administrator";
+
+    const userRole =
+        currentUser.role
+        || currentUser.roleName
+        || "Administrator";
+
+    const userInitial =
+        String(userName)
+            .trim()
+            .charAt(0)
+            .toUpperCase()
+        || "A";
+
+    const department =
+        currentEmployee.department || null;
+
+    const designation =
+        currentEmployee.designation || null;
+
+    const branch =
+        currentEmployee.branch || null;
+
+    const salary =
+        currentEmployee.salary || {};
+
+    const earnings =
+        salary.earnings || {};
+
+    const deductions =
+        salary.deductions || {};
+
+    const payrollHistory =
+        Array.isArray(currentEmployee.payrollHistory)
+            ? currentEmployee.payrollHistory
+            : [];
+
+    const currency =
+        currentEmployee.currency
+        || salary.currency
+        || "INR";
+
+    const formatMoney = (value) => {
+
+        const amount =
+            Number(value || 0);
+
+        return new Intl.NumberFormat(
+            "en-IN",
+            {
+                style: "currency",
+                currency: currency,
+                maximumFractionDigits: 0
+            }
+        ).format(amount);
+
+    };
+
+    const formatDate = (value) => {
+
+        if (!value) return "-";
+
+        const date =
+            new Date(value);
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+            return "-";
+        }
+
+        return date.toLocaleDateString(
+            "en-IN",
+            {
+                day: "2-digit",
+                month: "short",
+                year: "numeric"
+            }
+        );
+
+    };
+
+    const basicSalary =
+        Number(
+            salary.basic
+            ?? currentEmployee.basicSalary
+            ?? 0
+        );
+
+    const hra =
+        Number(
+            earnings.hra
+            ?? currentEmployee.hra
+            ?? 0
+        );
+
+    const conveyance =
+        Number(
+            earnings.conveyance
+            ?? currentEmployee.conveyance
+            ?? 0
+        );
+
+    const specialAllowance =
+        Number(
+            earnings.specialAllowance
+            ?? currentEmployee.specialAllowance
+            ?? 0
+        );
+
+    const otherEarnings =
+        Number(
+            earnings.other
+            ?? currentEmployee.otherEarnings
+            ?? 0
+        );
+
+    const pf =
+        Number(
+            deductions.pf
+            ?? currentEmployee.pf
+            ?? 0
+        );
+
+    const esi =
+        Number(
+            deductions.esi
+            ?? currentEmployee.esi
+            ?? 0
+        );
+
+    const professionalTax =
+        Number(
+            deductions.professionalTax
+            ?? currentEmployee.professionalTax
+            ?? 0
+        );
+
+    const incomeTax =
+        Number(
+            deductions.incomeTax
+            ?? currentEmployee.incomeTax
+            ?? 0
+        );
+
+    const otherDeductions =
+        Number(
+            deductions.other
+            ?? currentEmployee.otherDeductions
+            ?? 0
+        );
+
+    const totalEarnings =
+        basicSalary
+        + hra
+        + conveyance
+        + specialAllowance
+        + otherEarnings;
+
+    const totalDeductions =
+        pf
+        + esi
+        + professionalTax
+        + incomeTax
+        + otherDeductions;
+
+    const netSalary =
+        Number(
+            salary.net
+            ?? currentEmployee.netSalary
+            ?? (totalEarnings - totalDeductions)
+        );
+
+    const annualCTC =
+        Number(
+            salary.annualCTC
+            ?? currentEmployee.annualCTC
+            ?? (totalEarnings * 12)
+        );
+
+    const monthlyCTC =
+        Number(
+            salary.monthlyCTC
+            ?? currentEmployee.monthlyCTC
+            ?? totalEarnings
+        );
+
+%>
+
+
+<div class="app">
+
+
+    <!-- =========================================
+         SIDEBAR
+    ========================================== -->
+
+    <aside
+        class="sidebar"
+        id="sidebar"
+    >
+
+        <div class="brand">
+
+            <div class="brand-logo">
+                G
+            </div>
+
+            <div>
+
+                <div class="brand-name">
+                    Gyansify
+                </div>
+
+                <div class="brand-subtitle">
+                    HRMS
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="menu-title">
+            MAIN
+        </div>
+
+
+        <nav class="sidebar-menu">
+
+            <a
+                href="/dashboard"
+                class="menu-item <%= currentPath.startsWith('/dashboard') ? 'active' : '' %>"
+            >
+                <span>▦</span>
+                Dashboard
+            </a>
+
+
+            <a
+                href="/employees"
+                class="menu-item <%= currentPath.startsWith('/employees') ? 'active' : '' %>"
+            >
+                <span>👥</span>
+                Employees
+            </a>
+
+
+            <a
+                href="/attendance"
+                class="menu-item <%= currentPath.startsWith('/attendance') ? 'active' : '' %>"
+            >
+                <span>◷</span>
+                Attendance
+            </a>
+
+
+            <a
+                href="/leave"
+                class="menu-item <%= currentPath.startsWith('/leave') ? 'active' : '' %>"
+            >
+                <span>▣</span>
+                Leave
+            </a>
+
+
+            <a
+                href="/payroll"
+                class="menu-item <%= currentPath.startsWith('/payroll') ? 'active' : '' %>"
+            >
+                <span>₹</span>
+                Payroll
+            </a>
+
+
+            <div class="menu-title">
+                PEOPLE
+            </div>
+
+
+            <a
+                href="/recruitment"
+                class="menu-item <%= currentPath.startsWith('/recruitment') ? 'active' : '' %>"
+            >
+                <span>♙</span>
+                Recruitment
+            </a>
+
+
+            <a
+                href="/performance"
+                class="menu-item <%= currentPath.startsWith('/performance') ? 'active' : '' %>"
+            >
+                <span>◈</span>
+                Performance
+            </a>
+
+
+            <a
+                href="/training"
+                class="menu-item <%= currentPath.startsWith('/training') ? 'active' : '' %>"
+            >
+                <span>◇</span>
+                Training
+            </a>
+
+
+            <a
+                href="/assets"
+                class="menu-item <%= currentPath.startsWith('/assets') ? 'active' : '' %>"
+            >
+                <span>▤</span>
+                Assets
+            </a>
+
+
+            <div class="menu-title">
+                MANAGEMENT
+            </div>
+
+
+            <a
+                href="/reports"
+                class="menu-item <%= currentPath.startsWith('/reports') ? 'active' : '' %>"
+            >
+                <span>▥</span>
+                Reports
+            </a>
+
+
+            <a
+                href="/organization"
+                class="menu-item <%= currentPath.startsWith('/organization') ? 'active' : '' %>"
+            >
+                <span>⚙</span>
+                Organization
+            </a>
+
+
+            <a
+                href="/settings"
+                class="menu-item <%= currentPath.startsWith('/settings') ? 'active' : '' %>"
+            >
+                <span>⚙</span>
+                Settings
+            </a>
+
+        </nav>
+
+
+        <div class="sidebar-bottom">
+
+            <a
+                href="/logout"
+                class="logout"
+            >
+                <span>↪</span>
+                Logout
+            </a>
+
+        </div>
+
+    </aside>
+
+
+    <div
+        class="sidebar-overlay"
+        id="sidebarOverlay"
+        onclick="toggleSidebar()"
+    ></div>
+
+
+    <!-- =========================================
+         MAIN
+    ========================================== -->
+
+    <main class="main">
+
+
+        <!-- HEADER -->
+
+        <header class="header">
+
+            <div class="header-left">
+
+                <button
+                    type="button"
+                    class="mobile-menu"
+                    onclick="toggleSidebar()"
+                    aria-label="Open navigation"
+                >
+                    ☰
+                </button>
+
+
+                <div>
+
+                    <div class="page-title">
+                        Salary Details
+                    </div>
+
+                    <div class="page-subtitle">
+                        Employee compensation and payroll information
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="header-right">
+
+                <div class="profile">
+
+                    <div class="profile-avatar">
+                        <%= userInitial %>
+                    </div>
+
+                    <div class="profile-info">
+
+                        <strong>
+                            <%= userName %>
+                        </strong>
+
+                        <small>
+                            <%= String(userRole).replace(/_/g, " ") %>
+                        </small>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- PAGE -->
+
+        <section class="page">
+
+
+            <!-- BREADCRUMB -->
+
+            <div class="breadcrumb">
+
+                <a href="/employees">
+                    Employees
+                </a>
+
+                <span>/</span>
+
+                <a
+                    href="/employees/<%= currentEmployee._id %>"
+                >
+                    <%= employeeName %>
+                </a>
+
+                <span>/</span>
+
+                <span class="breadcrumb-current">
+                    Salary
+                </span>
+
+            </div>
+
+
+            <!-- EMPLOYEE HEADER -->
+
+            <div class="employee-card">
+
+                <div class="employee-header">
+
+
+                    <div class="employee-avatar">
+                        <%= employeeInitials %>
+                    </div>
+
+
+                    <div class="employee-info">
+
+                        <h1>
+                            <%= employeeName %>
+                        </h1>
+
+                        <p>
+
+                            <%= designation?.name || "Employee" %>
+
+                            <% if (department?.name) { %>
+
+                                · <%= department.name %>
+
+                            <% } %>
+
+                        </p>
+
+
+                        <div class="employee-meta">
+
+                            <% if (currentEmployee.employeeId) { %>
+
+                                <span class="meta-pill">
+
+                                    ID:
+                                    <%= currentEmployee.employeeId %>
+
+                                </span>
+
+                            <% } %>
+
+
+                            <% if (currentEmployee.employmentType) { %>
+
+                                <span class="meta-pill">
+
+                                    <%= currentEmployee.employmentType %>
+
+                                </span>
+
+                            <% } %>
+
+
+                            <span class="status">
+                                <%= currentEmployee.status || "Active" %>
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="employee-actions">
+
+                        <a
+                            href="/employees/<%= currentEmployee._id %>"
+                            class="button button-secondary"
+                        >
+                            ← Profile
+                        </a>
+
+
+                        <a
+                            href="/employees/<%= currentEmployee._id %>/salary/edit"
+                            class="button button-primary"
+                        >
+                            ✎ Edit Salary
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- SALARY CONTENT -->
+
+            <div class="salary-grid">
+
+
+                <!-- LEFT -->
+
+                <div>
+
+
+                    <!-- SUMMARY -->
+
+                    <div class="card">
+
+                        <h3 class="card-title">
+                            Compensation Summary
+                        </h3>
+
+                        <p class="card-subtitle">
+                            Current employee salary structure
+                        </p>
+
+
+                        <div class="salary-summary">
+
+
+                            <div class="summary-box">
+
+                                <span class="summary-label">
+                                    Monthly CTC
+                                </span>
+
+                                <div class="summary-value">
+                                    <%= formatMoney(monthlyCTC) %>
+                                </div>
+
+                            </div>
+
+
+                            <div class="summary-box">
+
+                                <span class="summary-label">
+                                    Annual CTC
+                                </span>
+
+                                <div class="summary-value blue">
+                                    <%= formatMoney(annualCTC) %>
+                                </div>
+
+                            </div>
+
+
+                            <div class="summary-box">
+
+                                <span class="summary-label">
+                                    Net Monthly Salary
+                                </span>
+
+                                <div class="summary-value green">
+                                    <%= formatMoney(netSalary) %>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- EARNINGS -->
+
+                        <h3 class="card-title">
+                            Earnings
+                        </h3>
+
+                        <p class="card-subtitle">
+                            Monthly salary components
+                        </p>
+
+
+                        <div class="salary-list">
+
+
+                            <div class="salary-row">
+
+                                <span class="salary-name">
+                                    Basic Salary
+                                </span>
+
+                                <span class="salary-value">
+                                    <%= formatMoney(basicSalary) %>
+                                </span>
+
+                            </div>
+
+
+                            <div class="salary-row">
+
+                                <span class="salary-name">
+                                    House Rent Allowance
+                                </span>
+
+                                <span class="salary-value">
+                                    <%= formatMoney(hra) %>
+                                </span>
+
+                            </div>
+
+
+                            <div class="salary-row">
+
+                                <span class="salary-name">
+                                    Conveyance Allowance
+                                </span>
+
+                                <span class="salary-value">
+                                    <%= formatMoney(conveyance) %>
+                                </span>
+
+                            </div>
+
+
+                            <div class="salary-row">
+
+                                <span class="salary-name">
+                                    Special Allowance
+                                </span>
+
+                                <span class="salary-value">
+                                    <%= formatMoney(specialAllowance) %>
+                                </span>
+
+                            </div>
+
+
+                            <div class="salary-row">
+
+                                <span class="salary-name">
+                                    Other Earnings
+                                </span>
+
+                                <span class="salary-value">
+                                    <%= formatMoney(otherEarnings) %>
+                                </span>
+
+                            </div>
+
+
+                            <div class="salary-row total">
+
+                                <span class="salary-name">
+                                    Total Earnings
+                                </span>
+
+                                <span class="salary-value">
+                                    <%= formatMoney(totalEarnings) %>
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- DEDUCTIONS -->
+
+                    <div class="card" style="margin-top:20px;">
+
+                        <h3 class="card-title">
+                            Deductions
+                        </h3>
+
+                        <p class="card-subtitle">
+                            Monthly statutory and other deductions
+                        </p>
+
+
+                        <div class="salary-list">
+
+
+                            <div class="salary-row">
+
+                                <span class="salary-name">
+                                    Provident Fund (PF)
+                                </span>
+
+                                <span class="salary-value">
+                                    <%= formatMoney(pf) %>
+                                </span>
+
+                            </div>
+
+
+                            <div class="salary-row">
+
+                                <span class="salary-name">
+                                    Employee State Insurance (ESI)
+                                </span>
+
+                                <span class="salary-value">
+                                    <%= formatMoney(esi) %>
+                                </span>
+
+                            </div>
+
+
+                            <div class="salary-row">
+
+                                <span class="salary-name">
+                                    Professional Tax
+                                </span>
+
+                                <span class="salary-value">
+                                    <%= formatMoney(professionalTax) %>
+                                </span>
+
+                            </div>
+
+
+                            <div class="salary-row">
+
+                                <span class="salary-name">
+                                    Income Tax / TDS
+                                </span>
+
+                                <span class="salary-value">
+                                    <%= formatMoney(incomeTax) %>
+                                </span>
+
+                            </div>
+
+
+                            <div class="salary-row">
+
+                                <span class="salary-name">
+                                    Other Deductions
+                                </span>
+
+                                <span class="salary-value">
+                                    <%= formatMoney(otherDeductions) %>
+                                </span>
+
+                            </div>
+
+
+                            <div class="salary-row total">
+
+                                <span class="salary-name">
+                                    Total Deductions
+                                </span>
+
+                                <span class="salary-value">
+                                    <%= formatMoney(totalDeductions) %>
+                                </span>
+
+                            </div>
+
+
+                            <div class="salary-row total">
+
+                                <span class="salary-name">
+                                    Net Salary
+                                </span>
+
+                                <span class="salary-value">
+                                    <%= formatMoney(netSalary) %>
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- RIGHT -->
+
+                <div>
+
+
+                    <!-- EMPLOYMENT -->
+
+                    <div class="card">
+
+                        <h3 class="card-title">
+                            Salary Information
+                        </h3>
+
+                        <p class="card-subtitle">
+                            Payroll configuration
+                        </p>
+
+
+                        <div class="detail-list">
+
+
+                            <div class="detail-item">
+
+                                <span class="detail-label">
+                                    Currency
+                                </span>
+
+                                <span class="detail-value">
+                                    <%= currency %>
+                                </span>
+
+                            </div>
+
+
+                            <div class="detail-item">
+
+                                <span class="detail-label">
+                                    Payment Frequency
+                                </span>
+
+                                <span class="detail-value">
+                                    <%= salary.paymentFrequency || "Monthly" %>
+                                </span>
+
+                            </div>
+
+
+                            <div class="detail-item">
+
+                                <span class="detail-label">
+                                    Salary Structure
+                                </span>
+
+                                <span class="detail-value">
+                                    <%= salary.structure || "Standard" %>
+                                </span>
+
+                            </div>
+
+
+                            <div class="detail-item">
+
+                                <span class="detail-label">
+                                    Effective From
+                                </span>
+
+                                <span class="detail-value">
+                                    <%= formatDate(
+                                        salary.effectiveFrom
+                                        || currentEmployee.joiningDate
+                                    ) %>
+                                </span>
+
+                            </div>
+
+
+                            <div class="detail-item">
+
+                                <span class="detail-label">
+                                    Bank Name
+                                </span>
+
+                                <span class="detail-value">
+                                    <%= currentEmployee.bankName || salary.bankName || "-" %>
+                                </span>
+
+                            </div>
+
+
+                            <div class="detail-item">
+
+                                <span class="detail-label">
+                                    Account Number
+                                </span>
+
+                                <span class="detail-value">
+
+                                    <%
+                                        const accountNumber =
+                                            currentEmployee.accountNumber
+                                            || salary.accountNumber
+                                            || "";
+
+                                        let maskedAccount = "-";
+
+                                        if (accountNumber) {
+
+                                            const value =
+                                                String(accountNumber);
+
+                                            maskedAccount =
+                                                value.length > 4
+                                                    ? "••••••" + value.slice(-4)
+                                                    : value;
+
+                                        }
+                                    %>
+
+                                    <%= maskedAccount %>
+
+                                </span>
+
+                            </div>
+
+
+                            <div class="detail-item">
+
+                                <span class="detail-label">
+                                    IFSC
+                                </span>
+
+                                <span class="detail-value">
+                                    <%= currentEmployee.ifsc || salary.ifsc || "-" %>
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- TAX -->
+
+                    <div
+                        class="card"
+                        style="margin-top:20px;"
+                    >
+
+                        <h3 class="card-title">
+                            Tax Information
+                        </h3>
+
+                        <p class="card-subtitle">
+                            Employee tax and statutory settings
+                        </p>
+
+
+                        <div class="detail-list">
+
+
+                            <div class="detail-item">
+
+                                <span class="detail-label">
+                                    Tax Regime
+                                </span>
+
+                                <span class="detail-value">
+                                    <%= salary.taxRegime || "Not Set" %>
+                                </span>
+
+                            </div>
+
+
+                            <div class="detail-item">
+
+                                <span class="detail-label">
+                                    PAN
+                                </span>
+
+                                <span class="detail-value">
+
+                                    <%
+                                        const pan =
+                                            currentEmployee.pan
+                                            || salary.pan
+                                            || "";
+
+                                        let maskedPan = "-";
+
+                                        if (pan) {
+
+                                            const value =
+                                                String(pan).toUpperCase();
+
+                                            maskedPan =
+                                                value.length >= 4
+                                                    ? value.substring(0, 2)
+                                                      + "*****"
+                                                      + value.slice(-2)
+                                                    : value;
+
+                                        }
+                                    %>
+
+                                    <%= maskedPan %>
+
+                                </span>
+
+                            </div>
+
+
+                            <div class="detail-item">
+
+                                <span class="detail-label">
+                                    PF Applicable
+                                </span>
+
+                                <span class="detail-value">
+                                    <%= salary.pfApplicable === false ? "No" : "Yes" %>
+                                </span>
+
+                            </div>
+
+
+                            <div class="detail-item">
+
+                                <span class="detail-label">
+                                    ESI Applicable
+                                </span>
+
+                                <span class="detail-value">
+                                    <%= salary.esiApplicable === false ? "No" : "Yes" %>
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- PAYROLL HISTORY -->
+
+            <div class="card">
+
+                <h3 class="card-title">
+                    Payroll History
+                </h3>
+
+                <p class="card-subtitle">
+                    Recent salary processing records
+                </p>
+
+
+                <% if (payrollHistory.length > 0) { %>
+
+
+                    <div class="table-wrapper">
+
+                        <table class="payroll-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Month
+                                    </th>
+
+                                    <th>
+                                        Gross
+                                    </th>
+
+                                    <th>
+                                        Deductions
+                                    </th>
+
+                                    <th>
+                                        Net Salary
+                                    </th>
+
+                                    <th>
+                                        Payment Date
+                                    </th>
+
+                                    <th>
+                                        Status
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody>
+
+                                <% payrollHistory.forEach(record => { %>
+
+                                    <tr>
+
+                                        <td>
+                                            <strong>
+                                                <%= record.month || "-" %>
+                                            </strong>
+                                        </td>
+
+                                        <td class="amount">
+                                            <%= formatMoney(record.gross) %>
+                                        </td>
+
+                                        <td class="amount">
+                                            <%= formatMoney(record.deductions) %>
+                                        </td>
+
+                                        <td class="amount">
+                                            <%= formatMoney(record.net) %>
+                                        </td>
+
+                                        <td>
+                                            <%= formatDate(record.paymentDate) %>
+                                        </td>
+
+                                        <td>
+
+                                            <% if (
+                                                String(record.status || "")
+                                                    .toLowerCase() === "paid"
+                                            ) { %>
+
+                                                <span class="paid">
+                                                    Paid
+                                                </span>
+
+                                            <% } else { %>
+
+                                                <span class="pending">
+                                                    <%= record.status || "Pending" %>
+                                                </span>
+
+                                            <% } %>
+
+                                        </td>
+
+                                    </tr>
+
+                                <% }); %>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+
+                <% } else { %>
+
+                    <div class="empty">
+
+                        No payroll history is available
+                        for this employee.
+
+                    </div>
+
+                <% } %>
+
+            </div>
+
+
+            <!-- FOOTER -->
+
+            <div class="page-footer">
+
+                <span>
+                    © <%= new Date().getFullYear() %>
+                    Gyansify HRMS
+                </span>
+
+                <span>
+                    Human Resource Management System
+                </span>
+
+            </div>
+
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<script>
+
+    function toggleSidebar() {
+
+        const sidebar =
+            document.getElementById("sidebar");
+
+        const overlay =
+            document.getElementById("sidebarOverlay");
+
+        if (!sidebar) return;
+
+        sidebar.classList.toggle("show");
+
+        if (overlay) {
+            overlay.classList.toggle("show");
+        }
+
+    }
+
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+
+            if (event.key === "Escape") {
+
+                const sidebar =
+                    document.getElementById("sidebar");
+
+                const overlay =
+                    document.getElementById(
+                        "sidebarOverlay"
+                    );
+
+                if (sidebar) {
+                    sidebar.classList.remove("show");
+                }
+
+                if (overlay) {
+                    overlay.classList.remove("show");
+                }
+
+            }
+
+        }
+    );
+
+</script>
+
+</body>
+
+</html>

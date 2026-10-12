@@ -1,0 +1,54 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4f46e5">
+
+    <title><%= typeof title !== "undefined" && title
+        ? title + " | Gyansify HRMS"
+        : "Gyansify HRMS" %></title>
+
+    <link rel="icon" href="/images/gyansify-logo.png">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+
+    <%
+        const layoutUser =
+            typeof user !== "undefined" && user ? user : {};
+        const layoutUserName = layoutUser.name || "User";
+        const layoutUserRole = String(
+            layoutUser.role || "EMPLOYEE"
+        ).toUpperCase();
+    %>
+
+    <div class="hrms-app">
+
+        <%- include("sidebar", {
+            user: layoutUser,
+            title: title
+        }) %>
+
+        <div class="hrms-main-wrapper">
+
+            <%- include("header", {
+                user: layoutUser,
+                title: title
+            }) %>
+
+            <main class="hrms-content">
+                <div class="hrms-content-inner">
+                    <%- body %>
+                </div>
+            </main>
+
+            <%- include("footer") %>
+
+        </div>
+    </div>
+
+    <script src="/js/dashboard.js" defer></script>
+</body>
+</html>

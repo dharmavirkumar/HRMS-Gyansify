@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Gyansify HRMS - HR Dashboard
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="/css/dashboard.css"
+    >
+
+    <style>
+
+        .content {
+            padding: 30px;
+        }
+
+        .welcome {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .welcome h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .welcome p {
+            margin-top: 7px;
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        .primary-button {
+            display: inline-block;
+            padding: 10px 16px;
+            border-radius: 7px;
+            background: #111827;
+            color: white;
+            text-decoration: none;
+            font-size: 12px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .stat-label {
+            display: block;
+            color: #6b7280;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            display: block;
+            margin-top: 8px;
+            font-size: 27px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .stat-description {
+            display: block;
+            margin-top: 5px;
+            color: #9ca3af;
+            font-size: 10px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 20px;
+            border-bottom: 1px solid #f0f1f3;
+        }
+
+        .card-header h3 {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .card-header p {
+            margin: 5px 0 0;
+            color: #9ca3af;
+            font-size: 10px;
+        }
+
+        .card-header a {
+            color: #374151;
+            text-decoration: none;
+            font-size: 10px;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 20px;
+        }
+
+        .quick-action {
+            display: block;
+            padding: 15px;
+            border: 1px solid #e5e7eb;
+            border-radius: 9px;
+            color: #111827;
+            text-decoration: none;
+        }
+
+        .quick-action:hover {
+            background: #f9fafb;
+        }
+
+        .quick-action-icon {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 20px;
+        }
+
+        .quick-action strong {
+            display: block;
+            font-size: 11px;
+        }
+
+        .quick-action small {
+            display: block;
+            margin-top: 4px;
+            color: #9ca3af;
+            font-size: 9px;
+        }
+
+        .request-list {
+            padding: 5px 20px;
+        }
+
+        .request-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f1f3;
+        }
+
+        .request-row:last-child {
+            border-bottom: none;
+        }
+
+        .request-icon {
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f3f4f6;
+            border-radius: 8px;
+        }
+
+        .request-info {
+            flex: 1;
+        }
+
+        .request-info strong {
+            display: block;
+            font-size: 11px;
+        }
+
+        .request-info small {
+            display: block;
+            margin-top: 4px;
+            color: #9ca3af;
+            font-size: 9px;
+        }
+
+        .request-count {
+            min-width: 25px;
+            padding: 4px 7px;
+            border-radius: 15px;
+            background: #f3f4f6;
+            text-align: center;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .employee-list {
+            padding: 5px 20px;
+        }
+
+        .employee-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 0;
+            border-bottom: 1px solid #f0f1f3;
+        }
+
+        .employee-row:last-child {
+            border-bottom: none;
+        }
+
+        .employee-avatar {
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #f3f4f6;
+            color: #374151;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .employee-details {
+            flex: 1;
+        }
+
+        .employee-details strong {
+            display: block;
+            font-size: 11px;
+        }
+
+        .employee-details small {
+            display: block;
+            margin-top: 4px;
+            color: #9ca3af;
+            font-size: 9px;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 9px;
+            border-radius: 20px;
+            font-size: 9px;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: #ecfdf5;
+            color: #047857;
+        }
+
+        .status-pending {
+            background: #fff7ed;
+            color: #c2410c;
+        }
+
+        .status-leave {
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
+
+        .attendance-box {
+            padding: 20px;
+        }
+
+        .attendance-progress {
+            height: 9px;
+            overflow: hidden;
+            background: #f3f4f6;
+            border-radius: 20px;
+            margin: 15px 0;
+        }
+
+        .attendance-progress-bar {
+            height: 100%;
+            width: 0%;
+            background: #111827;
+            border-radius: 20px;
+        }
+
+        .attendance-numbers {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #6b7280;
+        }
+
+        .empty {
+            padding: 35px 20px;
+            text-align: center;
+            color: #9ca3af;
+            font-size: 11px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        .leave-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .leave-table th {
+            padding: 12px 15px;
+            background: #f9fafb;
+            color: #6b7280;
+            text-align: left;
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+
+        .leave-table td {
+            padding: 13px 15px;
+            border-top: 1px solid #f0f1f3;
+            font-size: 11px;
+        }
+
+        .approve-link {
+            color: #047857;
+            text-decoration: none;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        @media(max-width:1000px) {
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+        }
+
+        @media(max-width:750px) {
+
+            .content {
+                padding: 20px;
+            }
+
+            .welcome {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .stats-grid,
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<%
+
+    // =====================================================
+    // SAFE VARIABLES
+    // =====================================================
+
+    const currentUser =
+        typeof user !== "undefined" && user
+            ? user
+            : {};
+
+    const dashboardStats =
+        typeof stats !== "undefined" && stats
+            ? stats
+            : {};
+
+    const employees =
+        typeof recentEmployees !== "undefined" &&
+        Array.isArray(recentEmployees)
+            ? recentEmployees
+            : [];
+
+    const leaveRequests =
+        typeof pendingLeaveRequests !== "undefined" &&
+        Array.isArray(pendingLeaveRequests)
+            ? pendingLeaveRequests
+            : [];
+
+    const attendance =
+        typeof attendanceData !== "undefined" &&
+        attendanceData
+            ? attendanceData
+            : {};
+
+    const employeeCount =
+        dashboardStats.totalEmployees ??
+        dashboardStats.employees ??
+        0;
+
+    const presentCount =
+        dashboardStats.presentToday ??
+        attendance.present ??
+        0;
+
+    const leaveCount =
+        dashboardStats.onLeave ??
+        attendance.onLeave ??
+        0;
+
+    const absentCount =
+        dashboardStats.absentToday ??
+        attendance.absent ??
+        0;
+
+    const pendingCount =
+        dashboardStats.pendingLeaves ??
+        leaveRequests.length;
+
+    const userName =
+        currentUser.name ||
+        "HR Administrator";
+
+    const roleName =
+        currentUser.role
+            ? String(currentUser.role).replace(/_/g, " ")
+            : "HR ADMIN";
+
+%>
+
+
+<div class="app">
+
+
+    <!-- ================================================= -->
+    <!-- SIDEBAR -->
+    <!-- ================================================= -->
+
+    <aside class="sidebar">
+
+
+        <div class="brand">
+
+            <div class="brand-logo">
+                G
+            </div>
+
+            <div>
+
+                <div class="brand-name">
+                    Gyansify
+                </div>
+
+                <div class="brand-subtitle">
+                    HRMS
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="menu-title">
+            MAIN
+        </div>
+
+
+        <nav class="sidebar-menu">
+
+
+            <a
+                href="/dashboard"
+                class="menu-item active"
+            >
+                <span>▦</span>
+                Dashboard
+            </a>
+
+
+            <a
+                href="/employees"
+                class="menu-item"
+            >
+                <span>👥</span>
+                Employees
+            </a>
+
+
+            <a
+                href="/attendance"
+                class="menu-item"
+            >
+                <span>◷</span>
+                Attendance
+            </a>
+
+
+            <a
+                href="/leave"
+                class="menu-item"
+            >
+                <span>▣</span>
+                Leave
+            </a>
+
+
+            <a
+                href="/payroll"
+                class="menu-item"
+            >
+                <span>₹</span>
+                Payroll
+            </a>
+
+
+            <div class="menu-title">
+                PEOPLE
+            </div>
+
+
+            <a
+                href="/recruitment"
+                class="menu-item"
+            >
+                <span>♙</span>
+                Recruitment
+            </a>
+
+
+            <a
+                href="/performance"
+                class="menu-item"
+            >
+                <span>◈</span>
+                Performance
+            </a>
+
+
+            <a
+                href="/training"
+                class="menu-item"
+            >
+                <span>◇</span>
+                Training
+            </a>
+
+
+            <a
+                href="/assets"
+                class="menu-item"
+            >
+                <span>▤</span>
+                Assets
+            </a>
+
+
+            <div class="menu-title">
+                MANAGEMENT
+            </div>
+
+
+            <a
+                href="/reports"
+                class="menu-item"
+            >
+                <span>▥</span>
+                Reports
+            </a>
+
+
+            <a
+                href="/helpdesk"
+                class="menu-item"
+            >
+                <span>?</span>
+                Helpdesk
+            </a>
+
+
+            <a
+                href="/settings"
+                class="menu-item"
+            >
+                <span>⚙</span>
+                Settings
+            </a>
+
+
+        </nav>
+
+
+        <div class="sidebar-bottom">
+
+            <a
+                href="/logout"
+                class="logout"
+            >
+                <span>↪</span>
+                Logout
+            </a>
+
+        </div>
+
+    </aside>
+
+
+
+    <!-- ================================================= -->
+    <!-- MAIN -->
+    <!-- ================================================= -->
+
+    <main class="main">
+
+
+        <!-- HEADER -->
+
+        <header class="header">
+
+
+            <div>
+
+                <button
+                    class="mobile-menu"
+                    onclick="toggleSidebar()"
+                >
+                    ☰
+                </button>
+
+                <span class="page-title">
+                    HR Dashboard
+                </span>
+
+            </div>
+
+
+            <div class="header-right">
+
+
+                <button class="icon-button">
+                    🔔
+                </button>
+
+
+                <div class="profile">
+
+
+                    <div class="profile-avatar">
+
+                        <%= userName
+                            .charAt(0)
+                            .toUpperCase()
+                        %>
+
+                    </div>
+
+
+                    <div class="profile-info">
+
+                        <strong>
+                            <%= userName %>
+                        </strong>
+
+                        <small>
+                            <%= roleName %>
+                        </small>
+
+                    </div>
+
+
+                    <span>
+                        ▾
+                    </span>
+
+
+                </div>
+
+
+            </div>
+
+        </header>
+
+
+
+        <!-- ================================================= -->
+        <!-- CONTENT -->
+        <!-- ================================================= -->
+
+        <section class="content">
+
+
+            <!-- WELCOME -->
+
+            <div class="welcome">
+
+
+                <div>
+
+                    <h1>
+                        Good Morning, <%= userName %> 👋
+                    </h1>
+
+                    <p>
+                        Here's what's happening across
+                        your workforce today.
+                    </p>
+
+                </div>
+
+
+                <a
+                    href="/employees/create"
+                    class="primary-button"
+                >
+                    + Add Employee
+                </a>
+
+
+            </div>
+
+
+
+            <!-- ================================================= -->
+            <!-- STAT CARDS -->
+            <!-- ================================================= -->
+
+            <div class="stats-grid">
+
+
+                <div class="stat-card">
+
+                    <span class="stat-label">
+                        Total Employees
+                    </span>
+
+                    <span class="stat-value">
+                        <%= employeeCount %>
+                    </span>
+
+                    <span class="stat-description">
+                        Employees in organization
+                    </span>
+
+                </div>
+
+
+
+                <div class="stat-card">
+
+                    <span class="stat-label">
+                        Present Today
+                    </span>
+
+                    <span class="stat-value">
+                        <%= presentCount %>
+                    </span>
+
+                    <span class="stat-description">
+                        Employees present
+                    </span>
+
+                </div>
+
+
+
+                <div class="stat-card">
+
+                    <span class="stat-label">
+                        On Leave
+                    </span>
+
+                    <span class="stat-value">
+                        <%= leaveCount %>
+                    </span>
+
+                    <span class="stat-description">
+                        Employees on leave
+                    </span>
+
+                </div>
+
+
+
+                <div class="stat-card">
+
+                    <span class="stat-label">
+                        Pending Requests
+                    </span>
+
+                    <span class="stat-value">
+                        <%= pendingCount %>
+                    </span>
+
+                    <span class="stat-description">
+                        Requires HR attention
+                    </span>
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- ================================================= -->
+            <!-- ATTENDANCE + QUICK ACTIONS -->
+            <!-- ================================================= -->
+
+            <div class="dashboard-grid">
+
+
+                <!-- ATTENDANCE -->
+
+                <div class="card">
+
+
+                    <div class="card-header">
+
+                        <div>
+
+                            <h3>
+                                Today's Attendance
+                            </h3>
+
+                            <p>
+                                Workforce attendance overview
+                            </p>
+
+                        </div>
+
+
+                        <a href="/attendance">
+                            View Details →
+                        </a>
+
+                    </div>
+
+
+                    <div class="attendance-box">
+
+
+                        <div class="attendance-numbers">
+
+                            <span>
+                                Present
+                                <strong>
+                                    <%= presentCount %>
+                                </strong>
+                            </span>
+
+
+                            <span>
+                                Absent
+                                <strong>
+                                    <%= absentCount %>
+                                </strong>
+                            </span>
+
+
+                            <span>
+                                Leave
+                                <strong>
+                                    <%= leaveCount %>
+                                </strong>
+                            </span>
+
+                        </div>
+
+
+                        <%
+                            const totalWorkforce =
+                                Number(employeeCount) || 0;
+
+                            const attendancePercentage =
+                                totalWorkforce > 0
+                                    ? Math.round(
+                                        (
+                                            Number(presentCount) /
+                                            totalWorkforce
+                                        ) * 100
+                                    )
+                                    : 0;
+                        %>
+
+
+                        <div class="attendance-progress">
+
+                            <div
+                                class="attendance-progress-bar"
+                                style="width:<%= attendancePercentage %>%"
+                            ></div>
+
+                        </div>
+
+
+                        <div class="attendance-numbers">
+
+                            <span>
+                                Attendance
+                            </span>
+
+                            <strong>
+                                <%= attendancePercentage %>%
+                            </strong>
+
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- QUICK ACTIONS -->
+
+                <div class="card">
+
+
+                    <div class="card-header">
+
+                        <div>
+
+                            <h3>
+                                Quick Actions
+                            </h3>
+
+                            <p>
+                                Frequently used HR actions
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="quick-actions">
+
+
+                        <a
+                            href="/employees/create"
+                            class="quick-action"
+                        >
+
+                            <span class="quick-action-icon">
+                                👤
+                            </span>
+
+                            <strong>
+                                Add Employee
+                            </strong>
+
+                            <small>
+                                Create employee profile
+                            </small>
+
+                        </a>
+
+
+                        <a
+                            href="/leave/requests"
+                            class="quick-action"
+                        >
+
+                            <span class="quick-action-icon">
+                                📅
+                            </span>
+
+                            <strong>
+                                Leave Requests
+                            </strong>
+
+                            <small>
+                                Review pending requests
+                            </small>
+
+                        </a>
+
+
+                        <a
+                            href="/attendance"
+                            class="quick-action"
+                        >
+
+                            <span class="quick-action-icon">
+                                ◷
+                            </span>
+
+                            <strong>
+                                Attendance
+                            </strong>
+
+                            <small>
+                                Manage attendance
+                            </small>
+
+                        </a>
+
+
+                        <a
+                            href="/payroll"
+                            class="quick-action"
+                        >
+
+                            <span class="quick-action-icon">
+                                ₹
+                            </span>
+
+                            <strong>
+                                Payroll
+                            </strong>
+
+                            <small>
+                                Manage payroll
+                            </small>
+
+                        </a>
+
+
+                    </div>
+
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- ================================================= -->
+            <!-- RECENT EMPLOYEES + PENDING REQUESTS -->
+            <!-- ================================================= -->
+
+            <div class="dashboard-grid">
+
+
+                <!-- RECENT EMPLOYEES -->
+
+                <div class="card">
+
+
+                    <div class="card-header">
+
+                        <div>
+
+                            <h3>
+                                Recent Employees
+                            </h3>
+
+                            <p>
+                                Recently added employees
+                            </p>
+
+                        </div>
+
+
+                        <a href="/employees">
+                            View All →
+                        </a>
+
+                    </div>
+
+
+                    <% if (employees.length === 0) { %>
+
+
+                        <div class="empty">
+
+                            No recent employees found.
+
+                        </div>
+
+
+                    <% } else { %>
+
+
+                        <div class="employee-list">
+
+
+                            <% employees
+                                .slice(0, 5)
+                                .forEach(
+                                    employee => {
+                            %>
+
+
+                                <div class="employee-row">
+
+
+                                    <div class="employee-avatar">
+
+                                        <%= (
+                                            employee.firstName ||
+                                            employee.name ||
+                                            "E"
+                                        )
+                                        .charAt(0)
+                                        .toUpperCase()
+                                        %>
+
+                                    </div>
+
+
+                                    <div class="employee-details">
+
+                                        <strong>
+
+                                            <%= employee.name ||
+                                                `${employee.firstName || ""} ${employee.lastName || ""}`.trim() ||
+                                                "Employee"
+                                            %>
+
+                                        </strong>
+
+
+                                        <small>
+
+                                            <%= employee.designation?.name ||
+                                                employee.designation ||
+                                                employee.department?.name ||
+                                                employee.department ||
+                                                "Employee"
+                                            %>
+
+                                        </small>
+
+                                    </div>
+
+
+                                    <span class="status status-active">
+                                        Active
+                                    </span>
+
+
+                                </div>
+
+
+                            <% }) %>
+
+
+                        </div>
+
+
+                    <% } %>
+
+
+                </div>
+
+
+
+                <!-- PENDING REQUESTS -->
+
+                <div class="card">
+
+
+                    <div class="card-header">
+
+                        <div>
+
+                            <h3>
+                                Pending Requests
+                            </h3>
+
+                            <p>
+                                Requires your attention
+                            </p>
+
+                        </div>
+
+
+                        <a href="/leave/requests">
+                            View All →
+                        </a>
+
+                    </div>
+
+
+                    <% if (leaveRequests.length === 0) { %>
+
+
+                        <div class="empty">
+
+                            No pending leave requests.
+
+                        </div>
+
+
+                    <% } else { %>
+
+
+                        <div class="request-list">
+
+
+                            <% leaveRequests
+                                .slice(0, 5)
+                                .forEach(
+                                    request => {
+                            %>
+
+
+                                <div class="request-row">
+
+
+                                    <div class="request-icon">
+                                        📅
+                                    </div>
+
+
+                                    <div class="request-info">
+
+                                        <strong>
+
+                                            <%= request.employee
+                                                ? `${request.employee.firstName || ""} ${request.employee.lastName || ""}`.trim()
+                                                : "Employee"
+                                            %>
+
+                                        </strong>
+
+
+                                        <small>
+
+                                            <%= request.leaveType?.name ||
+                                                "Leave Request"
+                                            %>
+
+                                            ·
+
+                                            <%= request.totalDays || 0 %>
+                                            day(s)
+
+                                        </small>
+
+                                    </div>
+
+
+                                    <span class="status status-pending">
+                                        Pending
+                                    </span>
+
+
+                                </div>
+
+
+                            <% }) %>
+
+
+                        </div>
+
+
+                    <% } %>
+
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- ================================================= -->
+            <!-- HR MANAGEMENT -->
+            <!-- ================================================= -->
+
+            <div class="card">
+
+
+                <div class="card-header">
+
+                    <div>
+
+                        <h3>
+                            HR Management
+                        </h3>
+
+                        <p>
+                            Manage your organization's workforce
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="quick-actions">
+
+
+                    <a
+                        href="/employees"
+                        class="quick-action"
+                    >
+
+                        <span class="quick-action-icon">
+                            👥
+                        </span>
+
+                        <strong>
+                            Employees
+                        </strong>
+
+                        <small>
+                            View and manage employees
+                        </small>
+
+                    </a>
+
+
+                    <a
+                        href="/recruitment"
+                        class="quick-action"
+                    >
+
+                        <span class="quick-action-icon">
+                            ♙
+                        </span>
+
+                        <strong>
+                            Recruitment
+                        </strong>
+
+                        <small>
+                            Manage hiring process
+                        </small>
+
+                    </a>
+
+
+                    <a
+                        href="/performance"
+                        class="quick-action"
+                    >
+
+                        <span class="quick-action-icon">
+                            ◈
+                        </span>
+
+                        <strong>
+                            Performance
+                        </strong>
+
+                        <small>
+                            Track employee performance
+                        </small>
+
+                    </a>
+
+
+                    <a
+                        href="/reports"
+                        class="quick-action"
+                    >
+
+                        <span class="quick-action-icon">
+                            ▥
+                        </span>
+
+                        <strong>
+                            HR Reports
+                        </strong>
+
+                        <small>
+                            Generate HR reports
+                        </small>
+
+                    </a>
+
+
+                </div>
+
+
+            </div>
+
+
+        </section>
+
+
+    </main>
+
+
+</div>
+
+
+
+<script>
+
+function toggleSidebar() {
+
+    const sidebar =
+        document.querySelector(".sidebar");
+
+    if (sidebar) {
+
+        sidebar.classList.toggle("show");
+
+    }
+
+}
+
+</script>
+
+
+</body>
+
+</html>

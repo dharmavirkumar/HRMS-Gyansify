@@ -1,0 +1,493 @@
+<%
+const recruitmentInterviews =
+    typeof interviews !== "undefined" &&
+    Array.isArray(interviews)
+        ? interviews
+        : [];
+
+const interviewStats =
+    typeof stats !== "undefined" && stats
+        ? stats
+        : {
+            total: recruitmentInterviews.length,
+            upcoming: 0,
+            completed: 0,
+            cancelled: 0
+        };
+%>
+
+
+<style>
+
+.interview-page {
+    width: 100%;
+}
+
+.interview-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 28px;
+}
+
+.interview-breadcrumb {
+    display: flex;
+    gap: 8px;
+    font-size: 12px;
+    color: #94a3b8;
+    margin-bottom: 12px;
+}
+
+.interview-title {
+    font-size: 28px;
+    font-weight: 750;
+    color: #111827;
+}
+
+.interview-subtitle {
+    margin-top: 6px;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.interview-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 40px;
+    padding: 0 16px;
+    border-radius: 8px;
+    background: #4f46e5;
+    color: white;
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.interview-btn:hover {
+    background: #4338ca;
+}
+
+.interview-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.interview-stat {
+    background: white;
+    border: 1px solid #e7eaf0;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.interview-stat-label {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.interview-stat-number {
+    margin-top: 7px;
+    color: #111827;
+    font-size: 27px;
+    font-weight: 750;
+}
+
+.interview-card {
+    background: white;
+    border: 1px solid #e7eaf0;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.interview-card-header {
+    padding: 20px 22px;
+    border-bottom: 1px solid #edf0f4;
+}
+
+.interview-card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #172033;
+}
+
+.interview-card-subtitle {
+    margin-top: 4px;
+    color: #94a3b8;
+    font-size: 11px;
+}
+
+.interview-table-wrap {
+    overflow-x: auto;
+}
+
+.interview-table {
+    width: 100%;
+    min-width: 850px;
+    border-collapse: collapse;
+}
+
+.interview-table th {
+    text-align: left;
+    padding: 13px 18px;
+    background: #fafbfc;
+    border-bottom: 1px solid #edf0f4;
+    color: #7b8798;
+    font-size: 10px;
+    font-weight: 750;
+    text-transform: uppercase;
+}
+
+.interview-table td {
+    padding: 16px 18px;
+    border-bottom: 1px solid #f0f2f5;
+    color: #475569;
+    font-size: 12px;
+}
+
+.interview-table tbody tr:hover {
+    background: #fafbff;
+}
+
+.interview-candidate {
+    font-weight: 650;
+    color: #1e293b;
+}
+
+.interview-position {
+    margin-top: 3px;
+    color: #94a3b8;
+    font-size: 10px;
+}
+
+.interview-date {
+    font-weight: 600;
+    color: #334155;
+}
+
+.interview-time {
+    margin-top: 3px;
+    color: #94a3b8;
+    font-size: 10px;
+}
+
+.interview-badge {
+    display: inline-flex;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 650;
+}
+
+.interview-upcoming {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.interview-completed {
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.interview-cancelled {
+    background: #fff1f2;
+    color: #e11d48;
+}
+
+.interview-empty {
+    text-align: center;
+    padding: 70px 20px;
+}
+
+.interview-empty-icon {
+    width: 58px;
+    height: 58px;
+    margin: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #f1f5f9;
+    font-size: 25px;
+}
+
+.interview-empty-title {
+    margin-top: 15px;
+    color: #1e293b;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.interview-empty-text {
+    margin-top: 5px;
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+@media(max-width: 950px) {
+    .interview-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media(max-width: 650px) {
+    .interview-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .interview-stats {
+        grid-template-columns: 1fr;
+    }
+}
+
+</style>
+
+
+<div class="interview-page">
+
+    <div class="interview-header">
+
+        <div>
+
+            <div class="interview-breadcrumb">
+
+                <a href="/dashboard">
+                    Dashboard
+                </a>
+
+                <span>/</span>
+
+                <a href="/recruitment">
+                    Recruitment
+                </a>
+
+                <span>/</span>
+
+                <span>
+                    Interviews
+                </span>
+
+            </div>
+
+            <h1 class="interview-title">
+                Interviews
+            </h1>
+
+            <p class="interview-subtitle">
+                Schedule, manage and track candidate interviews.
+            </p>
+
+        </div>
+
+        <a
+            href="/recruitment/interviews/create"
+            class="interview-btn"
+        >
+            + Schedule Interview
+        </a>
+
+    </div>
+
+
+    <div class="interview-stats">
+
+        <div class="interview-stat">
+
+            <div class="interview-stat-label">
+                Total Interviews
+            </div>
+
+            <div class="interview-stat-number">
+                <%= interviewStats.total || 0 %>
+            </div>
+
+        </div>
+
+
+        <div class="interview-stat">
+
+            <div class="interview-stat-label">
+                Upcoming
+            </div>
+
+            <div class="interview-stat-number">
+                <%= interviewStats.upcoming || 0 %>
+            </div>
+
+        </div>
+
+
+        <div class="interview-stat">
+
+            <div class="interview-stat-label">
+                Completed
+            </div>
+
+            <div class="interview-stat-number">
+                <%= interviewStats.completed || 0 %>
+            </div>
+
+        </div>
+
+
+        <div class="interview-stat">
+
+            <div class="interview-stat-label">
+                Cancelled
+            </div>
+
+            <div class="interview-stat-number">
+                <%= interviewStats.cancelled || 0 %>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="interview-card">
+
+        <div class="interview-card-header">
+
+            <div class="interview-card-title">
+                Interview Schedule
+            </div>
+
+            <div class="interview-card-subtitle">
+                Upcoming and previous candidate interviews.
+            </div>
+
+        </div>
+
+
+        <% if (recruitmentInterviews.length === 0) { %>
+
+            <div class="interview-empty">
+
+                <div class="interview-empty-icon">
+                    📅
+                </div>
+
+                <div class="interview-empty-title">
+                    No interviews scheduled
+                </div>
+
+                <div class="interview-empty-text">
+                    Scheduled candidate interviews will appear here.
+                </div>
+
+            </div>
+
+        <% } else { %>
+
+            <div class="interview-table-wrap">
+
+                <table class="interview-table">
+
+                    <thead>
+
+                        <tr>
+                            <th>Candidate</th>
+                            <th>Position</th>
+                            <th>Date</th>
+                            <th>Interviewer</th>
+                            <th>Mode</th>
+                            <th>Status</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        <% recruitmentInterviews.forEach(function(interview) { %>
+
+                            <%
+                            const interviewStatus =
+                                String(interview.status || "UPCOMING").toUpperCase();
+
+                            let interviewClass =
+                                "interview-upcoming";
+
+                            if (interviewStatus === "COMPLETED") {
+                                interviewClass = "interview-completed";
+                            }
+
+                            if (interviewStatus === "CANCELLED") {
+                                interviewClass = "interview-cancelled";
+                            }
+                            %>
+
+                            <tr>
+
+                                <td>
+
+                                    <div class="interview-candidate">
+                                        <%= interview.candidateName ||
+                                            interview.candidate?.name ||
+                                            "Candidate" %>
+                                    </div>
+
+                                    <div class="interview-position">
+                                        <%= interview.candidate?.email || "" %>
+                                    </div>
+
+                                </td>
+
+                                <td>
+                                    <%= interview.position ||
+                                        interview.jobTitle ||
+                                        "Not specified" %>
+                                </td>
+
+                                <td>
+
+                                    <div class="interview-date">
+
+                                        <%= interview.date
+                                            ? new Date(interview.date).toLocaleDateString("en-IN")
+                                            : "—" %>
+
+                                    </div>
+
+                                    <div class="interview-time">
+                                        <%= interview.time || "Time not specified" %>
+                                    </div>
+
+                                </td>
+
+                                <td>
+                                    <%= interview.interviewer ||
+                                        "Not assigned" %>
+                                </td>
+
+                                <td>
+                                    <%= interview.mode || "Online" %>
+                                </td>
+
+                                <td>
+
+                                    <span class="interview-badge <%= interviewClass %>">
+                                        <%= interviewStatus %>
+                                    </span>
+
+                                </td>
+
+                            </tr>
+
+                        <% }); %>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        <% } %>
+
+    </div>
+
+</div>

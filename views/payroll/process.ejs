@@ -1,0 +1,1309 @@
+
+<%
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1;
+
+    const selectedMonth = Number(
+        typeof payrollMonth !== "undefined" && payrollMonth
+            ? payrollMonth
+            : currentMonth
+    );
+
+    const selectedYear = Number(
+        typeof payrollYear !== "undefined" && payrollYear
+            ? payrollYear
+            : currentYear
+    );
+
+    const months = [
+        "January", "February", "March", "April",
+        "May", "June", "July", "August",
+        "September", "October", "November", "December"
+    ];
+
+    const safeStats =
+        typeof stats !== "undefined" && stats
+            ? stats
+            : {};
+
+    const pageError =
+        typeof error !== "undefined" ? error : null;
+
+    const pageSuccess =
+        typeof success !== "undefined" ? success : null;
+
+    const formatMoney = (value) => {
+        const amount = Number(value ?? 0);
+
+        return (Number.isFinite(amount) ? amount : 0)
+            .toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+    };
+
+    const getMonthStart = (year, month) => {
+        return [
+            year,
+            String(month).padStart(2, "0"),
+            "01"
+        ].join("-");
+    };
+
+    const getMonthEnd = (year, month) => {
+        const date = new Date(Date.UTC(year, month, 0));
+
+        return [
+            date.getUTCFullYear(),
+            String(date.getUTCMonth() + 1).padStart(2, "0"),
+            String(date.getUTCDate()).padStart(2, "0")
+        ].join("-");
+    };
+
+    const defaultStart =
+        selectedMonth >= 1 && selectedMonth <= 12
+            ? getMonthStart(selectedYear, selectedMonth)
+            : "";
+
+    const defaultEnd =
+        selectedMonth >= 1 && selectedMonth <= 12
+            ? getMonthEnd(selectedYear, selectedMonth)
+            : "";
+
+    const selectedPeriodStart =
+        typeof periodStart !== "undefined" && periodStart
+            ? String(periodStart).slice(0, 10)
+            : defaultStart;
+
+    const selectedPeriodEnd =
+        typeof periodEnd !== "undefined" && periodEnd
+            ? String(periodEnd).slice(0, 10)
+            : defaultEnd;
+%>
+
+<section class="process-page">
+
+    <!-- PAGE HEADER -->
+
+    <header class="process-heading">
+        <div>
+            <div class="process-eyebrow">PAYROLL MANAGEMENT</div>
+
+            <h1>Process Payroll</h1>
+
+            <p>
+                Configure the payroll period, review salary inputs
+                and initiate monthly payroll processing.
+            </p>
+        </div>
+
+        <a href="/payroll" class="process-back-button">
+            <span aria-hidden="true">←</span>
+            Back to Payroll
+        </a>
+    </header>
+
+    <!-- FEEDBACK -->
+
+    <% if (pageError) { %>
+        <div class="process-alert process-alert-error" role="alert">
+            <span class="alert-icon" aria-hidden="true">!</span>
+
+            <div>
+                <strong>Payroll could not be processed</strong>
+                <p><%= pageError %></p>
+            </div>
+        </div>
+    <% } %>
+
+    <% if (pageSuccess) { %>
+        <div class="process-alert process-alert-success" role="status">
+            <span class="alert-icon" aria-hidden="true">✓</span>
+
+            <div>
+                <strong>Payroll request completed</strong>
+                <p><%= pageSuccess %></p>
+            </div>
+        </div>
+    <% } %>
+
+    <!-- PAYROLL OVERVIEW -->
+
+    <div class="process-overview">
+
+        <article class="overview-card">
+            <div class="overview-icon icon-blue">₹</div>
+
+            <div>
+                <span>Payroll Period</span>
+                <strong id="overviewPeriod">
+                    <%= months[selectedMonth - 1] || "Select month" %>
+                    <%= selectedYear %>
+                </strong>
+                <small>Selected processing cycle</small>
+            </div>
+        </article>
+
+        <article class="overview-card">
+            <div class="overview-icon icon-purple">01</div>
+
+            <div>
+                <span>Processing Stage</span>
+                <strong>Pre-processing</strong>
+                <small>Before payroll generation</small>
+            </div>
+        </article>
+
+        <article class="overview-card">
+            <div class="overview-icon icon-green">✓</div>
+
+            <div>
+                <span>Validation</span>
+                <strong>Required</strong>
+                <small>Server-side checks before saving</small>
+            </div>
+        </article>
+
+    </div>
+
+    <!-- PAYROLL PERIOD FORM -->
+
+    <section class="process-card">
+
+        <div class="process-card-header">
+            <div class="process-card-icon">01</div>
+
+            <div>
+                <h2>Payroll Period</h2>
+                <p>
+                    Choose the month, year and exact payroll date range.
+                </p>
+            </div>
+
+            <span class="process-badge">REQUIRED</span>
+        </div>
+
+        <form
+            method="POST"
+            action="/payroll/process"
+            class="process-form"
+            id="processPayrollForm"
+        >
+
+            <div class="process-form-grid">
+
+                <!-- MONTH -->
+
+                <div class="process-field">
+                    <label for="payrollMonth">
+                        Payroll Month <span>*</span>
+                    </label>
+
+                    <select
+                        id="payrollMonth"
+                        name="payrollMonth"
+                        required
+                    >
+                        <option value="">Select month</option>
+
+                        <% months.forEach((month, index) => { %>
+                            <option
+                                value="<%= index + 1 %>"
+                                <%= selectedMonth === index + 1 ? "selected" : "" %>
+                            >
+                                <%= month %>
+                            </option>
+                        <% }) %>
+                    </select>
+                </div>
+
+                <!-- YEAR -->
+
+                <div class="process-field">
+                    <label for="payrollYear">
+                        Payroll Year <span>*</span>
+                    </label>
+
+                    <input
+                        type="number"
+                        id="payrollYear"
+                        name="payrollYear"
+                        value="<%= selectedYear %>"
+                        min="2000"
+                        max="2100"
+                        step="1"
+                        required
+                    >
+                </div>
+
+                <!-- START DATE -->
+
+                <div class="process-field">
+                    <label for="periodStart">
+                        Period Start <span>*</span>
+                    </label>
+
+                    <input
+                        type="date"
+                        id="periodStart"
+                        name="periodStart"
+                        value="<%= selectedPeriodStart %>"
+                        required
+                    >
+
+                    <small>First day included in this payroll.</small>
+                </div>
+
+                <!-- END DATE -->
+
+                <div class="process-field">
+                    <label for="periodEnd">
+                        Period End <span>*</span>
+                    </label>
+
+                    <input
+                        type="date"
+                        id="periodEnd"
+                        name="periodEnd"
+                        value="<%= selectedPeriodEnd %>"
+                        required
+                    >
+
+                    <small>Last day included in this payroll.</small>
+                </div>
+
+            </div>
+
+            <!-- PERIOD PREVIEW -->
+
+            <div class="period-preview">
+                <div class="period-preview-icon" aria-hidden="true">i</div>
+
+                <div>
+                    <strong id="periodPreviewTitle">
+                        Payroll period preview
+                    </strong>
+
+                    <p id="periodPreviewText">
+                        Select a valid payroll month and date range.
+                    </p>
+                </div>
+            </div>
+
+            <div class="process-form-footer">
+
+                <p>
+                    <span>*</span> Required fields. The server must validate
+                    the payroll period and duplicate processing.
+                </p>
+
+                <button
+                    type="submit"
+                    class="process-primary-button"
+                    id="processPayrollButton"
+                >
+                    <span>Process Payroll</span>
+                    <span aria-hidden="true">→</span>
+                </button>
+
+            </div>
+
+        </form>
+    </section>
+
+    <!-- PAYROLL PRE-CHECKS -->
+
+    <section class="process-card">
+
+        <div class="process-card-header">
+            <div class="process-card-icon process-icon-orange">02</div>
+
+            <div>
+                <h2>Pre-processing Checklist</h2>
+                <p>
+                    Verify payroll inputs before calculating employee salaries.
+                </p>
+            </div>
+        </div>
+
+        <div class="precheck-list">
+
+            <div class="precheck-item">
+                <div class="precheck-symbol">01</div>
+
+                <div class="precheck-content">
+                    <strong>Employee eligibility</strong>
+                    <p>
+                        Include eligible employees belonging to the authenticated
+                        organization and exclude exited employees according to
+                        your payroll policy.
+                    </p>
+                </div>
+
+                <span class="precheck-label">VERIFY</span>
+            </div>
+
+            <div class="precheck-item">
+                <div class="precheck-symbol">02</div>
+
+                <div class="precheck-content">
+                    <strong>Effective salary structures</strong>
+                    <p>
+                        Confirm that each employee has the appropriate salary
+                        structure effective during the selected payroll period.
+                    </p>
+                </div>
+
+                <span class="precheck-label">VERIFY</span>
+            </div>
+
+            <div class="precheck-item">
+                <div class="precheck-symbol">03</div>
+
+                <div class="precheck-content">
+                    <strong>Attendance and leave</strong>
+                    <p>
+                        Verify attendance, approved leave, holidays and any
+                        applicable loss-of-pay calculations.
+                    </p>
+                </div>
+
+                <span class="precheck-label">VERIFY</span>
+            </div>
+
+            <div class="precheck-item">
+                <div class="precheck-symbol">04</div>
+
+                <div class="precheck-content">
+                    <strong>Earnings and statutory deductions</strong>
+                    <p>
+                        Validate allowances, PF, professional tax, TDS and
+                        other deductions against your organization's rules.
+                    </p>
+                </div>
+
+                <span class="precheck-label">VERIFY</span>
+            </div>
+
+            <div class="precheck-item">
+                <div class="precheck-symbol">05</div>
+
+                <div class="precheck-content">
+                    <strong>Duplicate payroll prevention</strong>
+                    <p>
+                        Check whether payroll already exists for this organization,
+                        month and year before creating a new record.
+                    </p>
+                </div>
+
+                <span class="precheck-label">VERIFY</span>
+            </div>
+
+        </div>
+
+        <div class="precheck-note">
+            <strong>Important:</strong>
+            This checklist is informational. It does not confirm that these
+            checks have already passed in your backend.
+        </div>
+
+    </section>
+
+    <!-- PROCESSING WORKFLOW -->
+
+    <section class="process-card">
+
+        <div class="process-card-header">
+            <div class="process-card-icon process-icon-green">03</div>
+
+            <div>
+                <h2>Payroll Processing Workflow</h2>
+                <p>
+                    Recommended lifecycle for the Gyansify HRMS payroll module.
+                </p>
+            </div>
+        </div>
+
+        <div class="workflow">
+
+            <div class="workflow-step">
+                <div class="workflow-step-number">1</div>
+
+                <div>
+                    <strong>Validate inputs</strong>
+                    <p>
+                        Validate organization, period, employee eligibility
+                        and salary structures.
+                    </p>
+                </div>
+            </div>
+
+            <div class="workflow-connector"></div>
+
+            <div class="workflow-step">
+                <div class="workflow-step-number">2</div>
+
+                <div>
+                    <strong>Calculate payroll</strong>
+                    <p>
+                        Calculate earnings, deductions, attendance adjustments
+                        and net salary.
+                    </p>
+                </div>
+            </div>
+
+            <div class="workflow-connector"></div>
+
+            <div class="workflow-step">
+                <div class="workflow-step-number">3</div>
+
+                <div>
+                    <strong>Review payroll</strong>
+                    <p>
+                        Inspect employee-level calculations and resolve
+                        validation errors.
+                    </p>
+                </div>
+            </div>
+
+            <div class="workflow-connector"></div>
+
+            <div class="workflow-step">
+                <div class="workflow-step-number">4</div>
+
+                <div>
+                    <strong>Approve payroll</strong>
+                    <p>
+                        Allow an authorized approver to approve the
+                        reviewed payroll batch.
+                    </p>
+                </div>
+            </div>
+
+            <div class="workflow-connector"></div>
+
+            <div class="workflow-step">
+                <div class="workflow-step-number">5</div>
+
+                <div>
+                    <strong>Generate payslips and payment records</strong>
+                    <p>
+                        Generate employee payslips and record payment status
+                        after the appropriate approval.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+
+    </section>
+
+</section>
+
+<style>
+    .process-page {
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 28px 32px;
+        color: #111827;
+    }
+
+    .process-page *,
+    .process-page *::before,
+    .process-page *::after {
+        box-sizing: border-box;
+    }
+
+    .process-eyebrow {
+        margin-bottom: 7px;
+        color: #2563eb;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1.4px;
+    }
+
+    .process-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 18px;
+        margin-bottom: 24px;
+    }
+
+    .process-heading h1 {
+        margin: 0;
+        font-size: 26px;
+        font-weight: 800;
+        letter-spacing: -.6px;
+    }
+
+    .process-heading p {
+        margin: 7px 0 0;
+        color: #6b7280;
+        font-size: 13px;
+        line-height: 1.7;
+    }
+
+    .process-back-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        padding: 11px 14px;
+        border: 1px solid #e5e7eb;
+        border-radius: 9px;
+        background: #fff;
+        color: #374151;
+        font-size: 12px;
+        font-weight: 650;
+        text-decoration: none;
+    }
+
+    .process-back-button:hover {
+        background: #f9fafb;
+    }
+
+    .process-alert {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 20px;
+        padding: 14px 16px;
+        border: 1px solid;
+        border-radius: 10px;
+    }
+
+    .process-alert-error {
+        border-color: #fecaca;
+        background: #fff7f7;
+        color: #991b1b;
+    }
+
+    .process-alert-success {
+        border-color: #a7f3d0;
+        background: #f0fdf4;
+        color: #065f46;
+    }
+
+    .alert-icon {
+        display: grid;
+        flex-shrink: 0;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: rgb(255 255 255 / 80%);
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .process-alert strong {
+        font-size: 12px;
+    }
+
+    .process-alert p {
+        margin: 4px 0 0;
+        font-size: 12px;
+        line-height: 1.6;
+        overflow-wrap: anywhere;
+    }
+
+    .process-overview {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        margin-bottom: 23px;
+    }
+
+    .overview-card {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        min-width: 0;
+        padding: 19px;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 3px 10px rgb(15 23 42 / 2%);
+    }
+
+    .overview-icon {
+        display: grid;
+        flex-shrink: 0;
+        place-items: center;
+        width: 42px;
+        height: 42px;
+        border-radius: 11px;
+        font-size: 15px;
+        font-weight: 800;
+    }
+
+    .icon-blue {
+        background: #eff6ff;
+        color: #2563eb;
+    }
+
+    .icon-purple {
+        background: #f5f3ff;
+        color: #7c3aed;
+    }
+
+    .icon-green {
+        background: #ecfdf5;
+        color: #047857;
+    }
+
+    .overview-card > div:last-child {
+        min-width: 0;
+    }
+
+    .overview-card span,
+    .overview-card strong,
+    .overview-card small {
+        display: block;
+    }
+
+    .overview-card span {
+        color: #6b7280;
+        font-size: 10px;
+        font-weight: 650;
+    }
+
+    .overview-card strong {
+        margin-top: 5px;
+        overflow-wrap: anywhere;
+        color: #111827;
+        font-size: 14px;
+        font-weight: 800;
+    }
+
+    .overview-card small {
+        margin-top: 5px;
+        color: #9ca3af;
+        font-size: 10px;
+        line-height: 1.5;
+    }
+
+    .process-card {
+        margin-bottom: 23px;
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 3px 10px rgb(15 23 42 / 2%);
+    }
+
+    .process-card-header {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        padding: 20px 22px;
+        border-bottom: 1px solid #f0f1f3;
+    }
+
+    .process-card-icon {
+        display: grid;
+        flex-shrink: 0;
+        place-items: center;
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        background: #eff6ff;
+        color: #2563eb;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .process-icon-orange {
+        background: #fff7ed;
+        color: #c2410c;
+    }
+
+    .process-icon-green {
+        background: #ecfdf5;
+        color: #047857;
+    }
+
+    .process-card-header > div:nth-child(2) {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .process-card-header h2 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 800;
+    }
+
+    .process-card-header p {
+        margin: 5px 0 0;
+        color: #9ca3af;
+        font-size: 11px;
+        line-height: 1.6;
+    }
+
+    .process-badge {
+        padding: 7px 9px;
+        border-radius: 6px;
+        background: #f3f4f6;
+        color: #6b7280;
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: .4px;
+    }
+
+    .process-form {
+        padding: 23px;
+    }
+
+    .process-form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+    }
+
+    .process-field {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .process-field label {
+        margin-bottom: 8px;
+        color: #374151;
+        font-size: 11px;
+        font-weight: 750;
+    }
+
+    .process-field label span {
+        color: #dc2626;
+    }
+
+    .process-field input,
+    .process-field select {
+        width: 100%;
+        min-height: 43px;
+        padding: 10px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        background: #fff;
+        color: #111827;
+        font-family: inherit;
+        font-size: 12px;
+        outline: none;
+        transition: border-color .18s, box-shadow .18s;
+    }
+
+    .process-field input:focus,
+    .process-field select:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgb(37 99 235 / 10%);
+    }
+
+    .process-field small {
+        margin-top: 7px;
+        color: #9ca3af;
+        font-size: 10px;
+        line-height: 1.5;
+    }
+
+    .period-preview {
+        display: flex;
+        align-items: flex-start;
+        gap: 11px;
+        margin-top: 22px;
+        padding: 14px;
+        border: 1px solid #dbeafe;
+        border-radius: 9px;
+        background: #f8fbff;
+    }
+
+    .period-preview-icon {
+        display: grid;
+        flex-shrink: 0;
+        place-items: center;
+        width: 23px;
+        height: 23px;
+        border-radius: 50%;
+        background: #dbeafe;
+        color: #1d4ed8;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .period-preview strong {
+        display: block;
+        color: #1e40af;
+        font-size: 11px;
+    }
+
+    .period-preview p {
+        margin: 5px 0 0;
+        color: #4b5563;
+        font-size: 10px;
+        line-height: 1.7;
+    }
+
+    .period-preview.is-error {
+        border-color: #fecaca;
+        background: #fff7f7;
+    }
+
+    .period-preview.is-error .period-preview-icon {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .period-preview.is-error strong {
+        color: #b91c1c;
+    }
+
+    .process-form-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-top: 22px;
+        padding-top: 19px;
+        border-top: 1px solid #f0f1f3;
+    }
+
+    .process-form-footer p {
+        max-width: 580px;
+        margin: 0;
+        color: #6b7280;
+        font-size: 10px;
+        line-height: 1.7;
+    }
+
+    .process-form-footer p span {
+        color: #dc2626;
+    }
+
+    .process-primary-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        min-height: 43px;
+        padding: 11px 17px;
+        border: 1px solid #2563eb;
+        border-radius: 8px;
+        background: #2563eb;
+        color: #fff;
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 750;
+        cursor: pointer;
+        transition: background .18s, opacity .18s;
+    }
+
+    .process-primary-button:hover:not(:disabled) {
+        background: #1d4ed8;
+    }
+
+    .process-primary-button:disabled {
+        cursor: not-allowed;
+        opacity: .6;
+    }
+
+    .precheck-list {
+        padding: 7px 22px;
+    }
+
+    .precheck-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 13px;
+        padding: 17px 0;
+        border-bottom: 1px solid #f0f1f3;
+    }
+
+    .precheck-item:last-child {
+        border-bottom: none;
+    }
+
+    .precheck-symbol {
+        display: grid;
+        flex-shrink: 0;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: #f3f4f6;
+        color: #4b5563;
+        font-size: 10px;
+        font-weight: 800;
+    }
+
+    .precheck-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .precheck-content strong {
+        display: block;
+        color: #111827;
+        font-size: 12px;
+        font-weight: 750;
+    }
+
+    .precheck-content p {
+        margin: 5px 0 0;
+        color: #6b7280;
+        font-size: 10px;
+        line-height: 1.7;
+    }
+
+    .precheck-label {
+        padding: 6px 8px;
+        border-radius: 5px;
+        background: #fff7ed;
+        color: #9a3412;
+        font-size: 8px;
+        font-weight: 800;
+        letter-spacing: .4px;
+    }
+
+    .precheck-note {
+        margin: 0 22px 22px;
+        padding: 12px 14px;
+        border: 1px solid #fde68a;
+        border-radius: 8px;
+        background: #fffbeb;
+        color: #92400e;
+        font-size: 10px;
+        line-height: 1.7;
+    }
+
+    .precheck-note strong {
+        font-weight: 800;
+    }
+
+    .workflow {
+        padding: 12px 22px 23px;
+    }
+
+    .workflow-step {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 12px 0;
+    }
+
+    .workflow-step-number {
+        display: grid;
+        flex-shrink: 0;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        border: 1px solid #dbeafe;
+        border-radius: 50%;
+        background: #eff6ff;
+        color: #2563eb;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .workflow-step > div:last-child {
+        padding-top: 2px;
+    }
+
+    .workflow-step strong {
+        display: block;
+        color: #111827;
+        font-size: 12px;
+        font-weight: 750;
+    }
+
+    .workflow-step p {
+        margin: 5px 0 0;
+        color: #6b7280;
+        font-size: 10px;
+        line-height: 1.7;
+    }
+
+    .workflow-connector {
+        width: 1px;
+        height: 15px;
+        margin-left: 15px;
+        background: #dbeafe;
+    }
+
+    .process-page a:focus-visible,
+    .process-page button:focus-visible {
+        outline: 3px solid #93c5fd;
+        outline-offset: 3px;
+    }
+
+    @media (max-width: 1000px) {
+        .process-overview {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 650px) {
+        .process-page {
+            padding: 19px 14px;
+        }
+
+        .process-heading {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .process-heading h1 {
+            font-size: 23px;
+        }
+
+        .process-card-header {
+            padding: 16px;
+        }
+
+        .process-card-header p {
+            font-size: 10px;
+        }
+
+        .process-badge {
+            display: none;
+        }
+
+        .process-form {
+            padding: 16px;
+        }
+
+        .process-form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .process-form-footer {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .process-primary-button {
+            width: 100%;
+        }
+
+        .precheck-list {
+            padding-right: 16px;
+            padding-left: 16px;
+        }
+
+        .precheck-item {
+            gap: 10px;
+        }
+
+        .precheck-label {
+            display: none;
+        }
+
+        .precheck-note {
+            margin-right: 16px;
+            margin-left: 16px;
+        }
+
+        .workflow {
+            padding-right: 16px;
+            padding-left: 16px;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .process-page *,
+        .process-page *::before,
+        .process-page *::after {
+            transition: none !important;
+            animation: none !important;
+        }
+    }
+</style>
+
+<script>
+(function () {
+    "use strict";
+
+    const form = document.getElementById("processPayrollForm");
+
+    if (!form || form.dataset.initialized === "true") {
+        return;
+    }
+
+    form.dataset.initialized = "true";
+
+    const monthInput = document.getElementById("payrollMonth");
+    const yearInput = document.getElementById("payrollYear");
+    const startInput = document.getElementById("periodStart");
+    const endInput = document.getElementById("periodEnd");
+
+    const preview = document.querySelector(".period-preview");
+    const previewTitle = document.getElementById("periodPreviewTitle");
+    const previewText = document.getElementById("periodPreviewText");
+    const overviewPeriod = document.getElementById("overviewPeriod");
+    const submitButton = document.getElementById("processPayrollButton");
+
+    const monthNames = [
+        "January", "February", "March", "April",
+        "May", "June", "July", "August",
+        "September", "October", "November", "December"
+    ];
+
+    const formatDate = (value) => {
+        if (!value) return "";
+
+        const parts = value.split("-").map(Number);
+
+        if (parts.length !== 3 || parts.some(Number.isNaN)) {
+            return "";
+        }
+
+        const date = new Date(
+            Date.UTC(parts[0], parts[1] - 1, parts[2])
+        );
+
+        if (Number.isNaN(date.getTime())) {
+            return "";
+        }
+
+        return date.toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+            timeZone: "UTC"
+        });
+    };
+
+    const getPeriodProblem = () => {
+        const month = Number(monthInput.value);
+        const year = Number(yearInput.value);
+        const start = startInput.value;
+        const end = endInput.value;
+
+        if (!monthInput.value || month < 1 || month > 12) {
+            return "Select a valid payroll month.";
+        }
+
+        if (
+            !yearInput.value ||
+            !Number.isInteger(year) ||
+            year < 2000 ||
+            year > 2100
+        ) {
+            return "Enter a valid payroll year between 2000 and 2100.";
+        }
+
+        if (!start || !end) {
+            return "Select both the period start and period end dates.";
+        }
+
+        if (start > end) {
+            return "Period start cannot be after period end.";
+        }
+
+        const expectedStart =
+            year + "-" + String(month).padStart(2, "0") + "-01";
+
+        const lastDay = new Date(Date.UTC(year, month, 0))
+            .getUTCDate();
+
+        const expectedEnd =
+            year + "-" +
+            String(month).padStart(2, "0") + "-" +
+            String(lastDay).padStart(2, "0");
+
+        if (start < expectedStart || end > expectedEnd) {
+            return (
+                "The selected dates must fall within " +
+                monthNames[month - 1] + " " + year + "."
+            );
+        }
+
+        return "";
+    };
+
+    const updatePreview = () => {
+        const month = Number(monthInput.value);
+        const year = Number(yearInput.value);
+        const problem = getPeriodProblem();
+
+        if (overviewPeriod) {
+            overviewPeriod.textContent =
+                month >= 1 && month <= 12 && year
+                    ? monthNames[month - 1] + " " + year
+                    : "Select period";
+        }
+
+        if (preview) {
+            preview.classList.toggle("is-error", Boolean(problem));
+        }
+
+        if (problem) {
+            previewTitle.textContent = "Check payroll period";
+            previewText.textContent = problem;
+
+            startInput.setCustomValidity(
+                startInput.value && endInput.value && startInput.value > endInput.value
+                    ? "Period start cannot be after period end."
+                    : ""
+            );
+
+            endInput.setCustomValidity(
+                startInput.value && endInput.value && startInput.value > endInput.value
+                    ? "Period end must be on or after the start date."
+                    : ""
+            );
+
+            return false;
+        }
+
+        startInput.setCustomValidity("");
+        endInput.setCustomValidity("");
+
+        const first = formatDate(startInput.value);
+        const last = formatDate(endInput.value);
+
+        previewTitle.textContent =
+            monthNames[month - 1] + " " + year + " payroll period";
+
+        previewText.textContent =
+            first + " to " + last +
+            ". Confirm that attendance and salary inputs are ready before processing.";
+
+        return true;
+    };
+
+    [monthInput, yearInput, startInput, endInput].forEach((input) => {
+        input.addEventListener("change", updatePreview);
+        input.addEventListener("input", updatePreview);
+    });
+
+    form.addEventListener("submit", (event) => {
+        const validPeriod = updatePreview();
+
+        if (!form.checkValidity() || !validPeriod) {
+            event.preventDefault();
+            form.reportValidity();
+            return;
+        }
+
+        /*
+         * Do not calculate or save payroll in browser JavaScript.
+         * The server must perform the authoritative calculations,
+         * authorization, validation and duplicate checks.
+         */
+        if (submitButton) {
+            submitButton.disabled = true;
+
+            const label = submitButton.querySelector("span");
+
+            if (label) {
+                label.textContent = "Submitting...";
+            }
+        }
+    });
+
+    updatePreview();
+})();
+</script>

@@ -1,0 +1,1077 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>
+        <%= (locals.employee?.firstName
+            ? `${locals.employee.firstName} ${locals.employee.lastName || ""}`.trim()
+            : locals.employee?.name || "Employee Profile") %> - Gyansify HRMS
+    </title>
+
+    <meta name="theme-color" content="#ffffff">
+
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --primary-soft: #eff6ff;
+            --page-bg: #f7f8fc;
+            --surface: #ffffff;
+            --border: #e5e7eb;
+            --border-soft: #f0f2f5;
+            --text: #111827;
+            --text-secondary: #374151;
+            --muted: #6b7280;
+            --subtle: #9ca3af;
+            --green-bg: #ecfdf5;
+            --green-text: #047857;
+            --yellow-bg: #fffbeb;
+            --yellow-text: #b45309;
+            --blue-bg: #eff6ff;
+            --blue-text: #1d4ed8;
+            --red-bg: #fef2f2;
+            --red-text: #b91c1c;
+            --gray-bg: #f3f4f6;
+            --gray-text: #6b7280;
+            --radius: 14px;
+            --shadow: 0 2px 8px rgba(15, 23, 42, .035);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            background: var(--page-bg);
+            color: var(--text);
+            font-family: Inter, -apple-system, BlinkMacSystemFont,
+                "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.55;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a {
+            color: inherit;
+        }
+
+        button {
+            font: inherit;
+        }
+
+        .employee-profile {
+            width: 100%;
+            min-height: calc(100vh - 70px);
+            padding: 28px 32px 20px;
+        }
+
+        .profile-container {
+            width: 100%;
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        /* Page heading */
+
+        .page-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+            margin-bottom: 22px;
+        }
+
+        .heading-copy {
+            min-width: 0;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 9px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .breadcrumb a {
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            color: var(--primary);
+        }
+
+        .breadcrumb-separator {
+            color: #c4c9d2;
+        }
+
+        .breadcrumb-current {
+            color: var(--text-secondary);
+            overflow-wrap: anywhere;
+        }
+
+        .page-title {
+            margin: 0;
+            font-size: clamp(23px, 2vw, 29px);
+            font-weight: 750;
+            line-height: 1.25;
+            letter-spacing: -.7px;
+        }
+
+        .page-description {
+            margin: 7px 0 0;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .heading-actions {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            flex-shrink: 0;
+            padding-top: 20px;
+        }
+
+        /* Buttons */
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 39px;
+            padding: 9px 14px;
+            border: 1px solid transparent;
+            border-radius: 9px;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 650;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: background .15s ease, border-color .15s ease;
+        }
+
+        .button-primary {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .button-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .button-secondary {
+            background: var(--surface);
+            border-color: var(--border);
+            color: var(--text-secondary);
+        }
+
+        .button-secondary:hover {
+            background: #f9fafb;
+            border-color: #cbd5e1;
+        }
+
+        /* Cards */
+
+        .profile-card {
+            margin-bottom: 18px;
+            padding: 24px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            min-width: 0;
+        }
+
+        /* Employee overview */
+
+        .employee-overview {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .employee-avatar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 78px;
+            height: 78px;
+            flex: 0 0 78px;
+            border: 1px solid #dbeafe;
+            border-radius: 20px;
+            background: linear-gradient(145deg, #eff6ff, #dbeafe);
+            color: #1d4ed8;
+            font-size: 25px;
+            font-weight: 800;
+            letter-spacing: -.5px;
+        }
+
+        .employee-identity {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .employee-name {
+            margin: 0;
+            overflow-wrap: anywhere;
+            font-size: 22px;
+            line-height: 1.35;
+            font-weight: 750;
+            letter-spacing: -.4px;
+        }
+
+        .employee-subtitle {
+            margin: 5px 0 0;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .employee-meta {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .meta-pill {
+            display: inline-flex;
+            align-items: center;
+            min-height: 25px;
+            padding: 4px 9px;
+            border: 1px solid var(--border-soft);
+            border-radius: 7px;
+            background: #f9fafb;
+            color: var(--text-secondary);
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            width: fit-content;
+            max-width: 100%;
+            padding: 5px 10px;
+            border-radius: 20px;
+            background: var(--green-bg);
+            color: var(--green-text);
+            font-size: 11px;
+            font-weight: 700;
+            overflow-wrap: anywhere;
+        }
+
+        .status-badge::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            flex: 0 0 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .status-leave {
+            background: var(--yellow-bg);
+            color: var(--yellow-text);
+        }
+
+        .status-notice {
+            background: var(--blue-bg);
+            color: var(--blue-text);
+        }
+
+        .status-suspended {
+            background: var(--red-bg);
+            color: var(--red-text);
+        }
+
+        .status-inactive,
+        .status-exited,
+        .status-unknown {
+            background: var(--gray-bg);
+            color: var(--gray-text);
+        }
+
+        /* Section heading */
+
+        .section-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 22px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-soft);
+        }
+
+        .section-title {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 750;
+            letter-spacing: -.15px;
+        }
+
+        .section-description {
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .section-label {
+            color: var(--subtle);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .7px;
+            text-transform: uppercase;
+        }
+
+        /* Details */
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 25px 28px;
+        }
+
+        .detail {
+            min-width: 0;
+        }
+
+        .detail-label {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .45px;
+            text-transform: uppercase;
+        }
+
+        .detail-value {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 600;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        .detail-value a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .detail-value a:hover {
+            text-decoration: underline;
+        }
+
+        .muted-value {
+            color: var(--subtle);
+            font-weight: 450;
+        }
+
+        /* Organization summary */
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .summary-item {
+            min-width: 0;
+            padding: 16px;
+            border: 1px solid var(--border-soft);
+            border-radius: 11px;
+            background: #fafbfc;
+        }
+
+        .summary-label {
+            display: block;
+            margin-bottom: 7px;
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .4px;
+            text-transform: uppercase;
+        }
+
+        .summary-value {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 700;
+            overflow-wrap: anywhere;
+        }
+
+        /* Address */
+
+        .address-panel {
+            padding: 16px 18px;
+            border: 1px solid var(--border-soft);
+            border-radius: 10px;
+            background: #fafbfc;
+        }
+
+        .address-text {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 13px;
+            line-height: 1.8;
+            white-space: pre-line;
+            overflow-wrap: anywhere;
+        }
+
+        .empty-value {
+            color: var(--subtle);
+            font-weight: 450;
+        }
+
+        /* Bottom actions/footer */
+
+        .bottom-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin: 22px 0;
+        }
+
+        .bottom-actions-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 9px;
+        }
+
+        .page-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 14px 2px 22px;
+            color: var(--subtle);
+            font-size: 11px;
+        }
+
+        button:focus-visible,
+        a:focus-visible {
+            outline: 3px solid #93c5fd;
+            outline-offset: 3px;
+        }
+
+        /* Responsive */
+
+        @media (max-width: 1050px) {
+            .employee-profile {
+                padding: 24px;
+            }
+
+            .details-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .summary-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 700px) {
+            .employee-profile {
+                padding: 20px 16px;
+            }
+
+            .page-heading {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .heading-actions {
+                padding-top: 0;
+                width: 100%;
+            }
+
+            .heading-actions .button {
+                flex: 1;
+            }
+
+            .profile-card {
+                padding: 20px;
+                margin-bottom: 14px;
+            }
+
+            .employee-overview {
+                align-items: flex-start;
+                flex-wrap: wrap;
+                gap: 14px;
+            }
+
+            .employee-avatar {
+                width: 64px;
+                height: 64px;
+                flex-basis: 64px;
+                border-radius: 16px;
+                font-size: 21px;
+            }
+
+            .employee-identity {
+                flex-basis: calc(100% - 80px);
+            }
+
+            .employee-name {
+                font-size: 19px;
+            }
+
+            .details-grid {
+                gap: 21px 18px;
+            }
+
+            .bottom-actions {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .bottom-actions-group {
+                width: 100%;
+            }
+
+            .bottom-actions-group .button {
+                flex: 1;
+            }
+        }
+
+        @media (max-width: 460px) {
+            .employee-profile {
+                padding: 16px 12px;
+            }
+
+            .profile-card {
+                padding: 17px;
+                border-radius: 12px;
+            }
+
+            .details-grid,
+            .summary-grid {
+                grid-template-columns: minmax(0, 1fr);
+                gap: 18px;
+            }
+
+            .section-heading {
+                margin-bottom: 18px;
+            }
+
+            .heading-actions {
+                flex-direction: column;
+            }
+
+            .heading-actions .button {
+                width: 100%;
+                flex: auto;
+            }
+
+            .bottom-actions-group {
+                flex-direction: column;
+            }
+
+            .bottom-actions-group .button {
+                width: 100%;
+                flex: auto;
+            }
+
+            .page-footer {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        /* Print */
+
+        @media print {
+            body {
+                background: #fff;
+                color: #000;
+            }
+
+            .employee-profile {
+                padding: 0;
+            }
+
+            .heading-actions,
+            .bottom-actions,
+            .page-footer {
+                display: none !important;
+            }
+
+            .profile-card {
+                box-shadow: none;
+                border-color: #ddd;
+                break-inside: avoid;
+            }
+
+            .details-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            a {
+                text-decoration: none !important;
+                color: inherit !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<%
+    /*
+     * Safe template helpers.
+     * Populated references are displayed by their readable fields,
+     * not by their raw MongoDB ObjectId.
+     */
+    const employee = locals.employee || {};
+    const currentUser = locals.user || {};
+
+    const displayValue = (value, fields = ["name", "title", "label", "code"]) => {
+        if (value === null || value === undefined || value === "") {
+            return "";
+        }
+
+        if (typeof value === "string" || typeof value === "number") {
+            const text = String(value).trim();
+
+            // Avoid showing raw MongoDB ObjectIds as human-readable names.
+            if (/^[a-f\d]{24}$/i.test(text)) {
+                return "";
+            }
+
+            return text;
+        }
+
+        if (typeof value === "object") {
+            for (const field of fields) {
+                if (value[field] !== undefined && value[field] !== null && String(value[field]).trim()) {
+                    return String(value[field]).trim();
+                }
+            }
+        }
+
+        return "";
+    };
+
+    const formatDate = (value) => {
+        if (!value) return "Not provided";
+
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return "Not provided";
+
+        return date.toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+            timeZone: "Asia/Kolkata"
+        });
+    };
+
+    const firstName = String(employee.firstName || "").trim();
+    const lastName = String(employee.lastName || "").trim();
+    const employeeName =
+        `${firstName} ${lastName}`.trim() ||
+        displayValue(employee.name, ["name", "fullName"]) ||
+        "Employee";
+
+    const employeeInitials = employeeName
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map(part => part.charAt(0).toUpperCase())
+        .join("") || "E";
+
+    const rawStatus = displayValue(employee.status, ["name", "label"]) || "Unknown";
+    const normalizedStatus = rawStatus.toLowerCase().replace(/[_-]+/g, " ").trim();
+
+    let statusClass = "status-unknown";
+
+    if (normalizedStatus === "active") {
+        statusClass = "";
+    } else if (normalizedStatus.includes("leave")) {
+        statusClass = "status-leave";
+    } else if (normalizedStatus.includes("notice")) {
+        statusClass = "status-notice";
+    } else if (normalizedStatus === "suspended") {
+        statusClass = "status-suspended";
+    } else if (normalizedStatus === "inactive") {
+        statusClass = "status-inactive";
+    } else if (normalizedStatus === "exited" || normalizedStatus === "terminated") {
+        statusClass = "status-exited";
+    }
+
+    const departmentName = displayValue(employee.department, ["name", "departmentName", "title"]);
+    const departmentCode = displayValue(employee.department, ["code", "departmentCode"]);
+    const designationName = displayValue(employee.designation, ["name", "designationName", "title"]);
+    const designationCode = displayValue(employee.designation, ["code", "designationCode"]);
+    const branchName = displayValue(employee.branch, ["name", "branchName", "title"]);
+    const branchCity = displayValue(employee.branch, ["city", "cityName"]);
+    const locationName = displayValue(employee.location, ["name", "locationName", "title"]);
+    const locationCity = displayValue(employee.location, ["city", "cityName"]);
+
+    const manager = employee.reportingManager || employee.manager || null;
+    const managerName = displayValue(manager, ["name", "fullName", "firstName", "email"]) ||
+        (manager && typeof manager === "object"
+            ? `${manager.firstName || ""} ${manager.lastName || ""}`.trim()
+            : "") ||
+        (typeof manager === "string" && !/^[a-f\d]{24}$/i.test(manager) ? manager : "");
+
+    const organization = employee.organization || null;
+    const organizationName =
+        displayValue(organization, ["name", "legalName", "organizationName"]) ||
+        displayValue(employee.organizationName, ["name", "legalName"]) ||
+        "";
+
+    const employeeId = displayValue(employee.employeeId, ["employeeId", "code"]) ||
+        displayValue(employee._id, ["name"]) ||
+        "";
+
+    const employmentType = displayValue(employee.employmentType, ["name", "label", "title"]);
+    const email = displayValue(employee.email, ["email"]);
+    const personalEmail = displayValue(employee.personalEmail, ["personalEmail"]);
+    const phone = displayValue(employee.phone, ["phone", "mobile", "phoneNumber"]);
+    const gender = displayValue(employee.gender, ["name", "label"]);
+    const maritalStatus = displayValue(employee.maritalStatus, ["name", "label"]);
+    const dateOfBirth = formatDate(employee.dateOfBirth);
+    const joiningDate = formatDate(employee.joiningDate);
+
+    const addressValue = typeof employee.address === "string"
+        ? employee.address.trim()
+        : employee.address && typeof employee.address === "object"
+            ? [
+                employee.address.addressLine1,
+                employee.address.addressLine2,
+                employee.address.city,
+                employee.address.state,
+                employee.address.postalCode,
+                employee.address.country
+            ].filter(Boolean).join(", ")
+            : "";
+
+    const editUrl = employee._id
+        ? `/employees/${encodeURIComponent(String(employee._id))}/edit`
+        : "/employees";
+%>
+
+<% /* Keep this include only if your app uses this shared navbar partial. */ %>
+<%- include("../partials/navbar") %>
+
+<main class="employee-profile">
+    <div class="profile-container">
+
+        <div class="page-heading">
+            <div class="heading-copy">
+                <nav class="breadcrumb" aria-label="Breadcrumb">
+                    <a href="/dashboard">Dashboard</a>
+                    <span class="breadcrumb-separator">/</span>
+                    <a href="/employees">Employees</a>
+                    <span class="breadcrumb-separator">/</span>
+                    <span class="breadcrumb-current"><%= employeeName %></span>
+                </nav>
+
+                <h1 class="page-title">Employee Profile</h1>
+                <p class="page-description">
+                    View personal details, employment information and organization assignment.
+                </p>
+            </div>
+
+            <div class="heading-actions">
+                <button type="button" class="button button-secondary" onclick="window.print()">
+                    <span aria-hidden="true">⎙</span>
+                    Print Profile
+                </button>
+
+                <a href="<%= editUrl %>" class="button button-primary">
+                    <span aria-hidden="true">✎</span>
+                    Edit Employee
+                </a>
+            </div>
+        </div>
+
+        <!-- Employee overview -->
+        <section class="profile-card" aria-labelledby="employee-name">
+            <div class="employee-overview">
+                <div class="employee-avatar" aria-hidden="true">
+                    <%= employeeInitials %>
+                </div>
+
+                <div class="employee-identity">
+                    <h2 class="employee-name" id="employee-name">
+                        <%= employeeName %>
+                    </h2>
+
+                    <p class="employee-subtitle">
+                        <%= designationName || "Designation not assigned" %>
+                        <% if (departmentName) { %>
+                            · <%= departmentName %>
+                        <% } %>
+                    </p>
+
+                    <div class="employee-meta">
+                        <% if (employeeId) { %>
+                            <span class="meta-pill">Employee ID: <%= employeeId %></span>
+                        <% } %>
+
+                        <% if (employmentType) { %>
+                            <span class="meta-pill"><%= employmentType %></span>
+                        <% } %>
+
+                        <span class="status-badge <%= statusClass %>">
+                            <%= rawStatus %>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Personal information -->
+        <section class="profile-card" aria-labelledby="personal-heading">
+            <div class="section-heading">
+                <div>
+                    <h2 class="section-title" id="personal-heading">Personal Information</h2>
+                    <p class="section-description">Employee contact and personal details.</p>
+                </div>
+                <span class="section-label">01 / Personal</span>
+            </div>
+
+            <div class="details-grid">
+                <div class="detail">
+                    <span class="detail-label">First Name</span>
+                    <span class="detail-value"><%= firstName || "Not provided" %></span>
+                </div>
+
+                <div class="detail">
+                    <span class="detail-label">Last Name</span>
+                    <span class="detail-value"><%= lastName || "Not provided" %></span>
+                </div>
+
+                <div class="detail">
+                    <span class="detail-label">Date of Birth</span>
+                    <span class="detail-value"><%= dateOfBirth %></span>
+                </div>
+
+                <div class="detail">
+                    <span class="detail-label">Work Email</span>
+                    <span class="detail-value">
+                        <% if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { %>
+                            <a href="mailto:<%= email %>"><%= email %></a>
+                        <% } else { %>
+                            <span class="empty-value"><%= email || "Not provided" %></span>
+                        <% } %>
+                    </span>
+                </div>
+
+                <div class="detail">
+                    <span class="detail-label">Phone Number</span>
+                    <span class="detail-value">
+                        <% if (phone) { %>
+                            <a href="tel:<%= phone.replace(/[^\d+]/g, "") %>"><%= phone %></a>
+                        <% } else { %>
+                            <span class="empty-value">Not provided</span>
+                        <% } %>
+                    </span>
+                </div>
+
+                <div class="detail">
+                    <span class="detail-label">Personal Email</span>
+                    <span class="detail-value">
+                        <% if (personalEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(personalEmail)) { %>
+                            <a href="mailto:<%= personalEmail %>"><%= personalEmail %></a>
+                        <% } else { %>
+                            <span class="empty-value"><%= personalEmail || "Not provided" %></span>
+                        <% } %>
+                    </span>
+                </div>
+
+                <div class="detail">
+                    <span class="detail-label">Gender</span>
+                    <span class="detail-value"><%= gender || "Not provided" %></span>
+                </div>
+
+                <div class="detail">
+                    <span class="detail-label">Marital Status</span>
+                    <span class="detail-value"><%= maritalStatus || "Not provided" %></span>
+                </div>
+
+                <div class="detail">
+                    <span class="detail-label">Employee Record</span>
+                    <span class="detail-value"><%= employeeId || "ID not assigned" %></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Employment information -->
+        <section class="profile-card" aria-labelledby="employment-heading">
+            <div class="section-heading">
+                <div>
+                    <h2 class="section-title" id="employment-heading">Employment Information</h2>
+                    <p class="section-description">Role, reporting structure and work assignment.</p>
+                </div>
+                <span class="section-label">02 / Employment</span>
+            </div>
+
+            <div class="details-grid">
+                <div class="detail">
+                    <span class="detail-label">Department</span>
+                    <span class="detail-value"><%= departmentName || "Not assigned" %></span>
+                </div>
+
+                <div class="detail">
+                    <span class="detail-label">Department Code</span>
+                    <span class="detail-value"><%= departmentCode || "Not available" %></span>
+                </div>
+
+                <div class="detail">
+                    <span class="detail-label">Designation</span>
+                    <span class="detail-value"><%= designationName || "Not assigned" %></span>
+                </div>
+
+                <div class="detail">
+                    <span class="detail-label">Designation Code</span>
+                    <span class="detail-value"><%= designationCode || "Not available" %></span>
+                </div>
+
+                <div class="detail">
+                    <span class="detail-label">Designation Level</span>
+                    <span class="detail-value">
+                        <%= displayValue(employee.designation, ["level", "grade", "rank"]) || "Not available" %>
+                    </span>
+                </div>
+
+                <div class="detail">
+                    <span class="detail-label">Employment Type</span>
+                    <span class="detail-value"><%= employmentType || "Not provided" %></span>
+                </div>
+
+                <div class="detail">
+                    <span class="detail-label">Joining Date</span>
+                    <span class="detail-value"><%= joiningDate %></span>
+                </div>
+
+                <div class="detail">
+                    <span class="detail-label">Reporting Manager</span>
+                    <span class="detail-value"><%= managerName || "Not assigned" %></span>
+                </div>
+
+                <div class="detail">
+                    <span class="detail-label">Employment Status</span>
+                    <span class="detail-value">
+                        <span class="status-badge <%= statusClass %>"><%= rawStatus %></span>
+                    </span>
+                </div>
+
+                <div class="detail">
+                    <span class="detail-label">Branch</span>
+                    <span class="detail-value">
+                        <%= [branchName, branchCity].filter(Boolean).join(" · ") || "Not assigned" %>
+                    </span>
+                </div>
+
+                <div class="detail">
+                    <span class="detail-label">Work Location</span>
+                    <span class="detail-value">
+                        <%= [locationName, locationCity].filter(Boolean).join(" · ") || "Not assigned" %>
+                    </span>
+                </div>
+
+                <div class="detail">
+                    <span class="detail-label">Employee Since</span>
+                    <span class="detail-value"><%= joiningDate %></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Organization information -->
+        <section class="profile-card" aria-labelledby="organization-heading">
+            <div class="section-heading">
+                <div>
+                    <h2 class="section-title" id="organization-heading">Organization Information</h2>
+                    <p class="section-description">Organization and employee record summary.</p>
+                </div>
+                <span class="section-label">03 / Organization</span>
+            </div>
+
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <span class="summary-label">Organization</span>
+                    <span class="summary-value"><%= organizationName || "Not assigned" %></span>
+                </div>
+
+                <div class="summary-item">
+                    <span class="summary-label">Employee ID</span>
+                    <span class="summary-value"><%= employeeId || "Not assigned" %></span>
+                </div>
+
+                <div class="summary-item">
+                    <span class="summary-label">Employment Type</span>
+                    <span class="summary-value"><%= employmentType || "Not provided" %></span>
+                </div>
+
+                <div class="summary-item">
+                    <span class="summary-label">Joining Date</span>
+                    <span class="summary-value"><%= joiningDate %></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Address -->
+        <section class="profile-card" aria-labelledby="address-heading">
+            <div class="section-heading">
+                <div>
+                    <h2 class="section-title" id="address-heading">Address</h2>
+                    <p class="section-description">Current address saved in the employee record.</p>
+                </div>
+                <span class="section-label">04 / Contact</span>
+            </div>
+
+            <div class="address-panel">
+                <p class="address-text"><%= addressValue || "No address information has been added for this employee." %></p>
+            </div>
+        </section>
+
+        <!-- Bottom actions -->
+        <div class="bottom-actions">
+            <div class="bottom-actions-group">
+                <a href="/employees" class="button button-secondary">
+                    <span aria-hidden="true">←</span>
+                    Back to Employees
+                </a>
+            </div>
+
+            <div class="bottom-actions-group">
+                <button type="button" class="button button-secondary" onclick="window.print()">
+                    <span aria-hidden="true">⎙</span>
+                    Print Profile
+                </button>
+
+                <a href="<%= editUrl %>" class="button button-primary">
+                    <span aria-hidden="true">✎</span>
+                    Edit Employee
+                </a>
+            </div>
+        </div>
+
+        <footer class="page-footer">
+            <span>© <%= new Date().getFullYear() %> Gyansify HRMS</span>
+            <span>Human Resource Management System</span>
+        </footer>
+    </div>
+</main>
+</body>
+</html>

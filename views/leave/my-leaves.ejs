@@ -1,0 +1,901 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>My Leaves | Gyansify HRMS</title>
+    <link rel="stylesheet" href="/css/dashboard.css">
+
+    <style>
+        * { box-sizing: border-box; }
+
+        :root {
+            --leave-primary: #2563eb;
+            --leave-primary-dark: #1d4ed8;
+            --leave-text: #172033;
+            --leave-muted: #64748b;
+            --leave-border: #e5eaf2;
+            --leave-bg: #f5f7fb;
+            --leave-success: #15803d;
+            --leave-danger: #b91c1c;
+            --leave-warning: #b45309;
+        }
+
+        .my-leaves-page {
+            width: 100%;
+            max-width: 1500px;
+            margin: 0 auto;
+            padding: 30px 36px 45px;
+            color: var(--leave-text);
+        }
+
+        .my-leaves-page button,
+        .my-leaves-page select {
+            font: inherit;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 26px;
+        }
+
+        .breadcrumb {
+            margin: 0 0 10px;
+            color: var(--leave-muted);
+            font-size: 13px;
+        }
+
+        .breadcrumb a {
+            color: var(--leave-primary);
+            text-decoration: none;
+        }
+
+        .page-title-section h1 {
+            margin: 0;
+            font-size: clamp(25px, 3vw, 32px);
+            font-weight: 750;
+            letter-spacing: -.7px;
+        }
+
+        .page-title-section p {
+            margin: 9px 0 0;
+            color: var(--leave-muted);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 40px;
+            padding: 10px 16px;
+            border: 1px solid transparent;
+            border-radius: 9px;
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background .2s, border-color .2s;
+        }
+
+        .btn-primary {
+            background: var(--leave-primary);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: var(--leave-primary-dark);
+        }
+
+        .btn-outline {
+            border-color: var(--leave-border);
+            background: #fff;
+            color: var(--leave-text);
+        }
+
+        .btn-outline:hover { background: #f8fafc; }
+
+        .btn-cancel {
+            min-height: 32px;
+            padding: 6px 10px;
+            border-color: #fecaca;
+            background: #fff;
+            color: var(--leave-danger);
+            font-size: 11px;
+        }
+
+        .btn-cancel:hover { background: #fef2f2; }
+
+        .btn:disabled {
+            opacity: .6;
+            cursor: wait;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .summary-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            min-width: 0;
+            padding: 20px;
+            border: 1px solid var(--leave-border);
+            border-radius: 15px;
+            background: #fff;
+            box-shadow: 0 3px 12px rgb(15 23 42 / 3%);
+        }
+
+        .summary-label {
+            margin: 0;
+            color: var(--leave-muted);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .summary-value {
+            margin: 8px 0 0;
+            color: var(--leave-text);
+            font-size: 27px;
+            font-weight: 750;
+            letter-spacing: -.5px;
+        }
+
+        .summary-description {
+            margin: 5px 0 0;
+            color: #94a3b8;
+            font-size: 11px;
+        }
+
+        .summary-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 44px;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: #eff6ff;
+            color: var(--leave-primary);
+            font-size: 20px;
+        }
+
+        .summary-icon.orange { background: #fff7ed; color: #c2410c; }
+        .summary-icon.green { background: #f0fdf4; color: var(--leave-success); }
+        .summary-icon.red { background: #fef2f2; color: var(--leave-danger); }
+
+        .section-card {
+            margin-bottom: 24px;
+            overflow: hidden;
+            border: 1px solid var(--leave-border);
+            border-radius: 16px;
+            background: #fff;
+            box-shadow: 0 3px 12px rgb(15 23 42 / 3%);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 15px;
+            flex-wrap: wrap;
+            padding: 22px 24px;
+            border-bottom: 1px solid var(--leave-border);
+        }
+
+        .section-header h2 {
+            margin: 0;
+            font-size: 17px;
+            font-weight: 750;
+        }
+
+        .section-header p {
+            margin: 7px 0 0;
+            color: var(--leave-muted);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .balance-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 15px;
+            padding: 22px 24px;
+        }
+
+        .balance-card {
+            min-width: 0;
+            padding: 17px;
+            border: 1px solid var(--leave-border);
+            border-radius: 12px;
+            background: #fff;
+        }
+
+        .balance-card h3 {
+            margin: 0 0 13px;
+            color: #475569;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .balance-number {
+            font-size: 25px;
+            font-weight: 750;
+            letter-spacing: -.5px;
+        }
+
+        .balance-number small {
+            color: var(--leave-muted);
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .balance-meta {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            margin-top: 9px;
+            color: var(--leave-muted);
+            font-size: 11px;
+        }
+
+        .progress {
+            height: 7px;
+            margin-top: 13px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: #eef2f7;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 999px;
+            background: var(--leave-primary);
+            transition: width .3s ease;
+        }
+
+        .balance-footer {
+            margin-top: 9px;
+            color: #94a3b8;
+            font-size: 11px;
+        }
+
+        .filters {
+            display: flex;
+            align-items: end;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding: 17px 24px;
+            border-bottom: 1px solid var(--leave-border);
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .filter-group label {
+            color: var(--leave-muted);
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .filter-group select {
+            min-width: 155px;
+            min-height: 39px;
+            padding: 9px 12px;
+            border: 1px solid #d7deea;
+            border-radius: 8px;
+            background: #fff;
+            color: var(--leave-text);
+            font-size: 12px;
+            outline: none;
+        }
+
+        .filter-group select:focus {
+            border-color: var(--leave-primary);
+            box-shadow: 0 0 0 3px rgb(37 99 235 / 10%);
+        }
+
+        .filter-result {
+            margin-left: auto;
+            padding-bottom: 10px;
+            color: var(--leave-muted);
+            font-size: 12px;
+        }
+
+        .table-wrapper { width: 100%; overflow-x: auto; }
+
+        .leave-table {
+            width: 100%;
+            min-width: 900px;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .leave-table th {
+            padding: 14px 17px;
+            border-bottom: 1px solid var(--leave-border);
+            background: #f8fafc;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 750;
+            letter-spacing: .4px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .leave-table td {
+            padding: 16px 17px;
+            border-bottom: 1px solid #edf0f5;
+            color: #334155;
+            font-size: 13px;
+            vertical-align: middle;
+        }
+
+        .leave-table tbody tr:last-child td { border-bottom: none; }
+        .leave-table tbody tr:hover { background: #fbfdff; }
+
+        .leave-type {
+            color: var(--leave-text);
+            font-weight: 700;
+        }
+
+        .cell-meta {
+            margin-top: 4px;
+            color: #94a3b8;
+            font-size: 11px;
+        }
+
+        .leave-reason {
+            max-width: 220px;
+            overflow: hidden;
+            color: var(--leave-muted);
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .days-badge {
+            display: inline-flex;
+            justify-content: center;
+            min-width: 35px;
+            padding: 6px 9px;
+            border-radius: 8px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-weight: 750;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 750;
+            white-space: nowrap;
+        }
+
+        .status-badge::before {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            content: "";
+        }
+
+        .status-approved { background: #ecfdf3; color: #15803d; }
+        .status-pending { background: #fff7ed; color: #b45309; }
+        .status-rejected { background: #fef2f2; color: #b91c1c; }
+        .status-cancelled { background: #f1f5f9; color: #64748b; }
+        .status-default { background: #eff6ff; color: #1d4ed8; }
+
+        .table-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .no-action {
+            color: #94a3b8;
+            font-size: 12px;
+        }
+
+        .empty-state {
+            padding: 48px 20px;
+            text-align: center;
+        }
+
+        .empty-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 58px;
+            height: 58px;
+            margin: 0 auto 15px;
+            border-radius: 16px;
+            background: #eff6ff;
+            color: var(--leave-primary);
+            font-size: 25px;
+        }
+
+        .empty-state h3 { margin: 0; font-size: 16px; }
+        .empty-state p {
+            margin: 8px 0 18px;
+            color: var(--leave-muted);
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .empty-filter {
+            display: none;
+            padding: 28px;
+            color: var(--leave-muted);
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .alert {
+            margin-bottom: 20px;
+            padding: 13px 16px;
+            border: 1px solid;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .alert-success { border-color: #bbf7d0; background: #f0fdf4; color: #166534; }
+        .alert-error { border-color: #fecaca; background: #fef2f2; color: #991b1b; }
+
+        .policy-note {
+            display: flex;
+            align-items: flex-start;
+            gap: 11px;
+            padding: 16px 18px;
+            border: 1px solid #dbeafe;
+            border-radius: 12px;
+            background: #eff6ff;
+            color: #1e40af;
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        @media (max-width: 1150px) {
+            .my-leaves-page { padding: 24px 20px 35px; }
+            .summary-grid, .balance-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 650px) {
+            .my-leaves-page { padding: 20px 14px 30px; }
+            .summary-grid, .balance-grid { grid-template-columns: 1fr; gap: 10px; }
+            .summary-card { padding: 16px; }
+            .summary-value { font-size: 23px; }
+            .section-header { padding: 18px; }
+            .balance-grid { padding: 16px; }
+            .filters { padding: 16px 18px; align-items: stretch; }
+            .filter-group, .filter-group select { width: 100%; }
+            .filter-result { width: 100%; margin-left: 0; padding: 0; }
+            .page-header { align-items: flex-start; }
+            .page-header > .btn { width: 100%; }
+        }
+    </style>
+</head>
+
+<body>
+<%
+    const leaveList =
+    typeof leaves !== "undefined" && Array.isArray(leaves)
+        ? leaves
+        : [];
+
+const balanceList =
+    typeof leaveBalances !== "undefined" && Array.isArray(leaveBalances)
+        ? leaveBalances
+        : [];
+
+    const normalizeStatus = value =>
+        String(value || "Pending").trim().toLowerCase();
+
+    const formatDate = value => {
+        if (!value) return "—";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return "—";
+
+        return date.toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+            timeZone: "Asia/Kolkata"
+        });
+    };
+
+    const getStatusClass = status => {
+        const normalized = normalizeStatus(status);
+        const allowed = ["approved", "pending", "rejected", "cancelled"];
+        return allowed.includes(normalized) ? normalized : "default";
+    };
+
+    const getLeaveTypeName = leave => {
+        const type = leave.leaveType;
+        if (type && typeof type === "object") {
+            return type.name || type.title || "Leave";
+        }
+        return leave.leaveTypeName || leave.type || "Leave";
+    };
+
+    const getLeaveDays = leave =>
+        Number(leave.totalDays ?? leave.numberOfDays ?? leave.days ?? 0);
+
+    const getFromDate = leave =>
+        leave.fromDate || leave.startDate || leave.dateFrom;
+
+    const getToDate = leave =>
+        leave.toDate || leave.endDate || leave.dateTo;
+
+    const getBalanceTypeName = balance => {
+        const type = balance.leaveType;
+        if (type && typeof type === "object") {
+            return type.name || type.title || "Leave";
+        }
+        return balance.leaveTypeName || balance.name || "Leave";
+    };
+
+    const getAllocated = balance =>
+        Number(balance.allocated ?? balance.annualLimit ?? balance.total ?? 0);
+
+    const getUsed = balance =>
+        Number(balance.used ?? balance.usedDays ?? 0);
+
+    const getRemaining = balance =>
+        Number(balance.remaining ?? Math.max(getAllocated(balance) - getUsed(balance), 0));
+
+    const totalBalance = balanceList.reduce(
+        (sum, balance) => sum + getRemaining(balance), 0
+    );
+
+    const usedBalance = balanceList.reduce(
+        (sum, balance) => sum + getUsed(balance), 0
+    );
+
+    const pendingLeaves = leaveList.filter(
+        leave => normalizeStatus(leave.status) === "pending"
+    ).length;
+
+    const approvedLeaves = leaveList.filter(
+        leave => normalizeStatus(leave.status) === "approved"
+    ).length;
+
+    const currentYear = new Date().getFullYear();
+%>
+
+<main class="my-leaves-page">
+    <header class="page-header">
+        <div class="page-title-section">
+            <p class="breadcrumb">
+                <a href="/dashboard">Dashboard</a>
+                / Leave Management
+                / <strong>My Leaves</strong>
+            </p>
+
+            <h1>My Leaves</h1>
+            <p>View your leave balance, applications and leave history.</p>
+        </div>
+
+        <a href="/leave/apply" class="btn btn-primary">
+            <span aria-hidden="true">+</span>
+            Apply for Leave
+        </a>
+    </header>
+
+    <% if (typeof success !== "undefined" && success) { %>
+        <div class="alert alert-success" role="status"><%= success %></div>
+    <% } %>
+
+    <% if (typeof error !== "undefined" && error) { %>
+        <div class="alert alert-error" role="alert"><%= error %></div>
+    <% } %>
+
+    <section class="summary-grid" aria-label="Leave summary">
+        <article class="summary-card">
+            <div>
+                <p class="summary-label">Available Leave</p>
+                <p class="summary-value"><%= totalBalance %></p>
+                <p class="summary-description">Days remaining in displayed balances</p>
+            </div>
+            <div class="summary-icon">▦</div>
+        </article>
+
+        <article class="summary-card">
+            <div>
+                <p class="summary-label">Used Leave</p>
+                <p class="summary-value"><%= usedBalance %></p>
+                <p class="summary-description">Days recorded as used</p>
+            </div>
+            <div class="summary-icon green">✓</div>
+        </article>
+
+        <article class="summary-card">
+            <div>
+                <p class="summary-label">Pending Requests</p>
+                <p class="summary-value"><%= pendingLeaves %></p>
+                <p class="summary-description">Awaiting a decision</p>
+            </div>
+            <div class="summary-icon orange">◷</div>
+        </article>
+
+        <article class="summary-card">
+            <div>
+                <p class="summary-label">Approved Requests</p>
+                <p class="summary-value"><%= approvedLeaves %></p>
+                <p class="summary-description">Approved applications</p>
+            </div>
+            <div class="summary-icon green">✓</div>
+        </article>
+    </section>
+
+    <section class="section-card">
+        <div class="section-header">
+            <div>
+                <h2>Leave Balance</h2>
+                <p>Review your allocated, used and remaining leave days.</p>
+            </div>
+        </div>
+
+        <div class="balance-grid">
+            <% if (balanceList.length > 0) { %>
+                <% balanceList.forEach(balance => {
+                    const allocated = getAllocated(balance);
+                    const used = getUsed(balance);
+                    const remaining = getRemaining(balance);
+                    const percentage = allocated > 0
+                        ? Math.min(Math.round((used / allocated) * 100), 100)
+                        : 0;
+                %>
+                    <article class="balance-card">
+                        <h3><%= getBalanceTypeName(balance) %></h3>
+
+                        <div class="balance-number">
+                            <%= remaining %> <small>days left</small>
+                        </div>
+
+                        <div class="balance-meta">
+                            <span>Used: <%= used %></span>
+                            <span>Allocated: <%= allocated %></span>
+                        </div>
+
+                        <div
+                            class="progress"
+                            role="progressbar"
+                            aria-label="<%= getBalanceTypeName(balance) %> leave usage"
+                            aria-valuemin="0"
+                            aria-valuemax="100"
+                            aria-valuenow="<%= percentage %>"
+                        >
+                            <div class="progress-bar" style="width: <%= percentage %>%"></div>
+                        </div>
+
+                        <div class="balance-footer">
+                            <%= percentage %>% of allocated leave used
+                        </div>
+                    </article>
+                <% }) %>
+            <% } else { %>
+                <div style="grid-column:1/-1;padding:24px;text-align:center;color:#64748b;">
+                    No leave balance is available for your account yet.
+                    Please contact HR if you believe this is incorrect.
+                </div>
+            <% } %>
+        </div>
+    </section>
+
+    <section class="section-card">
+        <div class="section-header">
+            <div>
+                <h2>Leave History</h2>
+                <p>Track the status and dates of your leave applications.</p>
+            </div>
+        </div>
+
+        <div class="filters">
+            <div class="filter-group">
+                <label for="statusFilter">Request Status</label>
+                <select id="statusFilter">
+                    <option value="all">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="yearFilter">Leave Year</label>
+                <select id="yearFilter">
+                    <option value="all">All Years</option>
+                    <% for (let year = currentYear; year >= currentYear - 4; year--) { %>
+                        <option value="<%= year %>"><%= year %></option>
+                    <% } %>
+                </select>
+            </div>
+
+            <div class="filter-result" id="filterResult" aria-live="polite">
+                <%= leaveList.length %> request(s)
+            </div>
+        </div>
+
+        <% if (leaveList.length > 0) { %>
+            <div class="table-wrapper">
+                <table class="leave-table">
+                    <thead>
+                        <tr>
+                            <th>Leave Type</th>
+                            <th>From Date</th>
+                            <th>To Date</th>
+                            <th>Days</th>
+                            <th>Reason</th>
+                            <th>Applied On</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="leaveTableBody">
+                        <% leaveList.forEach(leave => {
+                            const status = normalizeStatus(leave.status);
+                            const fromDate = getFromDate(leave);
+                            const year = fromDate && !Number.isNaN(new Date(fromDate).getTime())
+                                ? new Date(fromDate).getFullYear()
+                                : "";
+                            const reason = leave.reason || leave.description || "—";
+                        %>
+                            <tr
+                                class="leave-row"
+                                data-status="<%= status %>"
+                                data-year="<%= year %>"
+                            >
+                                <td>
+                                    <div class="leave-type"><%= getLeaveTypeName(leave) %></div>
+                                    <% if (leave.leaveType && typeof leave.leaveType === "object" && leave.leaveType.code) { %>
+                                        <div class="cell-meta"><%= leave.leaveType.code %></div>
+                                    <% } %>
+                                </td>
+
+                                <td><%= formatDate(fromDate) %></td>
+                                <td><%= formatDate(getToDate(leave)) %></td>
+
+                                <td>
+                                    <span class="days-badge"><%= getLeaveDays(leave) %></span>
+                                </td>
+
+                                <td>
+                                    <div class="leave-reason" title="<%= reason %>">
+                                        <%= reason %>
+                                    </div>
+                                </td>
+
+                                <td><%= formatDate(leave.createdAt || leave.appliedAt) %></td>
+
+                                <td>
+                                    <span class="status-badge status-<%= getStatusClass(status) %>">
+                                        <%= status %>
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <% if (status === "pending") { %>
+                                        <form
+                                            method="POST"
+                                            action="/leave/my/<%= leave._id %>/cancel"
+                                            class="cancel-form"
+                                        >
+                                            <button class="btn btn-cancel" type="submit">
+                                                Cancel Request
+                                            </button>
+                                        </form>
+                                    <% } else { %>
+                                        <span class="no-action">—</span>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="empty-filter" id="emptyFilter">
+                No leave requests match the selected filters.
+            </div>
+        <% } else { %>
+            <div class="empty-state">
+                <div class="empty-icon" aria-hidden="true">▦</div>
+                <h3>No Leave Applications Yet</h3>
+                <p>Your submitted leave applications will appear here.</p>
+                <a href="/leave/apply" class="btn btn-primary">Apply for Leave</a>
+            </div>
+        <% } %>
+    </section>
+
+    <aside class="policy-note">
+        <span aria-hidden="true">ⓘ</span>
+        <div>
+            <strong>Leave policy reminder</strong><br>
+            Your available balance may depend on leave type, eligibility and company policy.
+            A pending request is not an approved leave. Contact HR if a balance or status
+            appears incorrect.
+        </div>
+    </aside>
+</main>
+
+<script>
+(() => {
+    const statusFilter = document.getElementById("statusFilter");
+    const yearFilter = document.getElementById("yearFilter");
+    const tableBody = document.getElementById("leaveTableBody");
+    const emptyFilter = document.getElementById("emptyFilter");
+    const filterResult = document.getElementById("filterResult");
+
+    function filterLeaves() {
+        if (!tableBody) return;
+
+        const selectedStatus = statusFilter?.value || "all";
+        const selectedYear = yearFilter?.value || "all";
+        const rows = tableBody.querySelectorAll(".leave-row");
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const statusMatches =
+                selectedStatus === "all" ||
+                row.dataset.status === selectedStatus;
+
+            const yearMatches =
+                selectedYear === "all" ||
+                row.dataset.year === selectedYear;
+
+            const visible = statusMatches && yearMatches;
+            row.hidden = !visible;
+
+            if (visible) visibleCount++;
+        });
+
+        if (emptyFilter) {
+            emptyFilter.style.display = visibleCount === 0 ? "block" : "none";
+        }
+
+        if (filterResult) {
+            filterResult.textContent = `${visibleCount} request(s)`;
+        }
+    }
+
+    statusFilter?.addEventListener("change", filterLeaves);
+    yearFilter?.addEventListener("change", filterLeaves);
+
+    document.querySelectorAll(".cancel-form").forEach(form => {
+        form.addEventListener("submit", event => {
+            const confirmed = window.confirm(
+                "Are you sure you want to cancel this pending leave request?"
+            );
+
+            if (!confirmed) event.preventDefault();
+        });
+    });
+})();
+</script>
+</body>
+</html>

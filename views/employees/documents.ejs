@@ -1,0 +1,1801 @@
+<%
+    /* =========================================================
+       SAFE LOCALS
+    ========================================================= */
+
+    const employeeData =
+        locals.employee && typeof locals.employee === "object"
+            ? locals.employee
+            : {};
+
+    const documentList =
+        Array.isArray(locals.documents)
+            ? locals.documents
+            : [];
+
+    const errorMessage =
+        locals.error || "";
+
+    const successMessage =
+        locals.success || "";
+
+
+    /* =========================================================
+       EMPLOYEE NAME
+    ========================================================= */
+
+    const firstName =
+        employeeData.firstName || "";
+
+    const lastName =
+        employeeData.lastName || "";
+
+    const employeeName =
+        `${firstName} ${lastName}`.trim() ||
+        employeeData.name ||
+        employeeData.email ||
+        "Employee";
+
+
+    /* =========================================================
+       INITIALS
+    ========================================================= */
+
+    const employeeInitials =
+        employeeName
+            .split(/\s+/)
+            .filter(Boolean)
+            .slice(0, 2)
+            .map(
+                part =>
+                    part
+                        .charAt(0)
+                        .toUpperCase()
+            )
+            .join("") || "E";
+
+
+    /* =========================================================
+       SAFE HELPERS
+    ========================================================= */
+
+    const getObjectName = (value) => {
+
+        if (!value) {
+            return "-";
+        }
+
+        if (
+            typeof value === "string"
+        ) {
+            return value;
+        }
+
+        if (
+            typeof value === "object"
+        ) {
+
+            return (
+                value.name ||
+                value.title ||
+                value.fullName ||
+                (
+                    `${value.firstName || ""} ${value.lastName || ""}`
+                ).trim() ||
+                value.code ||
+                "-"
+            );
+
+        }
+
+        return "-";
+
+    };
+
+
+    const getFileSize = (size) => {
+
+        const bytes =
+            Number(size || 0);
+
+        if (!bytes) {
+            return "-";
+        }
+
+        if (bytes < 1024) {
+            return `${bytes} B`;
+        }
+
+        if (bytes < 1024 * 1024) {
+
+            return (
+                bytes / 1024
+            ).toFixed(1) + " KB";
+
+        }
+
+        return (
+            bytes /
+            (1024 * 1024)
+        ).toFixed(1) + " MB";
+
+    };
+
+
+    const getDocumentIcon = (document) => {
+
+        const path =
+            String(
+                document?.filePath ||
+                document?.fileName ||
+                ""
+            ).toLowerCase();
+
+        if (path.endsWith(".pdf")) {
+            return "📕";
+        }
+
+        if (
+            path.endsWith(".jpg") ||
+            path.endsWith(".jpeg") ||
+            path.endsWith(".png")
+        ) {
+            return "🖼️";
+        }
+
+        return "📄";
+
+    };
+
+
+    const getDocumentDate = (document) => {
+
+        const dateValue =
+            document?.createdAt ||
+            document?.uploadedAt;
+
+        if (!dateValue) {
+            return "-";
+        }
+
+        const date =
+            new Date(dateValue);
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+            return "-";
+        }
+
+        return date.toLocaleDateString(
+            "en-IN",
+            {
+                day: "2-digit",
+                month: "short",
+                year: "numeric"
+            }
+        );
+
+    };
+
+%>
+
+
+<style>
+
+    /* =========================================================
+       DOCUMENT PAGE
+    ========================================================= */
+
+    .documents-page {
+        max-width: 1180px;
+        margin: 0 auto;
+    }
+
+
+    /* =========================================================
+       BREADCRUMB
+    ========================================================= */
+
+    .documents-breadcrumb {
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 7px;
+
+        margin-bottom: 18px;
+
+        color: #9ca3af;
+
+        font-size: 11px;
+
+    }
+
+    .documents-breadcrumb a {
+
+        color: #6b7280;
+
+        text-decoration: none;
+
+    }
+
+    .documents-breadcrumb a:hover {
+
+        color: #111827;
+
+        text-decoration: underline;
+
+    }
+
+    .documents-breadcrumb strong {
+
+        color: #374151;
+
+        font-weight: 600;
+
+    }
+
+
+    /* =========================================================
+       EMPLOYEE HEADER
+    ========================================================= */
+
+    .employee-header {
+
+        background: #ffffff;
+
+        border: 1px solid #e5e7eb;
+
+        border-radius: 12px;
+
+        padding: 20px;
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 14px;
+
+        margin-bottom: 20px;
+
+        box-shadow:
+            0 1px 2px rgba(0, 0, 0, 0.04);
+
+    }
+
+
+    .employee-avatar {
+
+        width: 54px;
+
+        height: 54px;
+
+        flex-shrink: 0;
+
+        border-radius: 12px;
+
+        background: #111827;
+
+        color: #ffffff;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        font-size: 17px;
+
+        font-weight: 700;
+
+    }
+
+
+    .employee-header-info {
+
+        min-width: 0;
+
+        flex: 1;
+
+    }
+
+
+    .employee-header-info h1 {
+
+        margin: 0;
+
+        color: #111827;
+
+        font-size: 19px;
+
+        line-height: 25px;
+
+        font-weight: 700;
+
+    }
+
+
+    .employee-header-info p {
+
+        margin: 4px 0 0;
+
+        color: #9ca3af;
+
+        font-size: 10px;
+
+    }
+
+
+    .employee-header-meta {
+
+        display: flex;
+
+        align-items: center;
+
+        flex-wrap: wrap;
+
+        gap: 7px;
+
+        margin-top: 7px;
+
+    }
+
+
+    .employee-meta-badge {
+
+        display: inline-flex;
+
+        align-items: center;
+
+        padding: 4px 8px;
+
+        border-radius: 20px;
+
+        background: #f3f4f6;
+
+        color: #6b7280;
+
+        font-size: 9px;
+
+        font-weight: 600;
+
+    }
+
+
+    .back-button {
+
+        display: inline-flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        gap: 6px;
+
+        padding: 9px 13px;
+
+        border: 1px solid #e5e7eb;
+
+        border-radius: 7px;
+
+        background: #ffffff;
+
+        color: #374151;
+
+        text-decoration: none;
+
+        font-size: 10px;
+
+        font-weight: 600;
+
+        white-space: nowrap;
+
+    }
+
+
+    .back-button:hover {
+
+        background: #f9fafb;
+
+        border-color: #d1d5db;
+
+    }
+
+
+    /* =========================================================
+       ALERTS
+    ========================================================= */
+
+    .document-alert {
+
+        padding: 12px 14px;
+
+        border-radius: 8px;
+
+        margin-bottom: 18px;
+
+        font-size: 11px;
+
+        line-height: 17px;
+
+    }
+
+
+    .document-alert.error {
+
+        background: #fef2f2;
+
+        border: 1px solid #fecaca;
+
+        color: #991b1b;
+
+    }
+
+
+    .document-alert.success {
+
+        background: #ecfdf5;
+
+        border: 1px solid #a7f3d0;
+
+        color: #047857;
+
+    }
+
+
+    /* =========================================================
+       CONTENT GRID
+    ========================================================= */
+
+    .content-grid {
+
+        display: grid;
+
+        grid-template-columns:
+            340px minmax(0, 1fr);
+
+        gap: 20px;
+
+        align-items: start;
+
+    }
+
+
+    /* =========================================================
+       CARD
+    ========================================================= */
+
+    .document-card {
+
+        background: #ffffff;
+
+        border: 1px solid #e5e7eb;
+
+        border-radius: 12px;
+
+        overflow: hidden;
+
+        box-shadow:
+            0 1px 2px rgba(0, 0, 0, 0.04);
+
+    }
+
+
+    .card-header {
+
+        padding: 17px 20px;
+
+        border-bottom: 1px solid #f0f1f3;
+
+    }
+
+
+    .card-header h2 {
+
+        margin: 0;
+
+        color: #111827;
+
+        font-size: 13px;
+
+        font-weight: 700;
+
+    }
+
+
+    .card-header p {
+
+        margin: 3px 0 0;
+
+        color: #9ca3af;
+
+        font-size: 10px;
+
+    }
+
+
+    .card-body {
+
+        padding: 20px;
+
+    }
+
+
+    /* =========================================================
+       FORM
+    ========================================================= */
+
+    .form-group {
+
+        margin-bottom: 16px;
+
+    }
+
+
+    .form-group:last-child {
+
+        margin-bottom: 0;
+
+    }
+
+
+    .form-label {
+
+        display: block;
+
+        margin-bottom: 6px;
+
+        color: #374151;
+
+        font-size: 10px;
+
+        font-weight: 600;
+
+    }
+
+
+    .required {
+
+        color: #dc2626;
+
+    }
+
+
+    .form-control {
+
+        width: 100%;
+
+        min-height: 40px;
+
+        box-sizing: border-box;
+
+        padding: 9px 10px;
+
+        border: 1px solid #e5e7eb;
+
+        border-radius: 7px;
+
+        outline: none;
+
+        background: #ffffff;
+
+        color: #111827;
+
+        font-size: 11px;
+
+        transition:
+            border-color 0.15s ease,
+            box-shadow 0.15s ease;
+
+    }
+
+
+    .form-control:focus {
+
+        border-color: #9ca3af;
+
+        box-shadow:
+            0 0 0 3px rgba(17, 24, 39, 0.05);
+
+    }
+
+
+    input[type="file"].form-control {
+
+        padding: 7px;
+
+        cursor: pointer;
+
+    }
+
+
+    .form-help {
+
+        display: block;
+
+        margin-top: 5px;
+
+        color: #9ca3af;
+
+        font-size: 9px;
+
+        line-height: 14px;
+
+    }
+
+
+    /* =========================================================
+       UPLOAD BUTTON
+    ========================================================= */
+
+    .upload-button {
+
+        width: 100%;
+
+        min-height: 40px;
+
+        padding: 9px 14px;
+
+        display: inline-flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        gap: 7px;
+
+        background: #111827;
+
+        color: #ffffff;
+
+        border: 0;
+
+        border-radius: 7px;
+
+        cursor: pointer;
+
+        font-size: 11px;
+
+        font-weight: 600;
+
+        transition:
+            background 0.15s ease,
+            transform 0.15s ease;
+
+    }
+
+
+    .upload-button:hover {
+
+        background: #1f2937;
+
+        transform: translateY(-1px);
+
+    }
+
+
+    .upload-button:disabled {
+
+        opacity: 0.6;
+
+        cursor: not-allowed;
+
+        transform: none;
+
+    }
+
+
+    /* =========================================================
+       DOCUMENT LIST HEADER
+    ========================================================= */
+
+    .document-list-header {
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+
+        gap: 15px;
+
+    }
+
+
+    .document-count {
+
+        min-width: 25px;
+
+        height: 23px;
+
+        padding: 0 7px;
+
+        display: inline-flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        border-radius: 20px;
+
+        background: #f3f4f6;
+
+        color: #6b7280;
+
+        font-size: 10px;
+
+        font-weight: 600;
+
+    }
+
+
+    /* =========================================================
+       DOCUMENT
+    ========================================================= */
+
+    .document {
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 15px;
+
+        padding: 15px 20px;
+
+        border-bottom: 1px solid #f0f1f3;
+
+        transition:
+            background 0.12s ease;
+
+    }
+
+
+    .document:hover {
+
+        background: #fafafa;
+
+    }
+
+
+    .document:last-child {
+
+        border-bottom: 0;
+
+    }
+
+
+    .document-info {
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 11px;
+
+        flex: 1;
+
+        min-width: 0;
+
+    }
+
+
+    .document-icon {
+
+        width: 40px;
+
+        height: 40px;
+
+        flex-shrink: 0;
+
+        background: #f3f4f6;
+
+        border-radius: 8px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        font-size: 17px;
+
+    }
+
+
+    .document-details {
+
+        min-width: 0;
+
+    }
+
+
+    .document-name {
+
+        color: #111827;
+
+        font-size: 11px;
+
+        font-weight: 600;
+
+        overflow: hidden;
+
+        text-overflow: ellipsis;
+
+        white-space: nowrap;
+
+    }
+
+
+    .document-meta {
+
+        color: #9ca3af;
+
+        font-size: 9px;
+
+        margin-top: 3px;
+
+        line-height: 14px;
+
+    }
+
+
+    .document-type {
+
+        display: inline-flex;
+
+        padding: 3px 6px;
+
+        margin-right: 4px;
+
+        border-radius: 4px;
+
+        background: #f3f4f6;
+
+        color: #6b7280;
+
+        font-size: 8px;
+
+        font-weight: 600;
+
+    }
+
+
+    /* =========================================================
+       ACTIONS
+    ========================================================= */
+
+    .document-actions {
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 7px;
+
+        flex-shrink: 0;
+
+    }
+
+
+    .view-button,
+    .delete-button {
+
+        min-height: 30px;
+
+        display: inline-flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        padding: 6px 9px;
+
+        border-radius: 6px;
+
+        font-size: 9px;
+
+        font-weight: 600;
+
+        cursor: pointer;
+
+    }
+
+
+    .view-button {
+
+        text-decoration: none;
+
+        border: 1px solid #e5e7eb;
+
+        background: #ffffff;
+
+        color: #374151;
+
+    }
+
+
+    .view-button:hover {
+
+        background: #f9fafb;
+
+    }
+
+
+    .delete-button {
+
+        border: 1px solid #fee2e2;
+
+        background: #fef2f2;
+
+        color: #dc2626;
+
+    }
+
+
+    .delete-button:hover {
+
+        background: #fee2e2;
+
+        border-color: #fecaca;
+
+    }
+
+
+    /* =========================================================
+       EMPTY STATE
+    ========================================================= */
+
+    .empty {
+
+        text-align: center;
+
+        padding: 60px 25px;
+
+        color: #9ca3af;
+
+        font-size: 11px;
+
+    }
+
+
+    .empty-icon {
+
+        width: 52px;
+
+        height: 52px;
+
+        margin: 0 auto 12px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        border-radius: 50%;
+
+        background: #f3f4f6;
+
+        font-size: 23px;
+
+    }
+
+
+    .empty h3 {
+
+        margin: 0 0 5px;
+
+        color: #374151;
+
+        font-size: 13px;
+
+    }
+
+
+    .empty p {
+
+        margin: 0;
+
+        color: #9ca3af;
+
+        font-size: 10px;
+
+    }
+
+
+    /* =========================================================
+       FOOTER
+    ========================================================= */
+
+    .documents-footer {
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+
+        gap: 20px;
+
+        padding: 22px 2px 8px;
+
+        color: #9ca3af;
+
+        font-size: 9px;
+
+    }
+
+
+    /* =========================================================
+       RESPONSIVE
+    ========================================================= */
+
+    @media (max-width: 950px) {
+
+        .content-grid {
+
+            grid-template-columns: 1fr;
+
+        }
+
+    }
+
+
+    @media (max-width: 650px) {
+
+        .employee-header {
+
+            align-items: flex-start;
+
+            flex-wrap: wrap;
+
+        }
+
+        .back-button {
+
+            width: 100%;
+
+        }
+
+        .document {
+
+            align-items: flex-start;
+
+            flex-direction: column;
+
+        }
+
+        .document-info {
+
+            width: 100%;
+
+        }
+
+        .document-actions {
+
+            width: 100%;
+
+        }
+
+        .document-actions a,
+        .document-actions form,
+        .document-actions button {
+
+            flex: 1;
+
+        }
+
+        .documents-footer {
+
+            flex-direction: column;
+
+            align-items: flex-start;
+
+            gap: 5px;
+
+        }
+
+    }
+
+</style>
+
+
+<div class="documents-page">
+
+
+    <!-- =====================================================
+         BREADCRUMB
+    ====================================================== -->
+
+    <div class="documents-breadcrumb">
+
+        <a href="/employees">
+            Employees
+        </a>
+
+        <span>›</span>
+
+        <a href="/employees/<%= employeeData._id %>">
+            <%= employeeName %>
+        </a>
+
+        <span>›</span>
+
+        <strong>
+            Documents
+        </strong>
+
+    </div>
+
+
+    <!-- =====================================================
+         EMPLOYEE HEADER
+    ====================================================== -->
+
+    <div class="employee-header">
+
+
+        <div class="employee-avatar">
+
+            <%= employeeInitials %>
+
+        </div>
+
+
+        <div class="employee-header-info">
+
+            <h1>
+                Employee Documents
+            </h1>
+
+            <p>
+
+                <%= employeeName %>
+
+                ·
+
+                <%= employeeData.employeeId || "No Employee ID" %>
+
+            </p>
+
+
+            <div class="employee-header-meta">
+
+
+                <span class="employee-meta-badge">
+
+                    <%= getObjectName(
+                        employeeData.designation
+                    ) %>
+
+                </span>
+
+
+                <span class="employee-meta-badge">
+
+                    <%= getObjectName(
+                        employeeData.department
+                    ) %>
+
+                </span>
+
+
+                <% if (employeeData.email) { %>
+
+                    <span class="employee-meta-badge">
+
+                        <%= employeeData.email %>
+
+                    </span>
+
+                <% } %>
+
+
+            </div>
+
+        </div>
+
+
+        <a
+            href="/employees/<%= employeeData._id %>"
+            class="back-button"
+        >
+            ← Employee Profile
+        </a>
+
+
+    </div>
+
+
+    <!-- =====================================================
+         ALERTS
+    ====================================================== -->
+
+    <% if (errorMessage) { %>
+
+        <div class="document-alert error">
+
+            <strong>
+                Unable to process document.
+            </strong>
+
+            <div>
+                <%= errorMessage %>
+            </div>
+
+        </div>
+
+    <% } %>
+
+
+    <% if (successMessage) { %>
+
+        <div class="document-alert success">
+
+            <strong>
+                Success.
+            </strong>
+
+            <div>
+                <%= successMessage %>
+            </div>
+
+        </div>
+
+    <% } %>
+
+
+    <!-- =====================================================
+         CONTENT
+    ====================================================== -->
+
+    <div class="content-grid">
+
+
+        <!-- =================================================
+             UPLOAD DOCUMENT
+        ================================================== -->
+
+        <section class="document-card">
+
+
+            <div class="card-header">
+
+                <h2>
+                    Upload Document
+                </h2>
+
+                <p>
+                    Add employee documents securely.
+                </p>
+
+            </div>
+
+
+            <div class="card-body">
+
+
+                <form
+                    id="documentUploadForm"
+                    action="/employees/<%= employeeData._id %>/documents/upload"
+                    method="POST"
+                    enctype="multipart/form-data"
+                >
+
+
+                    <!-- DOCUMENT TYPE -->
+
+                    <div class="form-group">
+
+                        <label
+                            class="form-label"
+                            for="documentType"
+                        >
+                            Document Type
+                            <span class="required">*</span>
+                        </label>
+
+
+                        <select
+                            id="documentType"
+                            name="documentType"
+                            class="form-control"
+                            required
+                        >
+
+                            <option value="">
+                                Select document type
+                            </option>
+
+                            <option value="Resume">
+                                Resume
+                            </option>
+
+                            <option value="Aadhaar">
+                                Aadhaar
+                            </option>
+
+                            <option value="PAN">
+                                PAN
+                            </option>
+
+                            <option value="Joining Letter">
+                                Joining Letter
+                            </option>
+
+                            <option value="Experience Letter">
+                                Experience Letter
+                            </option>
+
+                            <option value="Offer Letter">
+                                Offer Letter
+                            </option>
+
+                            <option value="Education Certificate">
+                                Education Certificate
+                            </option>
+
+                            <option value="Bank Document">
+                                Bank Document
+                            </option>
+
+                            <option value="Address Proof">
+                                Address Proof
+                            </option>
+
+                            <option value="Other">
+                                Other
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- DOCUMENT NAME -->
+
+                    <div class="form-group">
+
+                        <label
+                            class="form-label"
+                            for="documentName"
+                        >
+                            Document Name
+                            <span class="required">*</span>
+                        </label>
+
+
+                        <input
+                            type="text"
+                            id="documentName"
+                            name="documentName"
+                            class="form-control"
+                            placeholder="e.g. Resume 2026"
+                            maxlength="150"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- FILE -->
+
+                    <div class="form-group">
+
+                        <label
+                            class="form-label"
+                            for="document"
+                        >
+                            Select File
+                            <span class="required">*</span>
+                        </label>
+
+
+                        <input
+                            type="file"
+                            id="document"
+                            name="document"
+                            class="form-control"
+                            accept=".pdf,.jpg,.jpeg,.png"
+                            required
+                        >
+
+
+                        <span class="form-help">
+
+                            Supported formats:
+                            PDF, JPG, JPEG and PNG.
+                            Maximum file size: 5 MB.
+
+                        </span>
+
+                    </div>
+
+
+                    <!-- UPLOAD -->
+
+                    <button
+                        type="submit"
+                        class="upload-button"
+                        id="uploadButton"
+                    >
+
+                        ↑ Upload Document
+
+                    </button>
+
+
+                </form>
+
+
+            </div>
+
+
+        </section>
+
+
+        <!-- =================================================
+             DOCUMENT LIST
+        ================================================== -->
+
+        <section class="document-card">
+
+
+            <div class="card-header">
+
+
+                <div class="document-list-header">
+
+                    <div>
+
+                        <h2>
+                            Employee Documents
+                        </h2>
+
+                        <p>
+                            Documents uploaded for this employee.
+                        </p>
+
+                    </div>
+
+
+                    <span class="document-count">
+
+                        <%= documentList.length %>
+
+                    </span>
+
+                </div>
+
+
+            </div>
+
+
+            <% if (
+                documentList.length === 0
+            ) { %>
+
+
+                <!-- EMPTY -->
+
+                <div class="empty">
+
+
+                    <div class="empty-icon">
+                        📄
+                    </div>
+
+
+                    <h3>
+                        No documents uploaded
+                    </h3>
+
+
+                    <p>
+                        Upload the employee's first document
+                        using the form.
+                    </p>
+
+
+                </div>
+
+
+            <% } else { %>
+
+
+                <!-- DOCUMENTS -->
+
+                <div>
+
+
+                    <% documentList.forEach(
+                        document => {
+                    %>
+
+
+                        <div class="document">
+
+
+                            <div class="document-info">
+
+
+                                <div class="document-icon">
+
+                                    <%= getDocumentIcon(
+                                        document
+                                    ) %>
+
+                                </div>
+
+
+                                <div class="document-details">
+
+
+                                    <div
+                                        class="document-name"
+                                        title="<%= document.documentName || document.fileName || 'Document' %>"
+                                    >
+
+                                        <%= document.documentName ||
+                                            document.fileName ||
+                                            "Untitled Document"
+                                        %>
+
+                                    </div>
+
+
+                                    <div
+                                        class="document-meta"
+                                    >
+
+                                        <span
+                                            class="document-type"
+                                        >
+
+                                            <%= document.documentType ||
+                                                "Other"
+                                            %>
+
+                                        </span>
+
+
+                                        ·
+
+
+                                        <%= getFileSize(
+                                            document.fileSize
+                                        ) %>
+
+
+                                        ·
+
+
+                                        <%= getDocumentDate(
+                                            document
+                                        ) %>
+
+                                    </div>
+
+
+                                </div>
+
+
+                            </div>
+
+
+                            <div class="document-actions">
+
+
+                                <% if (
+                                    document.filePath
+                                ) { %>
+
+
+                                    <a
+                                        href="<%= document.filePath %>"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="view-button"
+                                    >
+                                        View
+                                    </a>
+
+
+                                <% } else { %>
+
+
+                                    <span
+                                        class="view-button"
+                                        style="
+                                            opacity:.5;
+                                            cursor:not-allowed;
+                                        "
+                                    >
+                                        No File
+                                    </span>
+
+
+                                <% } %>
+
+
+                                <form
+                                    action="/employees/<%= employeeData._id %>/documents/<%= document._id %>/delete"
+                                    method="POST"
+                                    class="delete-form"
+                                >
+
+                                    <button
+                                        type="submit"
+                                        class="delete-button"
+                                    >
+                                        Delete
+                                    </button>
+
+                                </form>
+
+
+                            </div>
+
+
+                        </div>
+
+
+                    <% }); %>
+
+
+                </div>
+
+
+            <% } %>
+
+
+        </section>
+
+
+    </div>
+
+
+    <!-- =====================================================
+         FOOTER
+    ====================================================== -->
+
+    <div class="documents-footer">
+
+        <span>
+
+            © <%= new Date().getFullYear() %>
+            Gyansify HRMS
+
+        </span>
+
+        <span>
+            Employee Document Management
+        </span>
+
+    </div>
+
+
+</div>
+
+
+<script>
+
+    /* =========================================================
+       UPLOAD FORM
+    ========================================================= */
+
+    const uploadForm =
+        document.getElementById(
+            "documentUploadForm"
+        );
+
+    const uploadButton =
+        document.getElementById(
+            "uploadButton"
+        );
+
+
+    if (
+        uploadForm &&
+        uploadButton
+    ) {
+
+        uploadForm.addEventListener(
+            "submit",
+            function() {
+
+                uploadButton.disabled = true;
+
+                uploadButton.innerHTML =
+                    "Uploading...";
+
+            }
+        );
+
+    }
+
+
+    /* =========================================================
+       FILE SIZE VALIDATION
+    ========================================================= */
+
+    const fileInput =
+        document.getElementById(
+            "document"
+        );
+
+
+    if (fileInput) {
+
+        fileInput.addEventListener(
+            "change",
+            function() {
+
+                const file =
+                    this.files?.[0];
+
+                if (!file) {
+                    return;
+                }
+
+
+                const maxSize =
+                    5 * 1024 * 1024;
+
+
+                if (
+                    file.size > maxSize
+                ) {
+
+                    alert(
+                        "File size must not exceed 5 MB."
+                    );
+
+                    this.value = "";
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /* =========================================================
+       DELETE CONFIRMATION
+    ========================================================= */
+
+    document
+        .querySelectorAll(".delete-form")
+        .forEach(
+            function(form) {
+
+                form.addEventListener(
+                    "submit",
+                    function(event) {
+
+                        const confirmed =
+                            confirm(
+                                "Are you sure you want to delete this document?\n\n" +
+                                "This action cannot be undone."
+                            );
+
+
+                        if (!confirmed) {
+
+                            event.preventDefault();
+
+                        }
+
+                    }
+                );
+
+            }
+        );
+
+</script>

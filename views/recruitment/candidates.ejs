@@ -1,0 +1,831 @@
+<%
+const recruitmentCandidates =
+    typeof candidates !== "undefined" &&
+    Array.isArray(candidates)
+        ? candidates
+        : [];
+
+const candidateStats =
+    typeof stats !== "undefined" && stats
+        ? stats
+        : {
+            total: recruitmentCandidates.length,
+            newCandidates: 0,
+            screening: 0,
+            shortlisted: 0,
+            hired: 0
+        };
+%>
+
+<style>
+
+.recruitment-page {
+    width: 100%;
+}
+
+.recruitment-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #94a3b8;
+    margin-bottom: 12px;
+}
+
+.recruitment-breadcrumb a:hover {
+    color: #4f46e5;
+}
+
+.recruitment-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 28px;
+}
+
+.recruitment-title {
+    font-size: 28px;
+    font-weight: 750;
+    color: #111827;
+    letter-spacing: -0.5px;
+}
+
+.recruitment-subtitle {
+    margin-top: 6px;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.recruitment-primary-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 40px;
+    padding: 0 16px;
+    background: #4f46e5;
+    color: #fff;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 650;
+    transition: .18s ease;
+}
+
+.recruitment-primary-btn:hover {
+    background: #4338ca;
+}
+
+.recruitment-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.recruitment-stat-card {
+    background: #fff;
+    border: 1px solid #e7eaf0;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.recruitment-stat-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.recruitment-stat-label {
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.recruitment-stat-number {
+    margin-top: 8px;
+    font-size: 27px;
+    font-weight: 750;
+    color: #111827;
+}
+
+.recruitment-stat-description {
+    margin-top: 5px;
+    font-size: 10px;
+    color: #94a3b8;
+}
+
+.recruitment-stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+
+.recruitment-stat-blue {
+    background: #eef2ff;
+}
+
+.recruitment-stat-purple {
+    background: #f3e8ff;
+}
+
+.recruitment-stat-orange {
+    background: #fff7ed;
+}
+
+.recruitment-stat-green {
+    background: #ecfdf5;
+}
+
+.recruitment-card {
+    background: #fff;
+    border: 1px solid #e7eaf0;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.recruitment-card-header {
+    padding: 20px 22px;
+    border-bottom: 1px solid #edf0f4;
+}
+
+.recruitment-card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #172033;
+}
+
+.recruitment-card-subtitle {
+    margin-top: 4px;
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+.recruitment-toolbar {
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid #edf0f4;
+    background: #fbfcfe;
+}
+
+.recruitment-search {
+    width: 280px;
+    height: 38px;
+    border: 1px solid #dfe4eb;
+    border-radius: 8px;
+    padding: 0 12px;
+    outline: none;
+    background: #fff;
+    color: #334155;
+    font-size: 12px;
+}
+
+.recruitment-search:focus {
+    border-color: #818cf8;
+    box-shadow: 0 0 0 3px rgba(99,102,241,.08);
+}
+
+.recruitment-filter {
+    height: 38px;
+    border: 1px solid #dfe4eb;
+    border-radius: 8px;
+    padding: 0 12px;
+    background: #fff;
+    color: #475569;
+    font-size: 12px;
+    outline: none;
+}
+
+.recruitment-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.recruitment-table {
+    width: 100%;
+    min-width: 850px;
+    border-collapse: collapse;
+}
+
+.recruitment-table th {
+    text-align: left;
+    padding: 13px 18px;
+    background: #fafbfc;
+    color: #7b8798;
+    font-size: 10px;
+    font-weight: 750;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    border-bottom: 1px solid #edf0f4;
+}
+
+.recruitment-table td {
+    padding: 16px 18px;
+    border-bottom: 1px solid #f0f2f5;
+    font-size: 12px;
+    color: #475569;
+}
+
+.recruitment-table tr:last-child td {
+    border-bottom: none;
+}
+
+.recruitment-table tbody tr:hover {
+    background: #fafbff;
+}
+
+.candidate-name {
+    font-weight: 650;
+    color: #1e293b;
+}
+
+.candidate-email {
+    margin-top: 3px;
+    font-size: 10px;
+    color: #94a3b8;
+}
+
+.candidate-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #eef2ff;
+    color: #4f46e5;
+    font-weight: 700;
+    font-size: 12px;
+}
+
+.candidate-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.recruitment-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 650;
+}
+
+.badge-applied {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.badge-screening {
+    background: #f5f3ff;
+    color: #7c3aed;
+}
+
+.badge-shortlisted {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.badge-interview {
+    background: #fff7ed;
+    color: #ea580c;
+}
+
+.badge-hired {
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.badge-rejected {
+    background: #fff1f2;
+    color: #e11d48;
+}
+
+.recruitment-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.recruitment-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    color: #64748b;
+    background: #fff;
+    font-size: 13px;
+}
+
+.recruitment-action:hover {
+    background: #f8fafc;
+    color: #4f46e5;
+}
+
+.recruitment-empty {
+    padding: 70px 20px;
+    text-align: center;
+}
+
+.recruitment-empty-icon {
+    width: 58px;
+    height: 58px;
+    margin: 0 auto;
+    border-radius: 50%;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 25px;
+}
+
+.recruitment-empty-title {
+    margin-top: 15px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.recruitment-empty-text {
+    margin-top: 5px;
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+@media(max-width: 1000px) {
+    .recruitment-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media(max-width: 700px) {
+    .recruitment-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .recruitment-title {
+        font-size: 23px;
+    }
+
+    .recruitment-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .recruitment-search {
+        width: 100%;
+    }
+}
+
+@media(max-width: 520px) {
+    .recruitment-stats {
+        grid-template-columns: 1fr;
+    }
+}
+
+</style>
+
+
+<div class="recruitment-page">
+
+    <div class="recruitment-header">
+
+        <div>
+
+            <div class="recruitment-breadcrumb">
+
+                <a href="/dashboard">
+                    Dashboard
+                </a>
+
+                <span>/</span>
+
+                <a href="/recruitment">
+                    Recruitment
+                </a>
+
+                <span>/</span>
+
+                <span>
+                    Candidates
+                </span>
+
+            </div>
+
+            <h1 class="recruitment-title">
+                Candidates
+            </h1>
+
+            <p class="recruitment-subtitle">
+                Manage candidates and track their recruitment progress.
+            </p>
+
+        </div>
+
+        <a
+            href="/recruitment/create"
+            class="recruitment-primary-btn"
+        >
+            <span>+</span>
+            Create Job Opening
+        </a>
+
+    </div>
+
+
+    <!-- STATS -->
+
+    <div class="recruitment-stats">
+
+        <div class="recruitment-stat-card">
+
+            <div class="recruitment-stat-top">
+
+                <div>
+
+                    <div class="recruitment-stat-label">
+                        Total Candidates
+                    </div>
+
+                    <div class="recruitment-stat-number">
+                        <%= candidateStats.total || 0 %>
+                    </div>
+
+                    <div class="recruitment-stat-description">
+                        All candidates
+                    </div>
+
+                </div>
+
+                <div class="recruitment-stat-icon recruitment-stat-blue">
+                    👥
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="recruitment-stat-card">
+
+            <div class="recruitment-stat-top">
+
+                <div>
+
+                    <div class="recruitment-stat-label">
+                        New Applications
+                    </div>
+
+                    <div class="recruitment-stat-number">
+                        <%= candidateStats.newCandidates || 0 %>
+                    </div>
+
+                    <div class="recruitment-stat-description">
+                        Recently applied
+                    </div>
+
+                </div>
+
+                <div class="recruitment-stat-icon recruitment-stat-purple">
+                    📥
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="recruitment-stat-card">
+
+            <div class="recruitment-stat-top">
+
+                <div>
+
+                    <div class="recruitment-stat-label">
+                        Screening
+                    </div>
+
+                    <div class="recruitment-stat-number">
+                        <%= candidateStats.screening || 0 %>
+                    </div>
+
+                    <div class="recruitment-stat-description">
+                        Under review
+                    </div>
+
+                </div>
+
+                <div class="recruitment-stat-icon recruitment-stat-orange">
+                    🔎
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="recruitment-stat-card">
+
+            <div class="recruitment-stat-top">
+
+                <div>
+
+                    <div class="recruitment-stat-label">
+                        Hired
+                    </div>
+
+                    <div class="recruitment-stat-number">
+                        <%= candidateStats.hired || 0 %>
+                    </div>
+
+                    <div class="recruitment-stat-description">
+                        Successfully hired
+                    </div>
+
+                </div>
+
+                <div class="recruitment-stat-icon recruitment-stat-green">
+                    ✓
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- CANDIDATE TABLE -->
+
+    <div class="recruitment-card">
+
+        <div class="recruitment-card-header">
+
+            <div class="recruitment-card-title">
+                Candidate Applications
+            </div>
+
+            <div class="recruitment-card-subtitle">
+                Review and manage candidate applications.
+            </div>
+
+        </div>
+
+
+        <div class="recruitment-toolbar">
+
+            <input
+                type="text"
+                id="candidateSearch"
+                class="recruitment-search"
+                placeholder="Search candidate..."
+                onkeyup="filterCandidates()"
+            >
+
+            <select
+                id="candidateStatus"
+                class="recruitment-filter"
+                onchange="filterCandidates()"
+            >
+                <option value="">All Status</option>
+                <option value="APPLIED">Applied</option>
+                <option value="SCREENING">Screening</option>
+                <option value="SHORTLISTED">Shortlisted</option>
+                <option value="INTERVIEW">Interview</option>
+                <option value="HIRED">Hired</option>
+                <option value="REJECTED">Rejected</option>
+            </select>
+
+        </div>
+
+
+        <% if (recruitmentCandidates.length === 0) { %>
+
+            <div class="recruitment-empty">
+
+                <div class="recruitment-empty-icon">
+                    👥
+                </div>
+
+                <div class="recruitment-empty-title">
+                    No candidates yet
+                </div>
+
+                <div class="recruitment-empty-text">
+                    Candidate applications will appear here once applications are received.
+                </div>
+
+            </div>
+
+        <% } else { %>
+
+            <div class="recruitment-table-wrapper">
+
+                <table class="recruitment-table">
+
+                    <thead>
+
+                        <tr>
+                            <th>Candidate</th>
+                            <th>Position</th>
+                            <th>Experience</th>
+                            <th>Applied Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="candidateTableBody">
+
+                        <% recruitmentCandidates.forEach(function(candidate) { %>
+
+                            <%
+                            const candidateName =
+                                candidate.name ||
+                                candidate.fullName ||
+                                "Candidate";
+
+                            const candidateStatus =
+                                String(candidate.status || "APPLIED").toUpperCase();
+
+                            const initial =
+                                candidateName.charAt(0).toUpperCase();
+
+                            let badgeClass = "badge-applied";
+
+                            if (candidateStatus === "SCREENING") {
+                                badgeClass = "badge-screening";
+                            }
+
+                            if (candidateStatus === "SHORTLISTED") {
+                                badgeClass = "badge-shortlisted";
+                            }
+
+                            if (candidateStatus === "INTERVIEW") {
+                                badgeClass = "badge-interview";
+                            }
+
+                            if (candidateStatus === "HIRED") {
+                                badgeClass = "badge-hired";
+                            }
+
+                            if (candidateStatus === "REJECTED") {
+                                badgeClass = "badge-rejected";
+                            }
+                            %>
+
+                            <tr
+                                class="candidate-row"
+                                data-name="<%= candidateName.toLowerCase() %>"
+                                data-status="<%= candidateStatus %>"
+                            >
+
+                                <td>
+
+                                    <div class="candidate-cell">
+
+                                        <div class="candidate-avatar">
+                                            <%= initial %>
+                                        </div>
+
+                                        <div>
+
+                                            <div class="candidate-name">
+                                                <%= candidateName %>
+                                            </div>
+
+                                            <div class="candidate-email">
+                                                <%= candidate.email || "No email provided" %>
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </td>
+
+                                <td>
+                                    <%= candidate.position ||
+                                        candidate.jobTitle ||
+                                        "Not specified" %>
+                                </td>
+
+                                <td>
+                                    <%= candidate.experience ||
+                                        "Not specified" %>
+                                </td>
+
+                                <td>
+
+                                    <%= candidate.appliedDate
+                                        ? new Date(candidate.appliedDate).toLocaleDateString("en-IN")
+                                        : "—" %>
+
+                                </td>
+
+                                <td>
+
+                                    <span class="recruitment-badge <%= badgeClass %>">
+                                        <%= candidateStatus %>
+                                    </span>
+
+                                </td>
+
+                                <td>
+
+                                    <div class="recruitment-actions">
+
+                                        <a
+                                            href="/recruitment/candidates/<%= candidate._id || "" %>"
+                                            class="recruitment-action"
+                                            title="View Candidate"
+                                        >
+                                            👁
+                                        </a>
+
+                                        <a
+                                            href="/recruitment/candidates/<%= candidate._id || "" %>/edit"
+                                            class="recruitment-action"
+                                            title="Edit Candidate"
+                                        >
+                                            ✎
+                                        </a>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+
+                        <% }); %>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        <% } %>
+
+    </div>
+
+</div>
+
+
+<script>
+
+function filterCandidates() {
+
+    const searchInput =
+        document.getElementById("candidateSearch");
+
+    const statusInput =
+        document.getElementById("candidateStatus");
+
+    const search =
+        searchInput.value.toLowerCase().trim();
+
+    const status =
+        statusInput.value.toUpperCase();
+
+    const rows =
+        document.querySelectorAll(".candidate-row");
+
+    rows.forEach(function(row) {
+
+        const name =
+            row.dataset.name || "";
+
+        const rowStatus =
+            row.dataset.status || "";
+
+        const searchMatch =
+            !search || name.includes(search);
+
+        const statusMatch =
+            !status || rowStatus === status;
+
+        row.style.display =
+            searchMatch && statusMatch
+                ? ""
+                : "none";
+
+    });
+
+}
+
+</script>

@@ -1,0 +1,855 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Apply for Leave | Gyansify HRMS</title>
+
+    <meta
+        name="description"
+        content="Submit and manage your leave request through Gyansify HRMS."
+    >
+
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #eff6ff;
+            --background: #f5f7fb;
+            --surface: #ffffff;
+            --text: #172033;
+            --muted: #64748b;
+            --border: #e2e8f0;
+            --success: #15803d;
+            --danger: #b91c1c;
+            --radius: 16px;
+            --shadow: 0 10px 35px rgba(15, 23, 42, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        a {
+            color: inherit;
+        }
+
+        .page {
+            max-width: 1040px;
+            margin: 0 auto;
+            padding: 32px 22px 48px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 26px;
+        }
+
+        .breadcrumb {
+            color: var(--muted);
+            font-size: 13px;
+            margin-bottom: 7px;
+        }
+
+        .breadcrumb a {
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            color: var(--primary);
+        }
+
+        .page-title {
+            margin: 0;
+            font-size: clamp(25px, 4vw, 32px);
+            font-weight: 750;
+            letter-spacing: -0.8px;
+        }
+
+        .page-description {
+            margin: 8px 0 0;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 15px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: white;
+            color: #334155;
+            text-decoration: none;
+            font-weight: 650;
+            font-size: 13px;
+            white-space: nowrap;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .back-link:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 290px;
+            align-items: start;
+            gap: 22px;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 24px 26px 20px;
+            border-bottom: 1px solid #edf0f5;
+        }
+
+        .card-header h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 750;
+        }
+
+        .card-header p {
+            margin: 6px 0 0;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .form-body {
+            padding: 26px;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0 0 20px;
+            font-size: 14px;
+            font-weight: 750;
+        }
+
+        .section-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 27px;
+            height: 27px;
+            border-radius: 8px;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .form-group {
+            margin-bottom: 21px;
+            min-width: 0;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #334155;
+        }
+
+        .required {
+            color: var(--danger);
+        }
+
+        input,
+        select,
+        textarea {
+            display: block;
+            width: 100%;
+            min-height: 45px;
+            padding: 11px 13px;
+            border: 1px solid #d5dce7;
+            border-radius: 9px;
+            background: white;
+            color: var(--text);
+            font: inherit;
+            font-size: 14px;
+            outline: none;
+            transition:
+                border-color 0.2s,
+                box-shadow 0.2s;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.11);
+        }
+
+        input:disabled,
+        select:disabled,
+        textarea:disabled {
+            background: #f8fafc;
+            cursor: not-allowed;
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .field-hint {
+            margin: 7px 0 0;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .dates {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .duration-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 15px 16px;
+            margin: 2px 0 24px;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 11px;
+        }
+
+        .duration-label {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .duration-caption {
+            margin-top: 3px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .duration-value {
+            color: var(--primary);
+            font-size: 23px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .form-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+            padding-top: 22px;
+            border-top: 1px solid #edf0f5;
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 44px;
+            padding: 11px 17px;
+            border: 1px solid transparent;
+            border-radius: 9px;
+            font: inherit;
+            font-size: 13px;
+            font-weight: 750;
+            text-decoration: none;
+            cursor: pointer;
+            transition:
+                background 0.2s,
+                transform 0.2s;
+        }
+
+        .button:active {
+            transform: translateY(1px);
+        }
+
+        .button-secondary {
+            background: white;
+            color: #334155;
+            border-color: #d5dce7;
+        }
+
+        .button-secondary:hover {
+            background: #f8fafc;
+        }
+
+        .button-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .button-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .button-primary:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        .sidebar {
+            display: grid;
+            gap: 18px;
+        }
+
+        .info-card {
+            padding: 21px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        .info-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            margin-bottom: 15px;
+            border-radius: 12px;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 20px;
+            font-weight: 800;
+        }
+
+        .info-card h3 {
+            margin: 0 0 8px;
+            font-size: 15px;
+        }
+
+        .info-card p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.75;
+        }
+
+        .steps {
+            display: grid;
+            gap: 17px;
+            margin-top: 19px;
+        }
+
+        .step {
+            display: flex;
+            gap: 11px;
+            align-items: flex-start;
+        }
+
+        .step-dot {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 27px;
+            height: 27px;
+            border-radius: 50%;
+            background: #eff6ff;
+            color: var(--primary);
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .step strong {
+            display: block;
+            margin-bottom: 3px;
+            font-size: 12px;
+        }
+
+        .step span {
+            display: block;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .notice {
+            padding: 14px;
+            border: 1px solid #dbeafe;
+            border-radius: 10px;
+            background: #eff6ff;
+            color: #1e40af;
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        .notice strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .empty-option {
+            color: var(--muted);
+        }
+
+        @media (max-width: 800px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .notice {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .page {
+                padding: 23px 14px 32px;
+            }
+
+            .topbar {
+                align-items: flex-start;
+            }
+
+            .back-link {
+                padding: 9px 11px;
+                font-size: 12px;
+            }
+
+            .card-header,
+            .form-body {
+                padding: 20px;
+            }
+
+            .dates,
+            .sidebar {
+                grid-template-columns: 1fr;
+            }
+
+            .form-actions {
+                flex-direction: column-reverse;
+                align-items: stretch;
+            }
+
+            .form-actions .button {
+                width: 100%;
+            }
+
+            .notice {
+                grid-column: auto;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                transition: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="page">
+
+        <header class="topbar">
+            <div>
+                <div class="breadcrumb">
+                    <a href="/dashboard">Dashboard</a>
+                    &nbsp; / &nbsp;
+                    <a href="/leave">Leave Management</a>
+                    &nbsp; / &nbsp;
+                    Apply Leave
+                </div>
+
+                <h1 class="page-title">Apply for Leave</h1>
+
+                <p class="page-description">
+                    Submit your leave request for review and approval.
+                </p>
+            </div>
+
+            <a href="/leave" class="back-link">
+                <span aria-hidden="true">&larr;</span>
+                Back to Leaves
+            </a>
+        </header>
+
+        <div class="layout">
+
+            <section class="card">
+                <div class="card-header">
+                    <h2>Leave Request Form</h2>
+                    <p>Complete all required fields before submitting.</p>
+                </div>
+
+                <form
+                    id="leaveForm"
+                    method="POST"
+                    action="/leave/apply"
+                >
+                    <div class="form-body">
+
+                        <h3 class="section-title">
+                            <span class="section-number">01</span>
+                            Leave Information
+                        </h3>
+
+                        <div class="form-group">
+                            <label for="leaveType">
+                                Leave Type <span class="required">*</span>
+                            </label>
+
+                            <select
+                                id="leaveType"
+                                name="leaveType"
+                                required
+                            >
+                                <option value="">Select leave type</option>
+
+                                <% if (Array.isArray(leaveTypes) && leaveTypes.length > 0) { %>
+                                    <% leaveTypes.forEach(type => { %>
+                                        <option
+                                            value="<%= type._id %>"
+                                            data-paid="<%= type.isPaid ? 'true' : 'false' %>"
+                                        >
+                                            <%= type.name %>
+                                            — <%= type.isPaid ? "Paid" : "Unpaid" %>
+                                        </option>
+                                    <% }) %>
+                                <% } %>
+                            </select>
+
+                            <% if (!Array.isArray(leaveTypes) || leaveTypes.length === 0) { %>
+                                <p class="field-hint">
+                                    No active leave types are available. Please contact HR.
+                                </p>
+                            <% } else { %>
+                                <p class="field-hint">
+                                    Select the leave category that best matches your request.
+                                </p>
+                            <% } %>
+                        </div>
+
+                        <h3 class="section-title" style="margin-top: 28px;">
+                            <span class="section-number">02</span>
+                            Leave Dates
+                        </h3>
+
+                        <div class="dates">
+                            <div class="form-group">
+                                <label for="fromDate">
+                                    From Date <span class="required">*</span>
+                                </label>
+
+                                <input
+                                    type="date"
+                                    id="fromDate"
+                                    name="fromDate"
+                                    required
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="toDate">
+                                    To Date <span class="required">*</span>
+                                </label>
+
+                                <input
+                                    type="date"
+                                    id="toDate"
+                                    name="toDate"
+                                    required
+                                >
+                            </div>
+                        </div>
+
+                        <div
+                            class="duration-box"
+                            aria-live="polite"
+                        >
+                            <div>
+                                <div class="duration-label">Requested Duration</div>
+                                <div class="duration-caption" id="durationCaption">
+                                    Select your start and end dates.
+                                </div>
+                            </div>
+
+                            <div class="duration-value" id="durationValue">
+                                &mdash;
+                            </div>
+                        </div>
+
+                        <h3 class="section-title">
+                            <span class="section-number">03</span>
+                            Reason for Leave
+                        </h3>
+
+                        <div class="form-group">
+                            <label for="reason">
+                                Leave Reason <span class="required">*</span>
+                            </label>
+
+                            <textarea
+                                id="reason"
+                                name="reason"
+                                placeholder="Briefly explain the reason for your leave..."
+                                minlength="3"
+                                maxlength="1000"
+                                required
+                            ></textarea>
+
+                            <p class="field-hint">
+                                Provide enough detail for your manager or HR to review your request.
+                            </p>
+                        </div>
+
+                        <div class="form-actions">
+                            <a
+                                href="/leave"
+                                class="button button-secondary"
+                            >
+                                Cancel
+                            </a>
+
+                            <button
+                                type="submit"
+                                class="button button-primary"
+                                id="submitButton"
+                                <%= !Array.isArray(leaveTypes) || leaveTypes.length === 0 ? "disabled" : "" %>
+                            >
+                                <span id="submitText">Submit Leave Request</span>
+                                <span aria-hidden="true">&rarr;</span>
+                            </button>
+                        </div>
+
+                    </div>
+                </form>
+            </section>
+
+            <aside class="sidebar">
+
+                <section class="info-card">
+                    <div class="info-icon" aria-hidden="true">&#10003;</div>
+
+                    <h3>How it works</h3>
+
+                    <p>
+                        Your leave request will be submitted for review.
+                        You can check its status from your leave requests page.
+                    </p>
+
+                    <div class="steps">
+                        <div class="step">
+                            <div class="step-dot">1</div>
+                            <div>
+                                <strong>Submit Request</strong>
+                                <span>Choose a leave type and dates.</span>
+                            </div>
+                        </div>
+
+                        <div class="step">
+                            <div class="step-dot">2</div>
+                            <div>
+                                <strong>Review</strong>
+                                <span>Your authorized reviewer checks the request.</span>
+                            </div>
+                        </div>
+
+                        <div class="step">
+                            <div class="step-dot">3</div>
+                            <div>
+                                <strong>Track Status</strong>
+                                <span>View pending, approved or rejected requests.</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="info-card">
+                    <div class="info-icon" aria-hidden="true">&#9432;</div>
+
+                    <h3>Before submitting</h3>
+
+                    <p>
+                        Double-check your dates and leave category.
+                        The duration shown here counts calendar days,
+                        including weekends.
+                    </p>
+                </section>
+
+                <div class="notice">
+                    <strong>Important</strong>
+                    Submitting a request does not mean your leave has
+                    been approved. Wait for the official status update
+                    before treating your leave as approved.
+                </div>
+
+            </aside>
+
+        </div>
+    </main>
+
+    <script>
+        (() => {
+            "use strict";
+
+            const form = document.getElementById("leaveForm");
+            const leaveType = document.getElementById("leaveType");
+            const fromDate = document.getElementById("fromDate");
+            const toDate = document.getElementById("toDate");
+            const reason = document.getElementById("reason");
+
+            const durationValue = document.getElementById("durationValue");
+            const durationCaption = document.getElementById("durationCaption");
+            const submitButton = document.getElementById("submitButton");
+            const submitText = document.getElementById("submitText");
+
+            // Use local calendar dates rather than UTC date parsing.
+            const parseLocalDate = (value) => {
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+                    return null;
+                }
+
+                const [year, month, day] = value.split("-").map(Number);
+                const date = new Date(year, month - 1, day);
+
+                if (
+                    date.getFullYear() !== year ||
+                    date.getMonth() !== month - 1 ||
+                    date.getDate() !== day
+                ) {
+                    return null;
+                }
+
+                return date;
+            };
+
+            const updateDuration = () => {
+                const start = parseLocalDate(fromDate.value);
+                const end = parseLocalDate(toDate.value);
+
+                toDate.setCustomValidity("");
+
+                if (!start || !end) {
+                    durationValue.textContent = "\u2014";
+                    durationCaption.textContent =
+                        "Select your start and end dates.";
+                    return;
+                }
+
+                if (end < start) {
+                    toDate.setCustomValidity(
+                        "The end date cannot be before the start date."
+                    );
+
+                    durationValue.textContent = "\u2014";
+                    durationCaption.textContent =
+                        "End date must be on or after the start date.";
+                    return;
+                }
+
+                const startUTC = Date.UTC(
+                    start.getFullYear(),
+                    start.getMonth(),
+                    start.getDate()
+                );
+
+                const endUTC = Date.UTC(
+                    end.getFullYear(),
+                    end.getMonth(),
+                    end.getDate()
+                );
+
+                const days =
+                    Math.round((endUTC - startUTC) / 86400000) + 1;
+
+                durationValue.textContent = String(days);
+                durationCaption.textContent =
+                    days === 1 ? "1 calendar day requested." :
+                    days + " calendar days requested.";
+            };
+
+            fromDate.addEventListener("change", () => {
+                toDate.min = fromDate.value || "";
+                updateDuration();
+            });
+
+            toDate.addEventListener("change", updateDuration);
+
+            form.addEventListener("submit", (event) => {
+                updateDuration();
+
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    form.reportValidity();
+                    return;
+                }
+
+                if (!leaveType.value) {
+                    event.preventDefault();
+                    leaveType.focus();
+                    return;
+                }
+
+                if (!reason.value.trim()) {
+                    event.preventDefault();
+                    reason.setCustomValidity(
+                        "Please enter a reason for leave."
+                    );
+                    reason.reportValidity();
+                    return;
+                }
+
+                reason.setCustomValidity("");
+
+                submitButton.disabled = true;
+                submitText.textContent = "Submitting...";
+            });
+
+            reason.addEventListener("input", () => {
+                reason.setCustomValidity("");
+            });
+
+            updateDuration();
+        })();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,1536 @@
+
+<%
+    const money = (value) => {
+        const amount = Number(value ?? 0);
+
+        return (Number.isFinite(amount) ? amount : 0)
+            .toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+    };
+
+    const dateLabel = (value) => {
+        if (!value) return "-";
+
+        const date = new Date(value);
+
+        if (Number.isNaN(date.getTime())) return "-";
+
+        return date.toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+            timeZone: "UTC"
+        });
+    };
+
+    const employeeName = (employee) => {
+        if (!employee || typeof employee !== "object") {
+            return "Employee reference not populated";
+        }
+
+        const fullName = [
+            employee.firstName,
+            employee.middleName,
+            employee.lastName
+        ]
+            .filter((part) => typeof part === "string" && part.trim())
+            .map((part) => part.trim())
+            .join(" ");
+
+        return employee.fullName || fullName || "Name not available";
+    };
+
+    const employeeList = Array.isArray(employees) ? employees : [];
+    const salaryList = Array.isArray(salaryStructures)
+        ? salaryStructures
+        : [];
+
+    const hasEmployees = employeeList.length > 0;
+
+    const pageError = typeof error !== "undefined" ? error : null;
+    const pageSuccess = typeof success !== "undefined" ? success : null;
+%>
+
+<section class="salary-page">
+
+    <!-- PAGE HEADER -->
+
+    <header class="salary-heading">
+        <div>
+            <div class="salary-eyebrow">PAYROLL MANAGEMENT</div>
+            <h1>Salary Structures</h1>
+            <p>
+                Manage employee compensation, allowances, deductions
+                and effective salary revisions.
+            </p>
+        </div>
+
+        <a href="/payroll" class="salary-back-link">
+            <span aria-hidden="true">←</span>
+            Payroll Dashboard
+        </a>
+    </header>
+
+    <!-- FEEDBACK MESSAGES -->
+
+    <% if (pageError) { %>
+        <div class="salary-alert salary-alert-error" role="alert">
+            <span class="salary-alert-icon" aria-hidden="true">!</span>
+            <div>
+                <strong>Unable to complete the request</strong>
+                <p><%= pageError %></p>
+            </div>
+        </div>
+    <% } %>
+
+    <% if (pageSuccess) { %>
+        <div class="salary-alert salary-alert-success" role="status">
+            <span class="salary-alert-icon" aria-hidden="true">✓</span>
+            <div>
+                <strong>Success</strong>
+                <p><%= pageSuccess %></p>
+            </div>
+        </div>
+    <% } %>
+
+    <!-- CREATE SALARY STRUCTURE -->
+
+    <section class="salary-card" id="create-salary">
+
+        <div class="salary-card-header">
+            <div class="salary-heading-icon">
+                <span aria-hidden="true">₹</span>
+            </div>
+
+            <div class="salary-card-heading-content">
+                <h2>Create Salary Structure</h2>
+                <p>
+                    Configure the employee's monthly compensation and deductions.
+                </p>
+            </div>
+
+            <span class="salary-tag">COMPENSATION</span>
+        </div>
+
+        <form
+            method="POST"
+            action="/payroll/salary-structures"
+            class="salary-form"
+            id="salaryStructureForm"
+        >
+
+            <div class="salary-form-grid">
+
+                <!-- EMPLOYEE -->
+
+                <div class="salary-field">
+                    <label for="employee">
+                        Employee <span class="required-mark">*</span>
+                    </label>
+
+                    <select
+                        id="employee"
+                        name="employee"
+                        required
+                        <%= !hasEmployees ? "disabled" : "" %>
+                    >
+                        <option value="">Select employee</option>
+
+                        <% employeeList.forEach((employee) => { %>
+                            <option value="<%= employee._id %>">
+                                <%= employeeName(employee) %>
+                                <% if (employee.employeeId) { %>
+                                    — <%= employee.employeeId %>
+                                <% } %>
+                            </option>
+                        <% }) %>
+                    </select>
+
+                    <% if (!hasEmployees) { %>
+                        <p class="salary-help">
+                            No eligible employees found. Add an employee or check
+                            your organization and employee status filters.
+                        </p>
+                    <% } else { %>
+                        <p class="salary-help">
+                            Select the employee whose compensation you want to configure.
+                        </p>
+                    <% } %>
+                </div>
+
+                <!-- EFFECTIVE DATE -->
+
+                <div class="salary-field">
+                    <label for="effectiveFrom">
+                        Effective From <span class="required-mark">*</span>
+                    </label>
+
+                    <input
+                        type="date"
+                        id="effectiveFrom"
+                        name="effectiveFrom"
+                        required
+                    >
+
+                    <p class="salary-help">
+                        Future dates can be used to schedule salary revisions.
+                    </p>
+                </div>
+
+                <!-- INFORMATION -->
+
+                <div class="salary-field salary-field-note">
+                    <span class="note-icon" aria-hidden="true">i</span>
+
+                    <div>
+                        <strong>Monthly compensation</strong>
+                        <p>
+                            Enter monthly amounts in Indian rupees. Verify applicable
+                            deductions before saving.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- EARNINGS -->
+
+                <div class="salary-section-title">
+                    <span class="section-number">01</span>
+
+                    <div>
+                        <h3>Earnings</h3>
+                        <p>Basic pay and additional allowances</p>
+                    </div>
+                </div>
+
+                <div class="salary-field">
+                    <label for="basicSalary">
+                        Basic Salary (₹) <span class="required-mark">*</span>
+                    </label>
+
+                    <input
+                        type="number"
+                        id="basicSalary"
+                        name="basicSalary"
+                        min="0"
+                        step="0.01"
+                        inputmode="decimal"
+                        placeholder="0.00"
+                        required
+                    >
+                </div>
+
+                <div class="salary-field">
+                    <label for="hra">House Rent Allowance (₹)</label>
+                    <input
+                        type="number"
+                        id="hra"
+                        name="hra"
+                        min="0"
+                        step="0.01"
+                        inputmode="decimal"
+                        value="0"
+                    >
+                </div>
+
+                <div class="salary-field">
+                    <label for="conveyanceAllowance">Conveyance Allowance (₹)</label>
+                    <input
+                        type="number"
+                        id="conveyanceAllowance"
+                        name="conveyanceAllowance"
+                        min="0"
+                        step="0.01"
+                        inputmode="decimal"
+                        value="0"
+                    >
+                </div>
+
+                <div class="salary-field">
+                    <label for="medicalAllowance">Medical Allowance (₹)</label>
+                    <input
+                        type="number"
+                        id="medicalAllowance"
+                        name="medicalAllowance"
+                        min="0"
+                        step="0.01"
+                        inputmode="decimal"
+                        value="0"
+                    >
+                </div>
+
+                <div class="salary-field">
+                    <label for="specialAllowance">Special Allowance (₹)</label>
+                    <input
+                        type="number"
+                        id="specialAllowance"
+                        name="specialAllowance"
+                        min="0"
+                        step="0.01"
+                        inputmode="decimal"
+                        value="0"
+                    >
+                </div>
+
+                <div class="salary-field">
+                    <label for="otherAllowance">Other Allowance (₹)</label>
+                    <input
+                        type="number"
+                        id="otherAllowance"
+                        name="otherAllowance"
+                        min="0"
+                        step="0.01"
+                        inputmode="decimal"
+                        value="0"
+                    >
+                </div>
+
+                <!-- DEDUCTIONS -->
+
+                <div class="salary-section-title">
+                    <span class="section-number section-number-deduction">02</span>
+
+                    <div>
+                        <h3>Deductions</h3>
+                        <p>Employee deductions configured for this salary</p>
+                    </div>
+                </div>
+
+                <div class="salary-field">
+                    <label for="providentFund">Provident Fund (₹)</label>
+                    <input
+                        type="number"
+                        id="providentFund"
+                        name="providentFund"
+                        min="0"
+                        step="0.01"
+                        inputmode="decimal"
+                        value="0"
+                    >
+                </div>
+
+                <div class="salary-field">
+                    <label for="professionalTax">Professional Tax (₹)</label>
+                    <input
+                        type="number"
+                        id="professionalTax"
+                        name="professionalTax"
+                        min="0"
+                        step="0.01"
+                        inputmode="decimal"
+                        value="0"
+                    >
+                </div>
+
+                <div class="salary-field">
+                    <label for="tds">TDS (₹)</label>
+                    <input
+                        type="number"
+                        id="tds"
+                        name="tds"
+                        min="0"
+                        step="0.01"
+                        inputmode="decimal"
+                        value="0"
+                    >
+                </div>
+
+                <div class="salary-field">
+                    <label for="otherDeduction">Other Deduction (₹)</label>
+                    <input
+                        type="number"
+                        id="otherDeduction"
+                        name="otherDeduction"
+                        min="0"
+                        step="0.01"
+                        inputmode="decimal"
+                        value="0"
+                    >
+                </div>
+
+            </div>
+
+            <!-- LIVE SALARY SUMMARY -->
+
+            <div class="salary-preview">
+
+                <div class="salary-preview-heading">
+                    <div>
+                        <h3>Salary Summary</h3>
+                        <p>
+                            Live calculation using the amounts entered above.
+                        </p>
+                    </div>
+
+                    <span class="preview-tag">LIVE ESTIMATE</span>
+                </div>
+
+                <div class="salary-preview-grid">
+
+                    <div class="preview-item">
+                        <span>Gross Salary</span>
+                        <strong id="previewGross">₹0.00</strong>
+                        <small>Basic + allowances</small>
+                    </div>
+
+                    <div class="preview-item">
+                        <span>Total Deductions</span>
+                        <strong id="previewDeductions">₹0.00</strong>
+                        <small>All configured deductions</small>
+                    </div>
+
+                    <div class="preview-item preview-net">
+                        <span>Net Salary</span>
+                        <strong id="previewNet">₹0.00</strong>
+                        <small>Gross − deductions</small>
+                    </div>
+
+                </div>
+
+                <p
+                    id="salaryCalculationMessage"
+                    class="salary-calculation-message"
+                    aria-live="polite"
+                >
+                    Estimate only. The server validates all submitted amounts.
+                </p>
+
+            </div>
+
+            <!-- FORM ACTIONS -->
+
+            <div class="salary-form-footer">
+
+                <p>
+                    Fields marked <span class="required-mark">*</span> are required.
+                </p>
+
+                <button
+                    type="submit"
+                    class="salary-submit-button"
+                    <%= !hasEmployees ? "disabled" : "" %>
+                >
+                    Save Salary Structure
+                    <span aria-hidden="true">→</span>
+                </button>
+
+            </div>
+
+        </form>
+    </section>
+
+    <!-- EXISTING SALARY STRUCTURES -->
+
+    <section class="salary-card">
+
+        <div class="salary-card-header">
+            <div class="salary-heading-icon salary-heading-icon-list">
+                <span aria-hidden="true">≡</span>
+            </div>
+
+            <div class="salary-card-heading-content">
+                <h2>Existing Salary Structures</h2>
+                <p>
+                    Review saved compensation details and effective dates.
+                </p>
+            </div>
+
+            <span class="salary-tag">
+                <%= salaryList.length %> RECORDS
+            </span>
+        </div>
+
+        <% if (salaryList.length === 0) { %>
+
+            <div class="salary-empty">
+                <div class="empty-icon" aria-hidden="true">₹</div>
+
+                <h3>No salary structures found</h3>
+
+                <p>
+                    Select an employee above to configure their first salary structure.
+                </p>
+
+                <% if (hasEmployees) { %>
+                    <a href="#create-salary" class="salary-empty-link">
+                        Create salary structure →
+                    </a>
+                <% } %>
+            </div>
+
+        <% } else { %>
+
+            <div class="salary-table-wrapper">
+
+                <table class="salary-table">
+
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Basic Salary</th>
+                            <th>Gross Salary</th>
+                            <th>Deductions</th>
+                            <th>Net Salary</th>
+                            <th>Effective From</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <% salaryList.forEach((salary) => { %>
+                            <tr>
+
+                                <!-- EMPLOYEE DETAILS -->
+
+                                <td class="salary-employee-cell">
+
+                                    <div class="salary-employee-name">
+                                        <%= employeeName(salary.employee) %>
+                                    </div>
+
+                                    <% if (
+                                        salary.employee &&
+                                        typeof salary.employee === "object"
+                                    ) { %>
+
+                                        <div class="salary-employee-email">
+                                            <%= salary.employee.email || "No email available" %>
+                                        </div>
+
+                                        <% if (salary.employee.employeeId) { %>
+                                            <div class="salary-employee-id">
+                                                ID: <%= salary.employee.employeeId %>
+                                            </div>
+                                        <% } %>
+
+                                    <% } else { %>
+
+                                        <div class="salary-employee-warning">
+                                            Employee record could not be populated.
+                                        </div>
+
+                                    <% } %>
+
+                                </td>
+
+                                <!-- BASIC -->
+
+                                <td>
+                                    ₹<%= money(salary.basicSalary) %>
+                                </td>
+
+                                <!-- GROSS -->
+
+                                <td class="salary-amount">
+                                    ₹<%= money(salary.grossSalary) %>
+                                </td>
+
+                                <!-- DEDUCTIONS -->
+
+                                <td>
+                                    ₹<%= money(salary.totalDeductions) %>
+                                </td>
+
+                                <!-- NET -->
+
+                                <td class="salary-amount salary-net-amount">
+                                    ₹<%= money(salary.netSalary) %>
+                                </td>
+
+                                <!-- DATE -->
+
+                                <td>
+                                    <%= dateLabel(salary.effectiveFrom) %>
+                                </td>
+
+                                <!-- STATUS -->
+
+                                <td>
+                                    <% if (
+                                        salary.isFutureEffective ||
+                                        (
+                                            salary.effectiveFrom &&
+                                            new Date(salary.effectiveFrom).getTime() >
+                                                new Date().setHours(0, 0, 0, 0)
+                                        )
+                                    ) { %>
+
+                                        <span class="salary-status status-scheduled">
+                                            Scheduled
+                                        </span>
+
+                                    <% } else if (salary.isCurrent) { %>
+
+                                        <span class="salary-status status-current">
+                                            Current
+                                        </span>
+
+                                    <% } else if (
+                                        String(salary.status || "").toUpperCase() === "INACTIVE"
+                                    ) { %>
+
+                                        <span class="salary-status status-inactive">
+                                            Inactive
+                                        </span>
+
+                                    <% } else { %>
+
+                                        <span class="salary-status status-active">
+                                            Active
+                                        </span>
+
+                                    <% } %>
+                                </td>
+
+                            </tr>
+                        <% }) %>
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <div class="salary-table-footer">
+                <span>
+                    Showing <%= salaryList.length %> salary structure record(s).
+                </span>
+
+                <span>
+                    All amounts are displayed in Indian rupees (₹).
+                </span>
+            </div>
+
+        <% } %>
+
+    </section>
+
+</section>
+
+<style>
+    .salary-page {
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 28px 32px;
+        color: #111827;
+    }
+
+    .salary-page *,
+    .salary-page *::before,
+    .salary-page *::after {
+        box-sizing: border-box;
+    }
+
+    .salary-eyebrow {
+        margin-bottom: 7px;
+        color: #2563eb;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1.4px;
+    }
+
+    .salary-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 18px;
+        margin-bottom: 25px;
+    }
+
+    .salary-heading h1 {
+        margin: 0;
+        font-size: 26px;
+        letter-spacing: -.6px;
+        font-weight: 800;
+    }
+
+    .salary-heading > div > p {
+        margin: 7px 0 0;
+        color: #6b7280;
+        font-size: 13px;
+        line-height: 1.7;
+    }
+
+    .salary-back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        padding: 11px 14px;
+        border: 1px solid #e5e7eb;
+        border-radius: 9px;
+        background: #fff;
+        color: #374151;
+        font-size: 12px;
+        font-weight: 650;
+        text-decoration: none;
+        transition: background .18s, border-color .18s;
+    }
+
+    .salary-back-link:hover {
+        background: #f9fafb;
+        border-color: #cbd5e1;
+    }
+
+    .salary-alert {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 20px;
+        padding: 14px 16px;
+        border: 1px solid;
+        border-radius: 10px;
+    }
+
+    .salary-alert-error {
+        border-color: #fecaca;
+        background: #fff7f7;
+        color: #991b1b;
+    }
+
+    .salary-alert-success {
+        border-color: #a7f3d0;
+        background: #f0fdf4;
+        color: #065f46;
+    }
+
+    .salary-alert-icon {
+        display: grid;
+        flex-shrink: 0;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: rgb(255 255 255 / 75%);
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .salary-alert strong {
+        font-size: 12px;
+    }
+
+    .salary-alert p {
+        margin: 4px 0 0;
+        font-size: 12px;
+        line-height: 1.6;
+        overflow-wrap: anywhere;
+    }
+
+    .salary-card {
+        margin-bottom: 24px;
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+        border-radius: 13px;
+        background: #fff;
+        box-shadow: 0 3px 12px rgb(15 23 42 / 3%);
+    }
+
+    .salary-card-header {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        padding: 20px 22px;
+        border-bottom: 1px solid #f0f1f3;
+    }
+
+    .salary-heading-icon {
+        display: grid;
+        flex-shrink: 0;
+        place-items: center;
+        width: 42px;
+        height: 42px;
+        border: 1px solid #dbeafe;
+        border-radius: 10px;
+        background: #eff6ff;
+        color: #2563eb;
+        font-size: 19px;
+        font-weight: 800;
+    }
+
+    .salary-heading-icon-list {
+        border-color: #e5e7eb;
+        background: #f9fafb;
+        color: #4b5563;
+    }
+
+    .salary-card-heading-content {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .salary-card-header h2 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 750;
+    }
+
+    .salary-card-header p {
+        margin: 5px 0 0;
+        color: #9ca3af;
+        font-size: 11px;
+        line-height: 1.6;
+    }
+
+    .salary-tag,
+    .preview-tag {
+        padding: 7px 9px;
+        border-radius: 6px;
+        background: #f3f4f6;
+        color: #6b7280;
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: .45px;
+        white-space: nowrap;
+    }
+
+    .salary-form {
+        padding: 23px;
+    }
+
+    .salary-form-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 19px;
+    }
+
+    .salary-field {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .salary-field label {
+        margin-bottom: 8px;
+        color: #374151;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1.5;
+    }
+
+    .required-mark {
+        color: #dc2626;
+    }
+
+    .salary-field input,
+    .salary-field select {
+        width: 100%;
+        min-height: 43px;
+        padding: 10px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        background: #fff;
+        color: #111827;
+        font-family: inherit;
+        font-size: 12px;
+        outline: none;
+        transition: border-color .18s, box-shadow .18s;
+    }
+
+    .salary-field input:hover,
+    .salary-field select:hover {
+        border-color: #9ca3af;
+    }
+
+    .salary-field input:focus,
+    .salary-field select:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgb(37 99 235 / 11%);
+    }
+
+    .salary-field input:disabled,
+    .salary-field select:disabled {
+        cursor: not-allowed;
+        background: #f9fafb;
+        color: #9ca3af;
+    }
+
+    .salary-help {
+        margin: 7px 0 0;
+        color: #9ca3af;
+        font-size: 10px;
+        line-height: 1.65;
+    }
+
+    .salary-field-note {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 11px;
+        padding: 13px;
+        border: 1px solid #dbeafe;
+        border-radius: 9px;
+        background: #f8fbff;
+    }
+
+    .note-icon {
+        display: grid;
+        flex-shrink: 0;
+        place-items: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: #dbeafe;
+        color: #1d4ed8;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .salary-field-note strong {
+        display: block;
+        margin: 1px 0 5px;
+        color: #1e40af;
+        font-size: 11px;
+    }
+
+    .salary-field-note p {
+        margin: 0;
+        color: #4b5563;
+        font-size: 10px;
+        line-height: 1.65;
+    }
+
+    .salary-section-title {
+        display: flex;
+        align-items: center;
+        grid-column: 1 / -1;
+        gap: 11px;
+        padding-top: 17px;
+        margin-top: 2px;
+        border-top: 1px solid #f0f1f3;
+    }
+
+    .section-number {
+        display: grid;
+        flex-shrink: 0;
+        place-items: center;
+        width: 35px;
+        height: 35px;
+        border-radius: 9px;
+        background: #eff6ff;
+        color: #2563eb;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .section-number-deduction {
+        background: #fff7ed;
+        color: #c2410c;
+    }
+
+    .salary-section-title h3 {
+        margin: 0;
+        font-size: 12px;
+        font-weight: 800;
+    }
+
+    .salary-section-title p {
+        margin: 4px 0 0;
+        color: #9ca3af;
+        font-size: 10px;
+        line-height: 1.5;
+    }
+
+    .salary-preview {
+        margin-top: 27px;
+        padding: 20px;
+        border: 1px solid #dbeafe;
+        border-radius: 11px;
+        background: #f8fbff;
+    }
+
+    .salary-preview-heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .salary-preview-heading h3 {
+        margin: 0;
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .salary-preview-heading p {
+        margin: 5px 0 0;
+        color: #6b7280;
+        font-size: 11px;
+        line-height: 1.6;
+    }
+
+    .preview-tag {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+
+    .salary-preview-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 13px;
+        margin-top: 19px;
+    }
+
+    .preview-item {
+        min-width: 0;
+        padding: 15px;
+        border: 1px solid #e5e7eb;
+        border-radius: 9px;
+        background: #fff;
+    }
+
+    .preview-item > span {
+        display: block;
+        color: #6b7280;
+        font-size: 10px;
+        font-weight: 700;
+    }
+
+    .preview-item strong {
+        display: block;
+        margin-top: 9px;
+        overflow-wrap: anywhere;
+        color: #111827;
+        font-size: clamp(17px, 2vw, 22px);
+        font-weight: 800;
+        letter-spacing: -.4px;
+    }
+
+    .preview-item small {
+        display: block;
+        margin-top: 6px;
+        color: #9ca3af;
+        font-size: 9px;
+        line-height: 1.5;
+    }
+
+    .preview-net {
+        border-color: #a7f3d0;
+        background: #f0fdf4;
+    }
+
+    .preview-net strong {
+        color: #047857;
+    }
+
+    .salary-calculation-message {
+        margin: 14px 0 0;
+        color: #6b7280;
+        font-size: 10px;
+        line-height: 1.6;
+    }
+
+    .salary-calculation-message.is-error {
+        color: #b91c1c;
+        font-weight: 700;
+    }
+
+    .salary-calculation-message.is-success {
+        color: #047857;
+    }
+
+    .salary-form-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-top: 23px;
+        padding-top: 19px;
+        border-top: 1px solid #f0f1f3;
+    }
+
+    .salary-form-footer p {
+        margin: 0;
+        color: #6b7280;
+        font-size: 10px;
+        line-height: 1.6;
+    }
+
+    .salary-submit-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        min-height: 43px;
+        padding: 11px 17px;
+        border: 1px solid #2563eb;
+        border-radius: 8px;
+        background: #2563eb;
+        color: #fff;
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 750;
+        cursor: pointer;
+        transition: background .18s, transform .18s;
+    }
+
+    .salary-submit-button:hover:not(:disabled) {
+        background: #1d4ed8;
+    }
+
+    .salary-submit-button:active:not(:disabled) {
+        transform: translateY(1px);
+    }
+
+    .salary-submit-button:disabled {
+        opacity: .5;
+        cursor: not-allowed;
+    }
+
+    .salary-empty {
+        padding: 48px 20px;
+        text-align: center;
+    }
+
+    .empty-icon {
+        display: grid;
+        place-items: center;
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 14px;
+        border: 1px solid #dbeafe;
+        border-radius: 13px;
+        background: #eff6ff;
+        color: #2563eb;
+        font-size: 23px;
+        font-weight: 700;
+    }
+
+    .salary-empty h3 {
+        margin: 0;
+        font-size: 13px;
+        font-weight: 750;
+    }
+
+    .salary-empty p {
+        margin: 8px 0 0;
+        color: #9ca3af;
+        font-size: 11px;
+        line-height: 1.7;
+    }
+
+    .salary-empty-link {
+        display: inline-block;
+        margin-top: 15px;
+        color: #2563eb;
+        font-size: 11px;
+        font-weight: 750;
+        text-decoration: none;
+    }
+
+    .salary-empty-link:hover {
+        text-decoration: underline;
+    }
+
+    .salary-table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+    }
+
+    .salary-table {
+        width: 100%;
+        min-width: 970px;
+        border-collapse: separate;
+        border-spacing: 0;
+        text-align: left;
+    }
+
+    .salary-table th {
+        padding: 14px 17px;
+        border-bottom: 1px solid #e5e7eb;
+        background: #f9fafb;
+        color: #6b7280;
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: .45px;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .salary-table td {
+        padding: 16px 17px;
+        border-bottom: 1px solid #f0f1f3;
+        color: #374151;
+        font-size: 11px;
+        white-space: nowrap;
+    }
+
+    .salary-table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+    .salary-table tbody tr:hover {
+        background: #fbfdff;
+    }
+
+    .salary-employee-cell {
+        min-width: 210px;
+    }
+
+    .salary-employee-name {
+        max-width: 260px;
+        overflow: hidden;
+        color: #111827;
+        font-size: 12px;
+        font-weight: 750;
+        text-overflow: ellipsis;
+    }
+
+    .salary-employee-email,
+    .salary-employee-id {
+        margin-top: 5px;
+        color: #9ca3af;
+        font-size: 10px;
+    }
+
+    .salary-employee-warning {
+        max-width: 230px;
+        margin-top: 5px;
+        color: #b45309;
+        font-size: 10px;
+        white-space: normal;
+        line-height: 1.5;
+    }
+
+    .salary-amount {
+        color: #111827 !important;
+        font-weight: 750;
+    }
+
+    .salary-net-amount {
+        color: #047857 !important;
+    }
+
+    .salary-status {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 6px 9px;
+        border-radius: 6px;
+        font-size: 9px;
+        font-weight: 800;
+    }
+
+    .status-current {
+        background: #ecfdf5;
+        color: #047857;
+    }
+
+    .status-scheduled {
+        background: #eff6ff;
+        color: #1d4ed8;
+    }
+
+    .status-active {
+        background: #f3f4f6;
+        color: #4b5563;
+    }
+
+    .status-inactive {
+        background: #fef2f2;
+        color: #b91c1c;
+    }
+
+    .salary-table-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 14px 17px;
+        border-top: 1px solid #f0f1f3;
+        color: #9ca3af;
+        font-size: 10px;
+        line-height: 1.6;
+    }
+
+    .salary-page a:focus-visible,
+    .salary-page button:focus-visible {
+        outline: 3px solid #93c5fd;
+        outline-offset: 3px;
+    }
+
+    @media (max-width: 1050px) {
+        .salary-form-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 650px) {
+        .salary-page {
+            padding: 18px 14px;
+        }
+
+        .salary-heading {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .salary-heading h1 {
+            font-size: 23px;
+        }
+
+        .salary-card-header {
+            padding: 16px;
+        }
+
+        .salary-heading-icon {
+            width: 36px;
+            height: 36px;
+        }
+
+        .salary-card-header p {
+            font-size: 10px;
+        }
+
+        .salary-tag {
+            display: none;
+        }
+
+        .salary-form {
+            padding: 16px;
+        }
+
+        .salary-form-grid,
+        .salary-preview-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .salary-section-title {
+            padding-top: 15px;
+        }
+
+        .salary-preview {
+            padding: 15px;
+        }
+
+        .salary-form-footer {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .salary-submit-button {
+            width: 100%;
+        }
+
+        .salary-table-footer {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .salary-page *,
+        .salary-page *::before,
+        .salary-page *::after {
+            scroll-behavior: auto !important;
+            animation-duration: .01ms !important;
+            transition-duration: .01ms !important;
+        }
+    }
+</style>
+
+<script>
+(function () {
+    "use strict";
+
+    const form = document.getElementById("salaryStructureForm");
+
+    if (!form || form.dataset.initialized === "true") {
+        return;
+    }
+
+    form.dataset.initialized = "true";
+
+    const earningsFields = [
+        "basicSalary",
+        "hra",
+        "conveyanceAllowance",
+        "medicalAllowance",
+        "specialAllowance",
+        "otherAllowance"
+    ];
+
+    const deductionFields = [
+        "providentFund",
+        "professionalTax",
+        "tds",
+        "otherDeduction"
+    ];
+
+    const allFields = [...earningsFields, ...deductionFields];
+
+    const getInput = (id) => document.getElementById(id);
+
+    const getAmount = (id) => {
+        const input = getInput(id);
+
+        if (!input || input.value.trim() === "") {
+            return 0;
+        }
+
+        const value = Number(input.value);
+
+        return Number.isFinite(value) ? value : 0;
+    };
+
+    const formatMoney = (amount) => {
+        return "₹" + amount.toLocaleString("en-IN", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    };
+
+    const grossOutput = getInput("previewGross");
+    const deductionsOutput = getInput("previewDeductions");
+    const netOutput = getInput("previewNet");
+    const message = getInput("salaryCalculationMessage");
+    const basicInput = getInput("basicSalary");
+    const effectiveDateInput = getInput("effectiveFrom");
+    const submitButton = form.querySelector('[type="submit"]');
+
+    const calculate = () => {
+        const gross = earningsFields.reduce(
+            (total, id) => total + getAmount(id),
+            0
+        );
+
+        const deductions = deductionFields.reduce(
+            (total, id) => total + getAmount(id),
+            0
+        );
+
+        return {
+            gross,
+            deductions,
+            net: gross - deductions
+        };
+    };
+
+    const updateSummary = () => {
+        const { gross, deductions, net } = calculate();
+
+        if (grossOutput) {
+            grossOutput.textContent = formatMoney(gross);
+        }
+
+        if (deductionsOutput) {
+            deductionsOutput.textContent = formatMoney(deductions);
+        }
+
+        if (netOutput) {
+            netOutput.textContent = formatMoney(Math.max(0, net));
+        }
+
+        allFields.forEach((id) => {
+            const input = getInput(id);
+
+            if (!input) return;
+
+            const raw = input.value.trim();
+            const value = Number(raw);
+
+            const invalid =
+                raw !== "" &&
+                (!Number.isFinite(value) || value < 0);
+
+            input.setCustomValidity(
+                invalid
+                    ? "Enter a valid amount greater than or equal to zero."
+                    : ""
+            );
+        });
+
+        if (!message) return;
+
+        message.classList.remove("is-error", "is-success");
+
+        if (net < 0) {
+            message.textContent =
+                "Total deductions exceed gross salary. Reduce deductions before saving.";
+            message.classList.add("is-error");
+        } else if (gross > 0) {
+            message.textContent =
+                "Net salary: " + formatMoney(net) +
+                ". Final amounts are validated by the server.";
+            message.classList.add("is-success");
+        } else {
+            message.textContent =
+                "Estimate only. The server validates all submitted amounts.";
+        }
+    };
+
+    allFields.forEach((id) => {
+        const input = getInput(id);
+
+        if (input) {
+            input.addEventListener("input", updateSummary);
+            input.addEventListener("change", updateSummary);
+        }
+    });
+
+    form.addEventListener("submit", (event) => {
+        updateSummary();
+
+        const { gross, deductions, net } = calculate();
+
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            form.reportValidity();
+            return;
+        }
+
+        if (!basicInput || basicInput.value.trim() === "") {
+            event.preventDefault();
+
+            if (basicInput) {
+                basicInput.focus();
+            }
+
+            return;
+        }
+
+        if (Number(basicInput.value) < 0 || gross < 0) {
+            event.preventDefault();
+            return;
+        }
+
+        if (!effectiveDateInput || !effectiveDateInput.value) {
+            event.preventDefault();
+
+            if (effectiveDateInput) {
+                effectiveDateInput.focus();
+            }
+
+            return;
+        }
+
+        if (deductions > gross || net < 0) {
+            event.preventDefault();
+
+            if (message) {
+                message.textContent =
+                    "Cannot save this salary structure: total deductions cannot exceed gross salary.";
+                message.classList.add("is-error");
+                message.classList.remove("is-success");
+
+                message.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center"
+                });
+            }
+
+            return;
+        }
+
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.textContent = "Saving Salary Structure...";
+        }
+    });
+
+    updateSummary();
+})();
+</script>

@@ -1,0 +1,24 @@
+<%
+    const sidebarUser = user || {};
+    const layoutUserName = sidebarUser.name || "User";
+    const layoutUserRole = String(
+        sidebarUser.role || "EMPLOYEE"
+    ).toUpperCase();
+
+    const layoutRoleKey = layoutUserRole.trim();
+
+    const layoutIsEmployee = layoutRoleKey === "EMPLOYEE";
+    const layoutIsManager = layoutRoleKey === "MANAGER";
+
+    const layoutIsHR = [
+        "SUPER_ADMIN",
+        "HR_ADMIN",
+        "HR_EXECUTIVE"
+    ].includes(layoutRoleKey);
+
+    const layoutUserInitial =
+        layoutUserName.charAt(0).toUpperCase();
+
+    const layoutPath =
+        typeof currentPath !== "undefined" ? currentPath : "";
+%>

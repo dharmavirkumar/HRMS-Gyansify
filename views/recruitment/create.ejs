@@ -1,0 +1,1148 @@
+<%
+const currentUser =
+    typeof user !== "undefined" && user
+        ? user
+        : {};
+
+const form =
+    typeof formData !== "undefined" && formData
+        ? formData
+        : {};
+
+const pageError =
+    typeof error !== "undefined"
+        ? error
+        : null;
+
+const pageSuccess =
+    typeof success !== "undefined"
+        ? success
+        : null;
+%>
+
+
+<style>
+
+/* =====================================================
+   RECRUITMENT CREATE PAGE
+===================================================== */
+
+.recruitment-page {
+    width: 100%;
+}
+
+
+/* =====================================================
+   PAGE HEADER
+===================================================== */
+
+.recruitment-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    font-size: 11px;
+    color: #94a3b8;
+
+    margin-bottom: 8px;
+}
+
+.recruitment-breadcrumb a {
+    color: #64748b;
+    transition: 0.18s ease;
+}
+
+.recruitment-breadcrumb a:hover {
+    color: #4f46e5;
+}
+
+.recruitment-page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    margin-bottom: 25px;
+}
+
+.recruitment-page-title {
+    font-size: 25px;
+    font-weight: 750;
+    color: #111827;
+    letter-spacing: -0.02em;
+}
+
+.recruitment-page-description {
+    margin-top: 5px;
+
+    font-size: 13px;
+    color: #64748b;
+}
+
+
+/* =====================================================
+   ALERTS
+===================================================== */
+
+.recruitment-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+
+    padding: 13px 15px;
+
+    border-radius: 9px;
+
+    margin-bottom: 20px;
+
+    font-size: 12px;
+    font-weight: 550;
+}
+
+.recruitment-alert-error {
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    color: #be123c;
+}
+
+.recruitment-alert-success {
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #047857;
+}
+
+
+/* =====================================================
+   FORM LAYOUT
+===================================================== */
+
+.recruitment-form-grid {
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 2fr)
+        minmax(280px, 1fr);
+
+    gap: 20px;
+
+    align-items: start;
+}
+
+.recruitment-main-card,
+.recruitment-side-card {
+    background: #ffffff;
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 12px;
+
+    box-shadow:
+        0 1px 2px rgba(15, 23, 42, 0.025);
+}
+
+
+/* =====================================================
+   CARD HEADER
+===================================================== */
+
+.recruitment-card-header {
+    padding: 20px 22px;
+
+    border-bottom: 1px solid #edf0f4;
+}
+
+.recruitment-card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.recruitment-card-description {
+    margin-top: 3px;
+
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+
+/* =====================================================
+   FORM BODY
+===================================================== */
+
+.recruitment-card-body {
+    padding: 22px;
+}
+
+.recruitment-fields {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 18px;
+}
+
+.recruitment-field-full {
+    grid-column: 1 / -1;
+}
+
+
+/* =====================================================
+   LABEL
+===================================================== */
+
+.recruitment-label {
+    display: block;
+
+    margin-bottom: 6px;
+
+    font-size: 11px;
+    font-weight: 650;
+
+    color: #475569;
+}
+
+.recruitment-required {
+    color: #ef4444;
+}
+
+
+/* =====================================================
+   INPUT
+===================================================== */
+
+.recruitment-input,
+.recruitment-select,
+.recruitment-textarea {
+
+    width: 100%;
+
+    border: 1px solid #dfe4ea;
+
+    background: #ffffff;
+
+    color: #1e293b;
+
+    border-radius: 8px;
+
+    outline: none;
+
+    transition:
+        border-color 0.18s ease,
+        box-shadow 0.18s ease,
+        background 0.18s ease;
+
+    font-size: 12px;
+}
+
+.recruitment-input,
+.recruitment-select {
+
+    height: 40px;
+
+    padding: 0 12px;
+}
+
+.recruitment-textarea {
+
+    min-height: 110px;
+
+    padding: 11px 12px;
+
+    resize: vertical;
+
+    line-height: 1.55;
+}
+
+.recruitment-input::placeholder,
+.recruitment-textarea::placeholder {
+    color: #b0b8c5;
+}
+
+.recruitment-input:focus,
+.recruitment-select:focus,
+.recruitment-textarea:focus {
+
+    border-color: #6366f1;
+
+    box-shadow:
+        0 0 0 3px rgba(99, 102, 241, 0.09);
+}
+
+
+/* =====================================================
+   FIELD HELP
+===================================================== */
+
+.recruitment-help {
+
+    margin-top: 5px;
+
+    font-size: 10px;
+
+    color: #94a3b8;
+
+    line-height: 1.4;
+}
+
+
+/* =====================================================
+   NUMBER INPUT GROUP
+===================================================== */
+
+.recruitment-number-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 10px;
+}
+
+
+/* =====================================================
+   SIDE CARD
+===================================================== */
+
+.recruitment-side-card {
+    position: sticky;
+
+    top: 95px;
+}
+
+.recruitment-side-body {
+    padding: 20px;
+}
+
+
+/* =====================================================
+   STATUS OPTIONS
+===================================================== */
+
+.recruitment-status-option {
+
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 10px;
+
+    padding: 12px;
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 9px;
+
+    margin-bottom: 9px;
+
+    cursor: pointer;
+
+    transition: 0.18s ease;
+}
+
+.recruitment-status-option:hover {
+
+    border-color: #c7d2fe;
+
+    background: #f8faff;
+}
+
+.recruitment-status-option input {
+
+    margin-top: 3px;
+
+    accent-color: #4f46e5;
+}
+
+.recruitment-status-title {
+
+    font-size: 12px;
+
+    font-weight: 650;
+
+    color: #334155;
+}
+
+.recruitment-status-description {
+
+    margin-top: 2px;
+
+    font-size: 10px;
+
+    color: #94a3b8;
+}
+
+
+/* =====================================================
+   INFO BOX
+===================================================== */
+
+.recruitment-info-box {
+
+    margin-top: 18px;
+
+    padding: 14px;
+
+    border-radius: 9px;
+
+    background: #f8fafc;
+
+    border: 1px solid #e8edf3;
+}
+
+.recruitment-info-title {
+
+    font-size: 11px;
+
+    font-weight: 700;
+
+    color: #334155;
+}
+
+.recruitment-info-text {
+
+    margin-top: 5px;
+
+    font-size: 10px;
+
+    line-height: 1.55;
+
+    color: #64748b;
+}
+
+
+/* =====================================================
+   ACTIONS
+===================================================== */
+
+.recruitment-actions {
+
+    display: flex;
+
+    justify-content: flex-end;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding-top: 20px;
+
+    margin-top: 20px;
+
+    border-top: 1px solid #edf0f4;
+}
+
+.recruitment-btn {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 7px;
+
+    min-height: 39px;
+
+    padding: 0 16px;
+
+    border-radius: 8px;
+
+    font-size: 12px;
+
+    font-weight: 650;
+
+    cursor: pointer;
+
+    transition: 0.18s ease;
+}
+
+.recruitment-btn-secondary {
+
+    background: #ffffff;
+
+    color: #475569;
+
+    border: 1px solid #dfe4ea;
+}
+
+.recruitment-btn-secondary:hover {
+
+    background: #f8fafc;
+
+    border-color: #cbd5e1;
+}
+
+.recruitment-btn-primary {
+
+    background: #4f46e5;
+
+    color: #ffffff;
+
+    border: 1px solid #4f46e5;
+
+    box-shadow:
+        0 3px 8px rgba(79, 70, 229, 0.18);
+}
+
+.recruitment-btn-primary:hover {
+
+    background: #4338ca;
+
+    border-color: #4338ca;
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 1000px) {
+
+    .recruitment-form-grid {
+
+        grid-template-columns: 1fr;
+    }
+
+    .recruitment-side-card {
+
+        position: static;
+    }
+
+}
+
+
+@media (max-width: 650px) {
+
+    .recruitment-page-header {
+
+        flex-direction: column;
+
+        align-items: flex-start;
+    }
+
+    .recruitment-fields {
+
+        grid-template-columns: 1fr;
+    }
+
+    .recruitment-field-full {
+
+        grid-column: auto;
+    }
+
+    .recruitment-card-body {
+
+        padding: 16px;
+    }
+
+    .recruitment-card-header {
+
+        padding: 16px;
+    }
+
+    .recruitment-actions {
+
+        flex-direction: column-reverse;
+
+        align-items: stretch;
+    }
+
+    .recruitment-btn {
+
+        width: 100%;
+    }
+
+}
+
+</style>
+
+
+<div class="recruitment-page">
+
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <div class="recruitment-page-header">
+
+        <div>
+
+            <div class="recruitment-breadcrumb">
+
+                <a href="/dashboard">
+                    Dashboard
+                </a>
+
+                <span>/</span>
+
+                <a href="/recruitment">
+                    Recruitment
+                </a>
+
+                <span>/</span>
+
+                <span>
+                    Create Job
+                </span>
+
+            </div>
+
+
+            <h1 class="recruitment-page-title">
+                Create Job Opening
+            </h1>
+
+
+            <p class="recruitment-page-description">
+                Create and publish a new job opening for your organization.
+            </p>
+
+        </div>
+
+
+        <a
+            href="/recruitment"
+            class="recruitment-btn recruitment-btn-secondary"
+        >
+            ← Back to Recruitment
+        </a>
+
+    </div>
+
+
+    <!-- =====================================================
+         ERROR
+    ====================================================== -->
+
+    <% if (pageError) { %>
+
+        <div class="recruitment-alert recruitment-alert-error">
+
+            <span>⚠️</span>
+
+            <div>
+                <%= pageError %>
+            </div>
+
+        </div>
+
+    <% } %>
+
+
+    <!-- =====================================================
+         SUCCESS
+    ====================================================== -->
+
+    <% if (pageSuccess) { %>
+
+        <div class="recruitment-alert recruitment-alert-success">
+
+            <span>✓</span>
+
+            <div>
+                <%= pageSuccess %>
+            </div>
+
+        </div>
+
+    <% } %>
+
+
+    <!-- =====================================================
+         FORM GRID
+    ====================================================== -->
+
+    <form
+        action="/recruitment/create"
+        method="POST"
+    >
+
+        <div class="recruitment-form-grid">
+
+
+            <!-- =================================================
+                 MAIN FORM
+            ================================================== -->
+
+            <div class="recruitment-main-card">
+
+
+                <!-- BASIC INFORMATION -->
+
+                <div class="recruitment-card-header">
+
+                    <div class="recruitment-card-title">
+                        Job Information
+                    </div>
+
+                    <div class="recruitment-card-description">
+                        Enter the basic details of the position.
+                    </div>
+
+                </div>
+
+
+                <div class="recruitment-card-body">
+
+
+                    <div class="recruitment-fields">
+
+
+                        <!-- JOB TITLE -->
+
+                        <div class="recruitment-field-full">
+
+                            <label class="recruitment-label">
+                                Job Title
+                                <span class="recruitment-required">*</span>
+                            </label>
+
+                            <input
+                                type="text"
+                                name="title"
+                                class="recruitment-input"
+                                placeholder="e.g. Senior Software Engineer"
+                                value="<%= form.title || '' %>"
+                                required
+                            >
+
+                        </div>
+
+
+                        <!-- DEPARTMENT -->
+
+                        <div>
+
+                            <label class="recruitment-label">
+                                Department
+                                <span class="recruitment-required">*</span>
+                            </label>
+
+                            <input
+                                type="text"
+                                name="department"
+                                class="recruitment-input"
+                                placeholder="e.g. Engineering"
+                                value="<%= form.department || '' %>"
+                                required
+                            >
+
+                        </div>
+
+
+                        <!-- LOCATION -->
+
+                        <div>
+
+                            <label class="recruitment-label">
+                                Location
+                            </label>
+
+                            <input
+                                type="text"
+                                name="location"
+                                class="recruitment-input"
+                                placeholder="e.g. Bangalore / Remote"
+                                value="<%= form.location || '' %>"
+                            >
+
+                        </div>
+
+
+                        <!-- EMPLOYMENT TYPE -->
+
+                        <div>
+
+                            <label class="recruitment-label">
+                                Employment Type
+                            </label>
+
+                            <select
+                                name="employmentType"
+                                class="recruitment-select"
+                            >
+
+                                <option
+                                    value="FULL_TIME"
+                                    <%= form.employmentType === "FULL_TIME" ? "selected" : "" %>
+                                >
+                                    Full Time
+                                </option>
+
+                                <option
+                                    value="PART_TIME"
+                                    <%= form.employmentType === "PART_TIME" ? "selected" : "" %>
+                                >
+                                    Part Time
+                                </option>
+
+                                <option
+                                    value="CONTRACT"
+                                    <%= form.employmentType === "CONTRACT" ? "selected" : "" %>
+                                >
+                                    Contract
+                                </option>
+
+                                <option
+                                    value="INTERNSHIP"
+                                    <%= form.employmentType === "INTERNSHIP" ? "selected" : "" %>
+                                >
+                                    Internship
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <!-- OPENINGS -->
+
+                        <div>
+
+                            <label class="recruitment-label">
+                                Number of Openings
+                            </label>
+
+                            <input
+                                type="number"
+                                name="openings"
+                                class="recruitment-input"
+                                min="1"
+                                value="<%= form.openings || 1 %>"
+                            >
+
+                        </div>
+
+
+                        <!-- EXPERIENCE -->
+
+                        <div class="recruitment-field-full">
+
+                            <label class="recruitment-label">
+                                Experience Required
+                            </label>
+
+                            <div class="recruitment-number-grid">
+
+                                <input
+                                    type="number"
+                                    name="experienceMin"
+                                    class="recruitment-input"
+                                    min="0"
+                                    placeholder="Minimum years"
+                                    value="<%= form.experienceMin || '' %>"
+                                >
+
+                                <input
+                                    type="number"
+                                    name="experienceMax"
+                                    class="recruitment-input"
+                                    min="0"
+                                    placeholder="Maximum years"
+                                    value="<%= form.experienceMax || '' %>"
+                                >
+
+                            </div>
+
+                            <div class="recruitment-help">
+                                Example: 2 to 5 years
+                            </div>
+
+                        </div>
+
+
+                        <!-- SALARY -->
+
+                        <div class="recruitment-field-full">
+
+                            <label class="recruitment-label">
+                                Salary Range
+                            </label>
+
+                            <div class="recruitment-number-grid">
+
+                                <input
+                                    type="number"
+                                    name="salaryMin"
+                                    class="recruitment-input"
+                                    min="0"
+                                    placeholder="Minimum salary"
+                                    value="<%= form.salaryMin || '' %>"
+                                >
+
+                                <input
+                                    type="number"
+                                    name="salaryMax"
+                                    class="recruitment-input"
+                                    min="0"
+                                    placeholder="Maximum salary"
+                                    value="<%= form.salaryMax || '' %>"
+                                >
+
+                            </div>
+
+                            <div class="recruitment-help">
+                                Salary amount will use your organization's configured currency.
+                            </div>
+
+                        </div>
+
+
+                        <!-- DESCRIPTION -->
+
+                        <div class="recruitment-field-full">
+
+                            <label class="recruitment-label">
+                                Job Description
+                            </label>
+
+                            <textarea
+                                name="description"
+                                class="recruitment-textarea"
+                                placeholder="Describe the role, team and overall opportunity..."
+                            ><%= form.description || '' %></textarea>
+
+                        </div>
+
+
+                        <!-- RESPONSIBILITIES -->
+
+                        <div class="recruitment-field-full">
+
+                            <label class="recruitment-label">
+                                Responsibilities
+                            </label>
+
+                            <textarea
+                                name="responsibilities"
+                                class="recruitment-textarea"
+                                placeholder="List the key responsibilities of this position..."
+                            ><%= form.responsibilities || '' %></textarea>
+
+                        </div>
+
+
+                        <!-- REQUIREMENTS -->
+
+                        <div class="recruitment-field-full">
+
+                            <label class="recruitment-label">
+                                Requirements
+                            </label>
+
+                            <textarea
+                                name="requirements"
+                                class="recruitment-textarea"
+                                placeholder="List education, experience and other requirements..."
+                            ><%= form.requirements || '' %></textarea>
+
+                        </div>
+
+
+                        <!-- SKILLS -->
+
+                        <div class="recruitment-field-full">
+
+                            <label class="recruitment-label">
+                                Required Skills
+                            </label>
+
+                            <textarea
+                                name="skills"
+                                class="recruitment-textarea"
+                                placeholder="e.g. JavaScript, Node.js, MongoDB, React"
+                            ><%= form.skills || '' %></textarea>
+
+                            <div class="recruitment-help">
+                                Separate multiple skills using commas.
+                            </div>
+
+                        </div>
+
+
+                    </div>
+
+
+                    <!-- =================================================
+                         ACTIONS
+                    ================================================== -->
+
+                    <div class="recruitment-actions">
+
+                        <a
+                            href="/recruitment"
+                            class="recruitment-btn recruitment-btn-secondary"
+                        >
+                            Cancel
+                        </a>
+
+
+                        <button
+                            type="submit"
+                            class="recruitment-btn recruitment-btn-primary"
+                        >
+                            Create Job Opening
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 SIDE PANEL
+            ================================================== -->
+
+            <div class="recruitment-side-card">
+
+
+                <div class="recruitment-card-header">
+
+                    <div class="recruitment-card-title">
+                        Job Status
+                    </div>
+
+                    <div class="recruitment-card-description">
+                        Choose how this opening should be created.
+                    </div>
+
+                </div>
+
+
+                <div class="recruitment-side-body">
+
+
+                    <!-- DRAFT -->
+
+                    <label class="recruitment-status-option">
+
+                        <input
+                            type="radio"
+                            name="status"
+                            value="DRAFT"
+                            <%= !form.status || form.status === "DRAFT" ? "checked" : "" %>
+                        >
+
+                        <div>
+
+                            <div class="recruitment-status-title">
+                                Draft
+                            </div>
+
+                            <div class="recruitment-status-description">
+                                Save the job without opening it for recruitment.
+                            </div>
+
+                        </div>
+
+                    </label>
+
+
+                    <!-- OPEN -->
+
+                    <label class="recruitment-status-option">
+
+                        <input
+                            type="radio"
+                            name="status"
+                            value="OPEN"
+                            <%= form.status === "OPEN" ? "checked" : "" %>
+                        >
+
+                        <div>
+
+                            <div class="recruitment-status-title">
+                                Open
+                            </div>
+
+                            <div class="recruitment-status-description">
+                                Make the position active and ready for applications.
+                            </div>
+
+                        </div>
+
+                    </label>
+
+
+                    <!-- ON HOLD -->
+
+                    <label class="recruitment-status-option">
+
+                        <input
+                            type="radio"
+                            name="status"
+                            value="ON_HOLD"
+                            <%= form.status === "ON_HOLD" ? "checked" : "" %>
+                        >
+
+                        <div>
+
+                            <div class="recruitment-status-title">
+                                On Hold
+                            </div>
+
+                            <div class="recruitment-status-description">
+                                Keep the position temporarily paused.
+                            </div>
+
+                        </div>
+
+                    </label>
+
+
+                    <!-- CLOSING DATE -->
+
+                    <div style="margin-top: 18px;">
+
+                        <label class="recruitment-label">
+                            Application Closing Date
+                        </label>
+
+                        <input
+                            type="date"
+                            name="closingDate"
+                            class="recruitment-input"
+                            value="<%= form.closingDate || '' %>"
+                        >
+
+                        <div class="recruitment-help">
+                            Optional. Leave blank if there is no closing date.
+                        </div>
+
+                    </div>
+
+
+                    <!-- INFO -->
+
+                    <div class="recruitment-info-box">
+
+                        <div class="recruitment-info-title">
+                            Recruitment Workflow
+                        </div>
+
+                        <div class="recruitment-info-text">
+
+                            After creating a job, you will be able to
+                            manage candidates, screening, interviews,
+                            offers and hiring from the Recruitment module.
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </form>
+
+</div>

@@ -1,0 +1,1397 @@
+
+<%
+"use strict";
+
+const adminUser =
+    typeof user !== "undefined" && user && typeof user === "object"
+        ? user
+        : {};
+
+const dashboardStats =
+    typeof stats !== "undefined" && stats && typeof stats === "object"
+        ? stats
+        : {};
+
+const recentEmployees =
+    typeof employees !== "undefined" && Array.isArray(employees)
+        ? employees
+        : [];
+
+const recentActivities =
+    typeof activities !== "undefined" && Array.isArray(activities)
+        ? activities
+        : [];
+
+const getStat = (keys) => {
+    for (const key of keys) {
+        const value = dashboardStats[key];
+
+        if (value !== undefined && value !== null && value !== "") {
+            const number = Number(value);
+            return Number.isFinite(number) ? number : 0;
+        }
+    }
+
+    return 0;
+};
+
+const getEmployeeName = (employee) => {
+    if (!employee || typeof employee !== "object") {
+        return "Unknown Employee";
+    }
+
+    if (employee.name || employee.fullName) {
+        return String(employee.name || employee.fullName);
+    }
+
+    const first = employee.firstName || "";
+    const last = employee.lastName || "";
+    const fullName = `${first} ${last}`.trim();
+
+    return fullName || employee.employeeName || "Unknown Employee";
+};
+
+const getInitials = (name) => {
+    return String(name || "Employee")
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map(part => part.charAt(0).toUpperCase())
+        .join("") || "E";
+};
+
+const getDepartmentName = (employee) => {
+    if (!employee || typeof employee !== "object") {
+        return "Not assigned";
+    }
+
+    const department = employee.department;
+
+    if (department && typeof department === "object") {
+        return department.name || department.departmentName || "Not assigned";
+    }
+
+    return department || employee.departmentName || "Not assigned";
+};
+
+const getEmployeeStatus = (employee) => {
+    return String(employee?.status || "UNKNOWN").trim().toUpperCase();
+};
+
+const formatDate = (value) => {
+    if (!value) return "Recently";
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return String(value);
+    }
+
+    return date.toLocaleString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "Asia/Kolkata"
+    });
+};
+
+const displayName =
+    adminUser.name ||
+    adminUser.fullName ||
+    [adminUser.firstName, adminUser.lastName].filter(Boolean).join(" ") ||
+    adminUser.email ||
+    "Administrator";
+
+const currentHour = new Date().getHours();
+
+const greeting =
+    currentHour < 12
+        ? "Good morning"
+        : currentHour < 17
+            ? "Good afternoon"
+            : "Good evening";
+
+const totalEmployees = getStat([
+    "employees",
+    "totalEmployees",
+    "total"
+]);
+
+const activeEmployees = getStat([
+    "activeEmployees",
+    "active"
+]);
+
+const departments = getStat([
+    "departments",
+    "totalDepartments"
+]);
+
+const presentToday = getStat([
+    "presentToday",
+    "present",
+    "todayPresent"
+]);
+
+const onLeave = getStat([
+    "onLeave",
+    "employeesOnLeave",
+    "leaveToday"
+]);
+
+const openJobs = getStat([
+    "openJobs",
+    "openPositions",
+    "vacancies"
+]);
+
+const pendingLeaves = getStat([
+    "pendingLeaves",
+    "pendingLeaveRequests"
+]);
+
+const pendingApprovals = getStat([
+    "pendingApprovals",
+    "approvalsPending"
+]);
+%>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="Gyansify HRMS administration dashboard"
+    >
+
+    <title>
+        <%= typeof title !== "undefined" && title
+            ? title
+            : "Admin Dashboard | Gyansify HRMS" %>
+    </title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+    <link rel="stylesheet" href="/css/dashboard.css">
+
+    <style>
+        :root {
+            --admin-primary: #2563eb;
+            --admin-primary-dark: #1d4ed8;
+            --admin-primary-soft: #eff6ff;
+            --admin-bg: #f6f8fc;
+            --admin-surface: #ffffff;
+            --admin-text: #172033;
+            --admin-muted: #7b8497;
+            --admin-border: #e8edf5;
+            --admin-green: #059669;
+            --admin-orange: #d97706;
+            --admin-red: #dc2626;
+            --admin-purple: #7c3aed;
+            --admin-radius: 18px;
+            --admin-shadow: 0 5px 24px rgba(31, 48, 82, 0.045);
+        }
+
+        .admin-page,
+        .admin-page * {
+            box-sizing: border-box;
+        }
+
+        .admin-page {
+            width: 100%;
+            min-width: 0;
+            padding: 28px;
+            color: var(--admin-text);
+            font-family: "Inter", sans-serif;
+        }
+
+        .admin-page a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .admin-page button {
+            font: inherit;
+        }
+
+        .admin-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+
+        .admin-heading h1 {
+            margin: 0 0 8px;
+            font-size: clamp(24px, 3vw, 32px);
+            font-weight: 800;
+            letter-spacing: -1.1px;
+        }
+
+        .admin-heading p {
+            margin: 0;
+            color: var(--admin-muted);
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .admin-topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .admin-date {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 42px;
+            padding: 0 14px;
+            border: 1px solid var(--admin-border);
+            border-radius: 12px;
+            background: var(--admin-surface);
+            color: #596579;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .admin-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 42px;
+            padding: 0 16px;
+            border: 1px solid transparent;
+            border-radius: 12px;
+            background: var(--admin-primary);
+            color: #fff !important;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background .2s, transform .2s;
+        }
+
+        .admin-btn:hover {
+            background: var(--admin-primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .admin-btn-outline {
+            background: #fff;
+            color: var(--admin-text) !important;
+            border-color: var(--admin-border);
+        }
+
+        .admin-btn-outline:hover {
+            background: #f8faff;
+        }
+
+        .admin-welcome {
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            padding: 30px;
+            margin-bottom: 26px;
+            border-radius: 22px;
+            background: linear-gradient(115deg, #1d4ed8 0%, #2563eb 55%, #4f8df9 100%);
+            color: #fff;
+            box-shadow: 0 12px 30px rgba(37, 99, 235, .15);
+        }
+
+        .admin-welcome::after {
+            content: "";
+            position: absolute;
+            width: 250px;
+            height: 250px;
+            right: 7%;
+            top: -140px;
+            border: 1px solid rgba(255,255,255,.16);
+            border-radius: 50%;
+            box-shadow:
+                0 0 0 30px rgba(255,255,255,.035),
+                0 0 0 65px rgba(255,255,255,.025);
+            pointer-events: none;
+        }
+
+        .admin-welcome-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .admin-welcome-label {
+            margin-bottom: 12px;
+            color: #dbeafe;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1.7px;
+            text-transform: uppercase;
+        }
+
+        .admin-welcome h2 {
+            margin: 0 0 10px;
+            font-size: clamp(22px, 3vw, 30px);
+            font-weight: 800;
+            letter-spacing: -.8px;
+        }
+
+        .admin-welcome p {
+            max-width: 570px;
+            margin: 0;
+            color: #eaf1ff;
+            font-size: 13px;
+            line-height: 1.8;
+        }
+
+        .admin-welcome-actions {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .admin-welcome .admin-btn {
+            background: #fff;
+            color: var(--admin-primary-dark) !important;
+        }
+
+        .admin-welcome .admin-btn-outline {
+            background: rgba(255,255,255,.1);
+            color: #fff !important;
+            border-color: rgba(255,255,255,.35);
+        }
+
+        .admin-section-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 30px 0 16px;
+        }
+
+        .admin-section-heading h2 {
+            margin: 0;
+            font-size: 17px;
+            font-weight: 800;
+            letter-spacing: -.4px;
+        }
+
+        .admin-section-heading p {
+            margin: 6px 0 0;
+            color: var(--admin-muted);
+            font-size: 12px;
+        }
+
+        .admin-muted-link {
+            color: var(--admin-primary) !important;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .admin-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .admin-stat-card {
+            min-width: 0;
+            padding: 20px;
+            border: 1px solid var(--admin-border);
+            border-radius: var(--admin-radius);
+            background: var(--admin-surface);
+            box-shadow: var(--admin-shadow);
+            transition: transform .2s, box-shadow .2s;
+        }
+
+        .admin-stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 28px rgba(31, 48, 82, .08);
+        }
+
+        .admin-stat-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .admin-stat-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            flex-shrink: 0;
+            border-radius: 14px;
+            font-size: 21px;
+        }
+
+        .admin-stat-icon.blue {
+            background: #eff6ff;
+            color: #2563eb;
+        }
+
+        .admin-stat-icon.green {
+            background: #ecfdf5;
+            color: #059669;
+        }
+
+        .admin-stat-icon.orange {
+            background: #fff7ed;
+            color: #ea580c;
+        }
+
+        .admin-stat-icon.purple {
+            background: #f5f3ff;
+            color: #7c3aed;
+        }
+
+        .admin-stat-label {
+            color: var(--admin-muted);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .admin-stat-value {
+            margin-bottom: 8px;
+            font-size: clamp(25px, 2.5vw, 31px);
+            font-weight: 800;
+            letter-spacing: -1px;
+            overflow-wrap: anywhere;
+        }
+
+        .admin-stat-note {
+            color: var(--admin-muted);
+            font-size: 11px;
+            line-height: 1.6;
+        }
+
+        .admin-stat-note strong {
+            color: var(--admin-text);
+        }
+
+        .admin-two-column {
+            display: grid;
+            grid-template-columns: minmax(0, 1.45fr) minmax(280px, .85fr);
+            gap: 20px;
+            align-items: start;
+        }
+
+        .admin-panel {
+            min-width: 0;
+            overflow: hidden;
+            border: 1px solid var(--admin-border);
+            border-radius: var(--admin-radius);
+            background: var(--admin-surface);
+            box-shadow: var(--admin-shadow);
+        }
+
+        .admin-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 21px 22px;
+            border-bottom: 1px solid var(--admin-border);
+        }
+
+        .admin-panel-header h3 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .admin-panel-header p {
+            margin: 6px 0 0;
+            color: var(--admin-muted);
+            font-size: 11px;
+        }
+
+        .admin-table-wrap {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .admin-table th {
+            padding: 14px 20px;
+            background: #fafbfe;
+            color: #8a93a5;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .7px;
+            text-transform: uppercase;
+        }
+
+        .admin-table td {
+            padding: 16px 20px;
+            border-top: 1px solid #f0f2f7;
+            color: #4b5568;
+            font-size: 11px;
+        }
+
+        .admin-employee-cell {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+        }
+
+        .admin-avatar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 37px;
+            height: 37px;
+            flex-shrink: 0;
+            border-radius: 12px;
+            background: #eaf1ff;
+            color: #2456c4;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .admin-employee-name {
+            color: var(--admin-text);
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .admin-employee-subtitle {
+            margin-top: 4px;
+            color: var(--admin-muted);
+            font-size: 10px;
+        }
+
+        .admin-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 9px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .admin-status::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .admin-status.active,
+        .admin-status.approved {
+            background: #ecfdf5;
+            color: #047857;
+        }
+
+        .admin-status.inactive,
+        .admin-status.rejected {
+            background: #fef2f2;
+            color: #b91c1c;
+        }
+
+        .admin-status.pending,
+        .admin-status.unknown {
+            background: #fff7ed;
+            color: #c2410c;
+        }
+
+        .admin-status.neutral {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .admin-empty {
+            padding: 38px 20px;
+            text-align: center;
+        }
+
+        .admin-empty-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 52px;
+            height: 52px;
+            margin: 0 auto 14px;
+            border-radius: 16px;
+            background: var(--admin-primary-soft);
+            font-size: 23px;
+        }
+
+        .admin-empty h4 {
+            margin: 0 0 8px;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .admin-empty p {
+            margin: 0 auto 16px;
+            max-width: 270px;
+            color: var(--admin-muted);
+            font-size: 11px;
+            line-height: 1.7;
+        }
+
+        .admin-quick-actions {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            padding: 18px;
+        }
+
+        .admin-action-card {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            min-height: 130px;
+            padding: 16px;
+            border: 1px solid var(--admin-border);
+            border-radius: 15px;
+            background: #fff;
+            transition: background .2s, border-color .2s, transform .2s;
+        }
+
+        .admin-action-card:hover {
+            transform: translateY(-2px);
+            border-color: #bfd3ff;
+            background: #f8faff;
+        }
+
+        .admin-action-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            margin-bottom: 14px;
+            border-radius: 12px;
+            background: var(--admin-primary-soft);
+            color: var(--admin-primary);
+            font-size: 19px;
+        }
+
+        .admin-action-card strong {
+            margin-bottom: 6px;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .admin-action-card span:last-child {
+            color: var(--admin-muted);
+            font-size: 10px;
+            line-height: 1.6;
+        }
+
+        .admin-activity-list {
+            padding: 8px 22px 16px;
+        }
+
+        .admin-activity-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f2f7;
+        }
+
+        .admin-activity-item:last-child {
+            border-bottom: 0;
+        }
+
+        .admin-activity-dot {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            flex-shrink: 0;
+            border-radius: 11px;
+            background: #eff6ff;
+            font-size: 15px;
+        }
+
+        .admin-activity-content {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .admin-activity-content p {
+            margin: 0 0 7px;
+            color: #475166;
+            font-size: 11px;
+            line-height: 1.7;
+            overflow-wrap: anywhere;
+        }
+
+        .admin-activity-content strong {
+            color: var(--admin-text);
+        }
+
+        .admin-activity-time {
+            color: var(--admin-muted);
+            font-size: 10px;
+        }
+
+        .admin-module-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .admin-module-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+            padding: 17px;
+            border: 1px solid var(--admin-border);
+            border-radius: 15px;
+            background: #fff;
+            transition: border-color .2s, transform .2s;
+        }
+
+        .admin-module-card:hover {
+            transform: translateY(-2px);
+            border-color: #bfd3ff;
+        }
+
+        .admin-module-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            flex-shrink: 0;
+            border-radius: 13px;
+            background: #f0f5ff;
+            font-size: 19px;
+        }
+
+        .admin-module-card strong {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .admin-module-card span {
+            display: block;
+            color: var(--admin-muted);
+            font-size: 10px;
+            line-height: 1.5;
+        }
+
+        .admin-footer {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 28px;
+            padding: 18px 0 4px;
+            border-top: 1px solid var(--admin-border);
+            color: var(--admin-muted);
+            font-size: 10px;
+        }
+
+        @media (max-width: 1200px) {
+            .admin-stats-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .admin-module-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .admin-two-column {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
+        @media (max-width: 700px) {
+            .admin-page {
+                padding: 18px 14px;
+            }
+
+            .admin-topbar {
+                align-items: flex-start;
+            }
+
+            .admin-topbar-actions {
+                width: 100%;
+            }
+
+            .admin-welcome {
+                align-items: flex-start;
+                flex-direction: column;
+                padding: 23px;
+            }
+
+            .admin-welcome-actions {
+                width: 100%;
+            }
+
+            .admin-stats-grid {
+                gap: 11px;
+            }
+
+            .admin-stat-card {
+                padding: 15px;
+            }
+
+            .admin-stat-icon {
+                width: 37px;
+                height: 37px;
+            }
+
+            .admin-quick-actions {
+                padding: 12px;
+                gap: 10px;
+            }
+
+            .admin-action-card {
+                min-height: 125px;
+                padding: 13px;
+            }
+
+            .admin-panel-header {
+                padding: 17px;
+            }
+
+            .admin-module-grid {
+                gap: 10px;
+            }
+
+            .admin-module-card {
+                align-items: flex-start;
+                flex-direction: column;
+                padding: 13px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .admin-stats-grid,
+            .admin-module-grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .admin-stat-card {
+                padding: 18px;
+            }
+
+            .admin-quick-actions {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+    </style>
+</head>
+
+<body>
+<%- include('../partials/navbar') %>
+<main class="admin-page">
+
+    <!-- PAGE HEADER -->
+    <header class="admin-topbar">
+        <div class="admin-heading">
+            <h1>Admin Dashboard</h1>
+            <p>Manage your people, operations and workforce from one place.</p>
+        </div>
+
+        <div class="admin-topbar-actions">
+            <div class="admin-date">
+                <span aria-hidden="true">📅</span>
+                <span id="adminCurrentDate">Loading date...</span>
+            </div>
+
+            <a class="admin-btn" href="/employees/create">
+                <span aria-hidden="true">＋</span>
+                Add Employee
+            </a>
+        </div>
+    </header>
+
+    <!-- WELCOME -->
+    <section class="admin-welcome">
+        <div class="admin-welcome-content">
+            <div class="admin-welcome-label">GYANSIFY HRMS · ADMINISTRATION</div>
+
+            <h2>
+                <%= greeting %>, <%= displayName %> 👋
+            </h2>
+
+            <p>
+                Welcome to your workforce command center.
+                Review your team's overview, manage employee records
+                and keep track of important HR activities.
+            </p>
+        </div>
+
+        <div class="admin-welcome-actions">
+            <a class="admin-btn" href="/employees">
+                View Employees →
+            </a>
+
+            <a class="admin-btn admin-btn-outline" href="/leave/requests">
+                Review Leave Requests
+            </a>
+        </div>
+    </section>
+
+    <!-- OVERVIEW STATS -->
+    <div class="admin-section-heading">
+        <div>
+            <h2>Workforce Overview</h2>
+            <p>Key HR indicators based on the data supplied by your dashboard controller.</p>
+        </div>
+    </div>
+
+    <section class="admin-stats-grid">
+
+        <article class="admin-stat-card">
+            <div class="admin-stat-top">
+                <span class="admin-stat-label">Total Employees</span>
+                <div class="admin-stat-icon blue" aria-hidden="true">👥</div>
+            </div>
+
+            <div class="admin-stat-value">
+                <%= totalEmployees.toLocaleString("en-IN") %>
+            </div>
+
+            <div class="admin-stat-note">
+                Employees recorded in the dashboard data
+            </div>
+        </article>
+
+        <article class="admin-stat-card">
+            <div class="admin-stat-top">
+                <span class="admin-stat-label">Active Employees</span>
+                <div class="admin-stat-icon green" aria-hidden="true">✓</div>
+            </div>
+
+            <div class="admin-stat-value">
+                <%= activeEmployees.toLocaleString("en-IN") %>
+            </div>
+
+            <div class="admin-stat-note">
+                Employees marked active by the controller
+            </div>
+        </article>
+
+        <article class="admin-stat-card">
+            <div class="admin-stat-top">
+                <span class="admin-stat-label">Departments</span>
+                <div class="admin-stat-icon purple" aria-hidden="true">▦</div>
+            </div>
+
+            <div class="admin-stat-value">
+                <%= departments.toLocaleString("en-IN") %>
+            </div>
+
+            <div class="admin-stat-note">
+                Departments included in the dashboard statistics
+            </div>
+        </article>
+
+        <article class="admin-stat-card">
+            <div class="admin-stat-top">
+                <span class="admin-stat-label">Present Today</span>
+                <div class="admin-stat-icon green" aria-hidden="true">◷</div>
+            </div>
+
+            <div class="admin-stat-value">
+                <%= presentToday.toLocaleString("en-IN") %>
+            </div>
+
+            <div class="admin-stat-note">
+                Today's attendance count supplied by the controller
+            </div>
+        </article>
+
+        <article class="admin-stat-card">
+            <div class="admin-stat-top">
+                <span class="admin-stat-label">Employees on Leave</span>
+                <div class="admin-stat-icon orange" aria-hidden="true">🌴</div>
+            </div>
+
+            <div class="admin-stat-value">
+                <%= onLeave.toLocaleString("en-IN") %>
+            </div>
+
+            <div class="admin-stat-note">
+                Leave count supplied by the controller
+            </div>
+        </article>
+
+        <article class="admin-stat-card">
+            <div class="admin-stat-top">
+                <span class="admin-stat-label">Open Positions</span>
+                <div class="admin-stat-icon purple" aria-hidden="true">💼</div>
+            </div>
+
+            <div class="admin-stat-value">
+                <%= openJobs.toLocaleString("en-IN") %>
+            </div>
+
+            <div class="admin-stat-note">
+                Recruitment positions supplied by the controller
+            </div>
+        </article>
+
+        <article class="admin-stat-card">
+            <div class="admin-stat-top">
+                <span class="admin-stat-label">Pending Leave Requests</span>
+                <div class="admin-stat-icon orange" aria-hidden="true">◷</div>
+            </div>
+
+            <div class="admin-stat-value">
+                <%= pendingLeaves.toLocaleString("en-IN") %>
+            </div>
+
+            <div class="admin-stat-note">
+                <a class="admin-muted-link" href="/leave/requests">
+                    Review requests →
+                </a>
+            </div>
+        </article>
+
+        <article class="admin-stat-card">
+            <div class="admin-stat-top">
+                <span class="admin-stat-label">Pending Approvals</span>
+                <div class="admin-stat-icon blue" aria-hidden="true">✓</div>
+            </div>
+
+            <div class="admin-stat-value">
+                <%= pendingApprovals.toLocaleString("en-IN") %>
+            </div>
+
+            <div class="admin-stat-note">
+                Approvals count supplied by the controller
+            </div>
+        </article>
+
+    </section>
+
+    <!-- EMPLOYEES AND QUICK ACTIONS -->
+    <div class="admin-section-heading">
+        <div>
+            <h2>People & Operations</h2>
+            <p>Manage employee records and access frequently used HR actions.</p>
+        </div>
+    </div>
+
+    <section class="admin-two-column">
+
+        <!-- RECENT EMPLOYEES -->
+        <article class="admin-panel">
+            <div class="admin-panel-header">
+                <div>
+                    <h3>Recent Employees</h3>
+                    <p>Latest employee records supplied by your controller</p>
+                </div>
+
+                <a class="admin-muted-link" href="/employees">
+                    View all →
+                </a>
+            </div>
+
+            <% if (recentEmployees.length > 0) { %>
+
+                <div class="admin-table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Department</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <% recentEmployees.slice(0, 8).forEach((employee) => {
+                                const employeeName = getEmployeeName(employee);
+                                const departmentName = getDepartmentName(employee);
+                                const employeeStatus = getEmployeeStatus(employee);
+
+                                const statusClass =
+                                    employeeStatus === "ACTIVE"
+                                        ? "active"
+                                        : employeeStatus === "APPROVED"
+                                            ? "approved"
+                                            : employeeStatus === "PENDING"
+                                                ? "pending"
+                                                : employeeStatus === "INACTIVE" ||
+                                                  employeeStatus === "EXITED" ||
+                                                  employeeStatus === "TERMINATED"
+                                                    ? "inactive"
+                                                    : "unknown";
+                            %>
+
+                                <tr>
+                                    <td>
+                                        <div class="admin-employee-cell">
+                                            <div class="admin-avatar">
+                                                <%= getInitials(employeeName) %>
+                                            </div>
+
+                                            <div>
+                                                <div class="admin-employee-name">
+                                                    <%= employeeName %>
+                                                </div>
+
+                                                <div class="admin-employee-subtitle">
+                                                    <%= employee.employeeCode ||
+                                                        employee.employeeId ||
+                                                        employee.code ||
+                                                        "Employee record" %>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td><%= departmentName %></td>
+
+                                    <td>
+                                        <span class="admin-status <%= statusClass %>">
+                                            <%= employeeStatus.replace(/_/g, " ") %>
+                                        </span>
+                                    </td>
+                                </tr>
+
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+
+            <% } else { %>
+
+                <div class="admin-empty">
+                    <div class="admin-empty-icon" aria-hidden="true">👥</div>
+                    <h4>No employee records to display</h4>
+                    <p>
+                        Once your controller provides employee records,
+                        the latest employees will appear here.
+                    </p>
+
+                    <a class="admin-btn" href="/employees/create">
+                        ＋ Add Employee
+                    </a>
+                </div>
+
+            <% } %>
+        </article>
+
+        <!-- QUICK ACTIONS -->
+        <article class="admin-panel">
+            <div class="admin-panel-header">
+                <div>
+                    <h3>Quick Actions</h3>
+                    <p>Shortcuts for everyday administration</p>
+                </div>
+            </div>
+
+            <div class="admin-quick-actions">
+
+                <a class="admin-action-card" href="/employees/create">
+                    <div class="admin-action-icon" aria-hidden="true">＋</div>
+                    <strong>Add Employee</strong>
+                    <span>Create a new employee record</span>
+                </a>
+
+                <a class="admin-action-card" href="/recruitment/create">
+                    <div class="admin-action-icon" aria-hidden="true">💼</div>
+                    <strong>Create Job Opening</strong>
+                    <span>Start a recruitment opening</span>
+                </a>
+
+                <a class="admin-action-card" href="/leave/requests">
+                    <div class="admin-action-icon" aria-hidden="true">📋</div>
+                    <strong>Leave Requests</strong>
+                    <span>Review employee leave requests</span>
+                </a>
+
+                <a class="admin-action-card" href="/organization">
+                    <div class="admin-action-icon" aria-hidden="true">🏢</div>
+                    <strong>Organization</strong>
+                    <span>Manage organization information</span>
+                </a>
+
+            </div>
+        </article>
+
+    </section>
+
+    <!-- ACTIVITY AND ATTENDANCE -->
+    <div class="admin-section-heading">
+        <div>
+            <h2>Activity & Workforce</h2>
+            <p>Recent events and commonly used HR modules.</p>
+        </div>
+    </div>
+
+    <section class="admin-two-column">
+
+        <!-- RECENT ACTIVITY -->
+        <article class="admin-panel">
+            <div class="admin-panel-header">
+                <div>
+                    <h3>Recent Activity</h3>
+                    <p>Latest activity items provided by the controller</p>
+                </div>
+            </div>
+
+            <% if (recentActivities.length > 0) { %>
+
+                <div class="admin-activity-list">
+                    <% recentActivities.slice(0, 8).forEach((activity) => {
+                        const activityText =
+                            typeof activity === "string"
+                                ? activity
+                                : activity.message ||
+                                  activity.description ||
+                                  activity.title ||
+                                  activity.action ||
+                                  "HR activity recorded";
+
+                        const activityDate =
+                            typeof activity === "object" && activity
+                                ? formatDate(
+                                    activity.time ||
+                                    activity.createdAt ||
+                                    activity.updatedAt
+                                  )
+                                : "Recently";
+                    %>
+
+                        <div class="admin-activity-item">
+                            <div class="admin-activity-dot" aria-hidden="true">
+                                ◉
+                            </div>
+
+                            <div class="admin-activity-content">
+                                <p><%= activityText %></p>
+                                <div class="admin-activity-time">
+                                    <%= activityDate %>
+                                </div>
+                            </div>
+                        </div>
+
+                    <% }); %>
+                </div>
+
+            <% } else { %>
+
+                <div class="admin-empty">
+                    <div class="admin-empty-icon" aria-hidden="true">◷</div>
+                    <h4>No recent activity</h4>
+                    <p>
+                        Activity will appear here when your controller
+                        supplies recent HR events.
+                    </p>
+                </div>
+
+            <% } %>
+        </article>
+
+        <!-- MODULE SHORTCUTS -->
+        <article class="admin-panel">
+            <div class="admin-panel-header">
+                <div>
+                    <h3>HR Modules</h3>
+                    <p>Open frequently used modules</p>
+                </div>
+            </div>
+
+            <div class="admin-quick-actions">
+
+                <a class="admin-action-card" href="/attendance">
+                    <div class="admin-action-icon" aria-hidden="true">◷</div>
+                    <strong>Attendance</strong>
+                    <span>Daily attendance and records</span>
+                </a>
+
+                <a class="admin-action-card" href="/leave">
+                    <div class="admin-action-icon" aria-hidden="true">🌴</div>
+                    <strong>Leave Management</strong>
+                    <span>Leave requests and tracking</span>
+                </a>
+
+                <a class="admin-action-card" href="/recruitment">
+                    <div class="admin-action-icon" aria-hidden="true">💼</div>
+                    <strong>Recruitment</strong>
+                    <span>Job openings and applicants</span>
+                </a>
+
+                <a class="admin-action-card" href="/reports">
+                    <div class="admin-action-icon" aria-hidden="true">📊</div>
+                    <strong>Reports</strong>
+                    <span>Access available HR reports</span>
+                </a>
+
+            </div>
+        </article>
+
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="admin-footer">
+        <span>© <%= new Date().getFullYear() %> Gyansify HRMS</span>
+        <span>Human Resources Management System</span>
+    </footer>
+
+</main>
+
+<script>
+    (function () {
+        const dateElement = document.getElementById("adminCurrentDate");
+
+        if (!dateElement) return;
+
+        try {
+            dateElement.textContent = new Intl.DateTimeFormat("en-IN", {
+                weekday: "short",
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                timeZone: "Asia/Kolkata"
+            }).format(new Date());
+        } catch (error) {
+            dateElement.textContent = new Date().toDateString();
+        }
+    })();
+</script>
+
+</body>
+</html>

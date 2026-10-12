@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Leave Report - Gyansify HRMS</title>
+
+    <link rel="stylesheet" href="/css/dashboard.css">
+
+    <style>
+        .leave-report-page {
+            padding: 30px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .page-heading {
+            margin-bottom: 24px;
+        }
+
+        .page-heading h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .page-heading p {
+            margin: 7px 0 0;
+            font-size: 12px;
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+        .report-actions {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 9px;
+            margin-bottom: 20px;
+        }
+
+        .report-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            min-height: 36px;
+            padding: 8px 13px;
+            border: 1px solid #d1d5db;
+            border-radius: 7px;
+            background: #fff;
+            color: #374151;
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+
+        .report-btn:hover {
+            background: #f9fafb;
+        }
+
+        .report-btn-primary {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: #fff;
+        }
+
+        .report-btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .leave-stats {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 15px;
+            margin-bottom: 22px;
+        }
+
+        .leave-stat {
+            min-width: 0;
+            padding: 19px;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 11px;
+        }
+
+        .leave-stat-label {
+            margin-bottom: 10px;
+            color: #6b7280;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .045em;
+        }
+
+        .leave-stat-value {
+            color: #111827;
+            font-size: 27px;
+            font-weight: 700;
+            line-height: 1.2;
+            overflow-wrap: anywhere;
+        }
+
+        .leave-stat-note {
+            margin-top: 7px;
+            color: #9ca3af;
+            font-size: 11px;
+        }
+
+        .filter-card {
+            margin-bottom: 21px;
+            padding: 20px;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 11px;
+        }
+
+        .filter-title {
+            margin: 0 0 16px;
+            color: #111827;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+            align-items: end;
+        }
+
+        .filter-field {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            gap: 7px;
+        }
+
+        .filter-field label {
+            color: #4b5563;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .filter-field input,
+        .filter-field select {
+            width: 100%;
+            height: 39px;
+            padding: 0 11px;
+            border: 1px solid #d1d5db;
+            border-radius: 7px;
+            background: #fff;
+            color: #374151;
+            font: inherit;
+            font-size: 12px;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .filter-field input:focus,
+        .filter-field select:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, .10);
+        }
+
+        .filter-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            grid-column: 1 / -1;
+        }
+
+        .filter-submit {
+            min-height: 38px;
+            padding: 0 17px;
+            border: 1px solid #2563eb;
+            border-radius: 7px;
+            background: #2563eb;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .filter-submit:hover {
+            background: #1d4ed8;
+        }
+
+        .filter-reset {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 38px;
+            padding: 0 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 7px;
+            color: #374151;
+            background: #fff;
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .table-card {
+            overflow: hidden;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 18px 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .table-title {
+            margin: 0;
+            color: #111827;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .table-count {
+            padding: 5px 9px;
+            border-radius: 6px;
+            background: #f3f4f6;
+            color: #4b5563;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .report-table {
+            width: 100%;
+            min-width: 950px;
+            border-collapse: collapse;
+        }
+
+        .report-table th {
+            padding: 13px 15px;
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            color: #6b7280;
+            font-size: 10px;
+            font-weight: 700;
+            text-align: left;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .report-table td {
+            padding: 14px 15px;
+            border-bottom: 1px solid #f3f4f6;
+            color: #374151;
+            font-size: 12px;
+            vertical-align: middle;
+        }
+
+        .report-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .report-table tbody tr:hover {
+            background: #fafcff;
+        }
+
+        .employee-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 180px;
+        }
+
+        .employee-avatar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            border-radius: 9px;
+            background: #eff6ff;
+            color: #2563eb;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .employee-name {
+            color: #111827;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .employee-id {
+            margin-top: 4px;
+            color: #9ca3af;
+            font-size: 10px;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 9px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .status-approved {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-rejected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-cancelled {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .status-default {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .empty-state {
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .empty-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 52px;
+            height: 52px;
+            margin: 0 auto 15px;
+            border-radius: 12px;
+            background: #f3f4f6;
+            font-size: 23px;
+        }
+
+        .empty-state h3 {
+            margin: 0;
+            color: #111827;
+            font-size: 15px;
+        }
+
+        .empty-state p {
+            margin: 8px 0 0;
+            color: #6b7280;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .report-footer {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 16px;
+            color: #9ca3af;
+            font-size: 10px;
+        }
+
+        @media (min-width: 1200px) {
+            .leave-stats {
+                grid-template-columns: repeat(6, minmax(0, 1fr));
+            }
+
+            .filter-grid {
+                grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+            }
+
+            .filter-actions {
+                grid-column: auto;
+            }
+        }
+
+        @media (max-width: 800px) {
+            .leave-report-page {
+                padding: 20px;
+            }
+
+            .leave-stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .filter-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .filter-actions {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .leave-report-page {
+                padding: 15px;
+            }
+
+            .leave-stats,
+            .filter-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-actions {
+                grid-column: auto;
+            }
+
+            .report-actions {
+                justify-content: flex-start;
+            }
+
+            .report-footer {
+                flex-direction: column;
+            }
+        }
+
+        @media print {
+            .sidebar,
+            .header,
+            .report-actions,
+            .filter-card {
+                display: none !important;
+            }
+
+            .app,
+            .main {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .leave-report-page {
+                max-width: none;
+                padding: 0;
+            }
+
+            .leave-stats {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .table-card {
+                overflow: visible;
+            }
+
+            .table-wrapper {
+                overflow: visible;
+            }
+
+            .report-table {
+                min-width: 0;
+                font-size: 9px;
+            }
+
+            .report-table th,
+            .report-table td {
+                padding: 7px;
+            }
+
+            .report-table tr {
+                break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<%
+    // -------------------------------------------------
+    // SAFE TEMPLATE DATA
+    // -------------------------------------------------
+
+    const leaveStats =
+        typeof stats !== "undefined" && stats
+            ? stats
+            : {};
+
+    const leaveRecords =
+        typeof leaveRequests !== "undefined" &&
+        Array.isArray(leaveRequests)
+            ? leaveRequests
+            : (
+                typeof records !== "undefined" &&
+                Array.isArray(records)
+                    ? records
+                    : (
+                        typeof requests !== "undefined" &&
+                        Array.isArray(requests)
+                            ? requests
+                            : []
+                    )
+            );
+
+    const filterQuery =
+        typeof query !== "undefined" && query
+            ? query
+            : (
+                typeof filters !== "undefined" && filters
+                    ? filters
+                    : {}
+            );
+
+    const currentFromDate = String(filterQuery.fromDate || "");
+    const currentToDate = String(filterQuery.toDate || "");
+    const currentLeaveType = String(filterQuery.leaveType || "");
+    const currentStatus = String(filterQuery.status || "").toUpperCase();
+
+    const displayValue = (value, fallback = "-") => {
+        if (value === null || value === undefined || value === "") {
+            return fallback;
+        }
+
+        if (typeof value === "object") {
+            return value.name ||
+                value.label ||
+                value.title ||
+                value.code ||
+                fallback;
+        }
+
+        return value;
+    };
+
+    const getEmployeeName = (record) => {
+        const employee = record?.employee;
+
+        if (employee && typeof employee === "object") {
+            const fullName =
+                employee.name ||
+                employee.fullName ||
+                [
+                    employee.firstName,
+                    employee.middleName,
+                    employee.lastName
+                ].filter(Boolean).join(" ");
+
+            return fullName || record.employeeName || "Unknown Employee";
+        }
+
+        return record?.employeeName ||
+            record?.name ||
+            "Unknown Employee";
+    };
+
+    const getEmployeeId = (record) => {
+        const employee = record?.employee;
+
+        if (employee && typeof employee === "object") {
+            return employee.employeeId ||
+                employee.empId ||
+                employee.code ||
+                "-";
+        }
+
+        return record?.employeeId ||
+            record?.empId ||
+            "-";
+    };
+
+    const getLeaveType = (record) => {
+        return displayValue(
+            record?.leaveTypeName ||
+            record?.leaveType?.name ||
+            record?.leaveType?.label ||
+            record?.leaveType?.code ||
+            record?.leaveType,
+            "Leave"
+        );
+    };
+
+    const getLeaveDays = (record) => {
+        const value =
+            record?.totalDays ??
+            record?.days ??
+            record?.numberOfDays;
+
+        return value === null || value === undefined || value === ""
+            ? "-"
+            : value;
+    };
+
+    const getStatusClass = (status) => {
+        const value = String(status || "")
+            .toUpperCase()
+            .trim()
+            .replace(/[\s-]+/g, "_");
+
+        if (value === "APPROVED") return "status-approved";
+        if (value === "PENDING") return "status-pending";
+        if (value === "REJECTED") return "status-rejected";
+        if (value === "CANCELLED" || value === "CANCELED") {
+            return "status-cancelled";
+        }
+
+        return "status-default";
+    };
+
+    const getInitial = (name) => {
+        const cleanName = String(name || "").trim();
+        return cleanName ? cleanName.charAt(0).toUpperCase() : "U";
+    };
+
+    const formatDate = (value) => {
+        if (!value) return "-";
+
+        const date = new Date(value);
+
+        if (Number.isNaN(date.getTime())) return "-";
+
+        return new Intl.DateTimeFormat("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+            timeZone: "Asia/Kolkata"
+        }).format(date);
+    };
+
+    const leaveTypeOptions =
+        typeof leaveTypes !== "undefined" &&
+        Array.isArray(leaveTypes) &&
+        leaveTypes.length
+            ? leaveTypes
+            : [
+                { value: "CASUAL", label: "Casual Leave" },
+                { value: "SICK", label: "Sick Leave" },
+                { value: "ANNUAL", label: "Annual Leave" },
+                { value: "UNPAID", label: "Unpaid Leave" },
+                { value: "OTHER", label: "Other" }
+            ];
+
+    const statusOptions = [
+        { value: "PENDING", label: "Pending" },
+        { value: "APPROVED", label: "Approved" },
+        { value: "REJECTED", label: "Rejected" },
+        { value: "CANCELLED", label: "Cancelled" }
+    ];
+
+    const currentLeaveTypeKey = currentLeaveType.toUpperCase();
+%>
+
+<div class="app">
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-logo">G</div>
+
+            <div>
+                <div class="brand-name">Gyansify</div>
+                <div class="brand-subtitle">HRMS</div>
+            </div>
+        </div>
+
+        <div class="menu-title">MAIN</div>
+
+        <nav class="sidebar-menu">
+            <a href="/dashboard" class="menu-item">
+                <span>▦</span>
+                Dashboard
+            </a>
+
+            <a href="/employees" class="menu-item">
+                <span>♙</span>
+                Employees
+            </a>
+
+            <a href="/attendance" class="menu-item">
+                <span>◷</span>
+                Attendance
+            </a>
+
+            <a href="/leave" class="menu-item">
+                <span>▣</span>
+                Leave
+            </a>
+
+            <a href="/payroll" class="menu-item">
+                <span>₹</span>
+                Payroll
+            </a>
+
+            <a href="/organization" class="menu-item">
+                <span>⌂</span>
+                Organization
+            </a>
+
+            <a href="/recruitment" class="menu-item">
+                <span>◫</span>
+                Recruitment
+            </a>
+
+            <a href="/reports" class="menu-item active">
+                <span>▤</span>
+                Reports
+            </a>
+
+            <a href="/settings" class="menu-item">
+                <span>⚙</span>
+                Settings
+            </a>
+        </nav>
+
+    </aside>
+
+    <main class="main">
+
+        <header class="header">
+            <span class="page-title">Leave Report</span>
+        </header>
+
+        <section class="leave-report-page">
+
+            <div class="page-heading">
+                <h1>Leave Report</h1>
+
+                <p>
+                    Review leave applications, approval status,
+                    and leave utilization across your organization.
+                </p>
+            </div>
+
+            <div class="report-actions">
+
+                <a href="/reports" class="report-btn">
+                    ← All Reports
+                </a>
+
+                <button
+                    type="button"
+                    class="report-btn"
+                    onclick="window.print()"
+                >
+                    Print Report
+                </button>
+
+                <a
+                    href="/reports/leave/export<%= Object.keys(filterQuery).length ? '?' + new URLSearchParams(filterQuery).toString() : '' %>"
+                    class="report-btn report-btn-primary"
+                >
+                    Export Report
+                </a>
+
+            </div>
+
+            <div class="leave-stats">
+
+                <div class="leave-stat">
+                    <div class="leave-stat-label">TOTAL REQUESTS</div>
+                    <div class="leave-stat-value">
+                        <%= leaveStats.total ?? leaveStats.totalRequests ?? leaveRecords.length %>
+                    </div>
+                    <div class="leave-stat-note">Applications matching the report</div>
+                </div>
+
+                <div class="leave-stat">
+                    <div class="leave-stat-label">APPROVED</div>
+                    <div class="leave-stat-value">
+                        <%= leaveStats.approved ?? 0 %>
+                    </div>
+                    <div class="leave-stat-note">Approved requests</div>
+                </div>
+
+                <div class="leave-stat">
+                    <div class="leave-stat-label">PENDING</div>
+                    <div class="leave-stat-value">
+                        <%= leaveStats.pending ?? 0 %>
+                    </div>
+                    <div class="leave-stat-note">Awaiting a decision</div>
+                </div>
+
+                <div class="leave-stat">
+                    <div class="leave-stat-label">REJECTED</div>
+                    <div class="leave-stat-value">
+                        <%= leaveStats.rejected ?? 0 %>
+                    </div>
+                    <div class="leave-stat-note">Rejected requests</div>
+                </div>
+
+                <div class="leave-stat">
+                    <div class="leave-stat-label">DAYS TAKEN</div>
+                    <div class="leave-stat-value">
+                        <%= leaveStats.daysTaken ?? 0 %>
+                    </div>
+                    <div class="leave-stat-note">Approved leave days</div>
+                </div>
+
+                <div class="leave-stat">
+                    <div class="leave-stat-label">EMPLOYEES</div>
+                    <div class="leave-stat-value">
+                        <%= leaveStats.employees ?? 0 %>
+                    </div>
+                    <div class="leave-stat-note">Employees represented in the report</div>
+                </div>
+
+            </div>
+
+            <section class="filter-card">
+
+                <h2 class="filter-title">Filter Leave Requests</h2>
+
+                <form method="GET" action="/reports/leave">
+
+                    <div class="filter-grid">
+
+                        <div class="filter-field">
+                            <label for="fromDate">From date</label>
+
+                            <input
+                                type="date"
+                                id="fromDate"
+                                name="fromDate"
+                                value="<%= currentFromDate %>"
+                            >
+                        </div>
+
+                        <div class="filter-field">
+                            <label for="toDate">To date</label>
+
+                            <input
+                                type="date"
+                                id="toDate"
+                                name="toDate"
+                                value="<%= currentToDate %>"
+                            >
+                        </div>
+
+                        <div class="filter-field">
+                            <label for="leaveType">Leave type</label>
+
+                            <select id="leaveType" name="leaveType">
+                                <option value="">All leave types</option>
+
+                                <% leaveTypeOptions.forEach(option => {
+                                    const optionValue =
+                                        String(
+                                            option.value ??
+                                            option.code ??
+                                            option._id ??
+                                            ""
+                                        );
+
+                                    const optionLabel =
+                                        option.label ||
+                                        option.name ||
+                                        optionValue;
+                                %>
+
+                                    <option
+                                        value="<%= optionValue %>"
+                                        <%= currentLeaveTypeKey === optionValue.toUpperCase() ? "selected" : "" %>
+                                    >
+                                        <%= optionLabel %>
+                                    </option>
+
+                                <% }) %>
+                            </select>
+                        </div>
+
+                        <div class="filter-field">
+                            <label for="status">Request status</label>
+
+                            <select id="status" name="status">
+                                <option value="">All statuses</option>
+
+                                <% statusOptions.forEach(option => { %>
+                                    <option
+                                        value="<%= option.value %>"
+                                        <%= currentStatus === option.value ? "selected" : "" %>
+                                    >
+                                        <%= option.label %>
+                                    </option>
+                                <% }) %>
+                            </select>
+                        </div>
+
+                        <div class="filter-actions">
+                            <button type="submit" class="filter-submit">
+                                Apply Filters
+                            </button>
+
+                            <a href="/reports/leave" class="filter-reset">
+                                Reset
+                            </a>
+                        </div>
+
+                    </div>
+
+                </form>
+
+                <p style="margin: 13px 0 0; color: #9ca3af; font-size: 11px;">
+                    Filters are applied when the report controller supports
+                    these query parameters.
+                </p>
+
+            </section>
+
+            <section class="table-card">
+
+                <div class="table-header">
+                    <h2 class="table-title">Leave Requests</h2>
+
+                    <span class="table-count">
+                        <%= leaveRecords.length %>
+                        <%= leaveRecords.length === 1 ? "record" : "records" %>
+                    </span>
+                </div>
+
+                <% if (leaveRecords.length > 0) { %>
+
+                    <div class="table-wrapper">
+
+                        <table class="report-table">
+
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Leave Type</th>
+                                    <th>From Date</th>
+                                    <th>To Date</th>
+                                    <th>Days</th>
+                                    <th>Applied On</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                <% leaveRecords.forEach(record => {
+                                    const employeeName = getEmployeeName(record);
+                                    const employeeId = getEmployeeId(record);
+
+                                    const leaveType = getLeaveType(record);
+
+                                    const fromDate =
+                                        record.fromDate ??
+                                        record.startDate ??
+                                        record.start;
+
+                                    const toDate =
+                                        record.toDate ??
+                                        record.endDate ??
+                                        record.end;
+
+                                    const days = getLeaveDays(record);
+
+                                    const appliedOn =
+                                        record.appliedAt ??
+                                        record.createdAt ??
+                                        record.applicationDate;
+
+                                    const status = String(
+                                        record.status || "PENDING"
+                                    ).toUpperCase();
+                                %>
+
+                                    <tr>
+
+                                        <td>
+                                            <div class="employee-info">
+
+                                                <div class="employee-avatar">
+                                                    <%= getInitial(employeeName) %>
+                                                </div>
+
+                                                <div>
+                                                    <div class="employee-name">
+                                                        <%= employeeName %>
+                                                    </div>
+
+                                                    <div class="employee-id">
+                                                        ID: <%= employeeId %>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </td>
+
+                                        <td><%= leaveType %></td>
+
+                                        <td><%= formatDate(fromDate) %></td>
+
+                                        <td><%= formatDate(toDate) %></td>
+
+                                        <td><%= days %></td>
+
+                                        <td><%= formatDate(appliedOn) %></td>
+
+                                        <td>
+                                            <span class="status <%= getStatusClass(status) %>">
+                                                <%= status.replace(/[_-]+/g, " ") %>
+                                            </span>
+                                        </td>
+
+                                    </tr>
+
+                                <% }) %>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                <% } else { %>
+
+                    <div class="empty-state">
+
+                        <div class="empty-icon">▣</div>
+
+                        <h3>No leave records found</h3>
+
+                        <p>
+                            No leave applications match the current report.
+                            Try changing your filters or resetting them.
+                        </p>
+
+                        <div style="margin-top: 18px;">
+                            <a href="/reports/leave" class="report-btn">
+                                Clear Filters
+                            </a>
+                        </div>
+
+                    </div>
+
+                <% } %>
+
+            </section>
+
+            <footer class="report-footer">
+                <span>Gyansify HRMS · Leave Report</span>
+
+                <span>
+                    Generated:
+                    <%= new Intl.DateTimeFormat("en-IN", {
+                        dateStyle: "medium",
+                        timeZone: "Asia/Kolkata"
+                    }).format(new Date()) %>
+                </span>
+            </footer>
+
+        </section>
+
+    </main>
+
+</div>
+
+<script>
+    "use strict";
+
+    // Client-side date-range validation.
+    // The controller must validate dates again on the server.
+    const leaveFilterForm = document.querySelector(
+        'form[action="/reports/leave"]'
+    );
+
+    if (leaveFilterForm) {
+        leaveFilterForm.addEventListener("submit", function (event) {
+            const fromInput = document.getElementById("fromDate");
+            const toInput = document.getElementById("toDate");
+
+            const fromDate = fromInput.value;
+            const toDate = toInput.value;
+
+            toInput.setCustomValidity("");
+
+            if (fromDate && toDate && fromDate > toDate) {
+                event.preventDefault();
+
+                toInput.setCustomValidity(
+                    "To date must be the same as or later than From date."
+                );
+
+                toInput.reportValidity();
+                return;
+            }
+
+            toInput.setCustomValidity("");
+        });
+    }
+</script>
+
+</body>
+</html>

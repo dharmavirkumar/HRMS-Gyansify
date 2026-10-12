@@ -1,0 +1,2237 @@
+<%
+/* =========================================================
+   SAFE RECRUITMENT DATA
+   ========================================================= */
+
+const recruitmentStats =
+    typeof stats !== "undefined" && stats
+        ? stats
+        : {
+            openPositions: 0,
+            applications: 0,
+            interviews: 0,
+            hired: 0,
+            screening: 0,
+            offers: 0
+        };
+
+
+const recruitmentJobList =
+    typeof jobOpenings !== "undefined" &&
+    Array.isArray(jobOpenings)
+        ? jobOpenings
+        : [];
+
+
+const recruitmentApplicationList =
+    typeof recentApplications !== "undefined" &&
+    Array.isArray(recentApplications)
+        ? recentApplications
+        : [];
+
+
+/* =========================================================
+   SAFE NUMBER
+   ========================================================= */
+
+const safeNumber = (value) => {
+
+    const number = Number(value);
+
+    return Number.isFinite(number)
+        ? number
+        : 0;
+};
+
+
+/* =========================================================
+   STATUS CLASS
+   ========================================================= */
+
+const getJobStatusClass = (status) => {
+
+    const normalized =
+        String(status || "OPEN")
+            .toUpperCase()
+            .trim();
+
+    if (normalized === "OPEN") {
+        return "recruitment-status-open";
+    }
+
+    if (normalized === "CLOSED") {
+        return "recruitment-status-closed";
+    }
+
+    if (normalized === "ON_HOLD") {
+        return "recruitment-status-hold";
+    }
+
+    if (normalized === "DRAFT") {
+        return "recruitment-status-draft";
+    }
+
+    return "recruitment-status-default";
+};
+
+
+/* =========================================================
+   APPLICATION STATUS CLASS
+   ========================================================= */
+
+const getApplicationStatusClass = (status) => {
+
+    const normalized =
+        String(status || "APPLIED")
+            .toUpperCase()
+            .trim();
+
+    if (
+        normalized === "HIRED" ||
+        normalized === "SELECTED"
+    ) {
+        return "recruitment-application-success";
+    }
+
+    if (
+        normalized === "INTERVIEW" ||
+        normalized === "INTERVIEW_SCHEDULED"
+    ) {
+        return "recruitment-application-warning";
+    }
+
+    if (
+        normalized === "REJECTED"
+    ) {
+        return "recruitment-application-danger";
+    }
+
+    if (
+        normalized === "SCREENING"
+    ) {
+        return "recruitment-application-purple";
+    }
+
+    return "recruitment-application-default";
+};
+
+%>
+
+
+<style>
+
+/* =========================================================
+   RECRUITMENT PAGE
+   ========================================================= */
+
+.recruitment-page {
+
+    width: 100%;
+
+    min-width: 0;
+}
+
+
+/* =========================================================
+   PAGE TOP
+   ========================================================= */
+
+.recruitment-page-header {
+
+    display: flex;
+
+    align-items: flex-end;
+
+    justify-content: space-between;
+
+    gap: 24px;
+
+    margin-bottom: 26px;
+}
+
+
+.recruitment-page-heading {
+
+    min-width: 0;
+}
+
+
+.recruitment-breadcrumb {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    margin-bottom: 9px;
+
+    color: #94a3b8;
+
+    font-size: 11px;
+
+    font-weight: 500;
+}
+
+
+.recruitment-breadcrumb a {
+
+    color: #64748b;
+
+    transition: color 0.18s ease;
+}
+
+
+.recruitment-breadcrumb a:hover {
+
+    color: #4f46e5;
+}
+
+
+.recruitment-breadcrumb-current {
+
+    color: #64748b;
+
+    font-weight: 600;
+}
+
+
+.recruitment-page-title {
+
+    margin: 0;
+
+    color: #172033;
+
+    font-size: 26px;
+
+    line-height: 1.2;
+
+    font-weight: 750;
+
+    letter-spacing: -0.025em;
+}
+
+
+.recruitment-page-description {
+
+    margin-top: 7px;
+
+    color: #7b8799;
+
+    font-size: 12px;
+
+    line-height: 1.5;
+}
+
+
+/* =========================================================
+   PRIMARY ACTION
+   ========================================================= */
+
+.recruitment-primary-btn {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 8px;
+
+    min-height: 40px;
+
+    padding: 0 17px;
+
+    flex-shrink: 0;
+
+    border: 0;
+
+    border-radius: 8px;
+
+    background: #111827;
+
+    color: #ffffff;
+
+    font-size: 12px;
+
+    font-weight: 650;
+
+    box-shadow:
+        0 2px 4px rgba(15, 23, 42, 0.08);
+
+    transition:
+        background 0.18s ease,
+        transform 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+
+.recruitment-primary-btn:hover {
+
+    background: #1f2937;
+
+    box-shadow:
+        0 5px 12px rgba(15, 23, 42, 0.12);
+
+    transform: translateY(-1px);
+}
+
+
+.recruitment-primary-btn:active {
+
+    transform: translateY(0);
+}
+
+
+.recruitment-primary-plus {
+
+    font-size: 17px;
+
+    line-height: 1;
+
+    font-weight: 400;
+}
+
+
+/* =========================================================
+   STAT GRID
+   ========================================================= */
+
+.recruitment-stat-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap: 16px;
+
+    margin-bottom: 22px;
+}
+
+
+/* =========================================================
+   STAT CARD
+   ========================================================= */
+
+.recruitment-stat-card {
+
+    min-width: 0;
+
+    padding: 19px;
+
+    background: #ffffff;
+
+    border: 1px solid #e7ebf0;
+
+    border-radius: 11px;
+
+    box-shadow:
+        0 1px 2px rgba(15, 23, 42, 0.025);
+
+    transition:
+        border-color 0.18s ease,
+        box-shadow 0.18s ease,
+        transform 0.18s ease;
+}
+
+
+.recruitment-stat-card:hover {
+
+    border-color: #dce2ea;
+
+    box-shadow:
+        0 5px 16px rgba(15, 23, 42, 0.05);
+
+    transform: translateY(-1px);
+}
+
+
+.recruitment-stat-top {
+
+    display: flex;
+
+    align-items: flex-start;
+
+    justify-content: space-between;
+
+    gap: 12px;
+}
+
+
+.recruitment-stat-content {
+
+    min-width: 0;
+}
+
+
+.recruitment-stat-label {
+
+    color: #7b8799;
+
+    font-size: 11px;
+
+    font-weight: 600;
+}
+
+
+.recruitment-stat-value {
+
+    margin-top: 7px;
+
+    color: #172033;
+
+    font-size: 28px;
+
+    line-height: 1.1;
+
+    font-weight: 750;
+
+    letter-spacing: -0.025em;
+}
+
+
+.recruitment-stat-description {
+
+    margin-top: 7px;
+
+    color: #a0a9b7;
+
+    font-size: 10px;
+
+    line-height: 1.4;
+}
+
+
+.recruitment-stat-icon {
+
+    width: 42px;
+    height: 42px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 10px;
+
+    font-size: 18px;
+}
+
+
+.recruitment-stat-icon-blue {
+
+    background: #eef4ff;
+}
+
+
+.recruitment-stat-icon-purple {
+
+    background: #f3efff;
+}
+
+
+.recruitment-stat-icon-orange {
+
+    background: #fff5e9;
+}
+
+
+.recruitment-stat-icon-green {
+
+    background: #ecfdf5;
+}
+
+
+/* =========================================================
+   SECTION CARD
+   ========================================================= */
+
+.recruitment-section-card {
+
+    background: #ffffff;
+
+    border: 1px solid #e7ebf0;
+
+    border-radius: 11px;
+
+    box-shadow:
+        0 1px 2px rgba(15, 23, 42, 0.025);
+}
+
+
+/* =========================================================
+   SECTION HEADER
+   ========================================================= */
+
+.recruitment-section-header {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 15px;
+
+    padding: 19px 21px;
+
+    border-bottom: 1px solid #eef1f4;
+}
+
+
+.recruitment-section-title {
+
+    margin: 0;
+
+    color: #202b3d;
+
+    font-size: 15px;
+
+    line-height: 1.3;
+
+    font-weight: 700;
+}
+
+
+.recruitment-section-description {
+
+    margin-top: 4px;
+
+    color: #9aa4b3;
+
+    font-size: 10px;
+}
+
+
+.recruitment-section-link {
+
+    color: #4f46e5;
+
+    font-size: 11px;
+
+    font-weight: 650;
+
+    white-space: nowrap;
+}
+
+
+.recruitment-section-link:hover {
+
+    color: #4338ca;
+}
+
+
+/* =========================================================
+   PIPELINE
+   ========================================================= */
+
+.recruitment-pipeline {
+
+    margin-bottom: 22px;
+
+    padding: 21px;
+}
+
+
+.recruitment-pipeline-header {
+
+    margin-bottom: 18px;
+}
+
+
+.recruitment-pipeline-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(5, minmax(0, 1fr));
+
+    gap: 12px;
+}
+
+
+.recruitment-pipeline-item {
+
+    min-width: 0;
+
+    padding: 15px;
+
+    border: 1px solid #e8ebf0;
+
+    border-radius: 10px;
+
+    background: #ffffff;
+
+    transition:
+        border-color 0.18s ease,
+        background 0.18s ease,
+        transform 0.18s ease;
+}
+
+
+.recruitment-pipeline-item:hover {
+
+    transform: translateY(-1px);
+
+    background: #fafbfc;
+}
+
+
+.recruitment-pipeline-top {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 10px;
+
+    margin-bottom: 13px;
+}
+
+
+.recruitment-pipeline-label {
+
+    color: #475569;
+
+    font-size: 11px;
+
+    font-weight: 650;
+}
+
+
+.recruitment-pipeline-icon {
+
+    width: 31px;
+    height: 31px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 8px;
+
+    font-size: 14px;
+}
+
+
+.recruitment-pipeline-number {
+
+    color: #172033;
+
+    font-size: 22px;
+
+    line-height: 1.1;
+
+    font-weight: 750;
+}
+
+
+.recruitment-pipeline-description {
+
+    margin-top: 4px;
+
+    color: #a0a9b7;
+
+    font-size: 9px;
+}
+
+
+/* Pipeline colors */
+
+.pipeline-blue {
+
+    background: #eef4ff;
+}
+
+
+.pipeline-purple {
+
+    background: #f3efff;
+}
+
+
+.pipeline-orange {
+
+    background: #fff5e9;
+}
+
+
+.pipeline-yellow {
+
+    background: #fffbeb;
+}
+
+
+.pipeline-green {
+
+    background: #ecfdf5;
+}
+
+
+/* =========================================================
+   LOWER GRID
+   ========================================================= */
+
+.recruitment-main-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 2fr)
+        minmax(290px, 1fr);
+
+    gap: 18px;
+
+    margin-bottom: 18px;
+}
+
+
+/* =========================================================
+   JOB OPENINGS
+   ========================================================= */
+
+.recruitment-jobs-card {
+
+    min-width: 0;
+
+    overflow: hidden;
+}
+
+
+.recruitment-jobs-body {
+
+    width: 100%;
+}
+
+
+/* =========================================================
+   EMPTY STATE
+   ========================================================= */
+
+.recruitment-empty {
+
+    padding: 48px 24px;
+
+    text-align: center;
+}
+
+
+.recruitment-empty-icon {
+
+    width: 58px;
+    height: 58px;
+
+    margin: 0 auto;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: #f1f5f9;
+
+    font-size: 25px;
+}
+
+
+.recruitment-empty-title {
+
+    margin-top: 14px;
+
+    color: #334155;
+
+    font-size: 14px;
+
+    font-weight: 700;
+}
+
+
+.recruitment-empty-description {
+
+    max-width: 390px;
+
+    margin: 6px auto 0;
+
+    color: #94a3b8;
+
+    font-size: 11px;
+
+    line-height: 1.6;
+}
+
+
+.recruitment-empty-btn {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    margin-top: 17px;
+
+    min-height: 37px;
+
+    padding: 0 15px;
+
+    border-radius: 8px;
+
+    background: #111827;
+
+    color: #ffffff;
+
+    font-size: 11px;
+
+    font-weight: 650;
+}
+
+
+.recruitment-empty-btn:hover {
+
+    background: #1f2937;
+}
+
+
+/* =========================================================
+   JOB ROW
+   ========================================================= */
+
+.recruitment-job-row {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 20px;
+
+    padding: 17px 21px;
+
+    border-bottom: 1px solid #f0f2f5;
+
+    transition: background 0.18s ease;
+}
+
+
+.recruitment-job-row:last-child {
+
+    border-bottom: 0;
+}
+
+
+.recruitment-job-row:hover {
+
+    background: #fafbfc;
+}
+
+
+.recruitment-job-info {
+
+    min-width: 0;
+
+    flex: 1;
+}
+
+
+.recruitment-job-title {
+
+    overflow: hidden;
+
+    color: #263246;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    white-space: nowrap;
+
+    text-overflow: ellipsis;
+}
+
+
+.recruitment-job-meta {
+
+    display: flex;
+
+    align-items: center;
+
+    flex-wrap: wrap;
+
+    gap: 5px 14px;
+
+    margin-top: 5px;
+
+    color: #94a3b8;
+
+    font-size: 10px;
+}
+
+
+.recruitment-job-meta-item {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 4px;
+}
+
+
+.recruitment-job-actions {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 13px;
+
+    flex-shrink: 0;
+}
+
+
+.recruitment-job-applications {
+
+    color: #94a3b8;
+
+    font-size: 10px;
+
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   STATUS BADGES
+   ========================================================= */
+
+.recruitment-status {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    min-height: 25px;
+
+    padding: 0 9px;
+
+    border-radius: 999px;
+
+    font-size: 9px;
+
+    font-weight: 700;
+
+    letter-spacing: 0.01em;
+
+    white-space: nowrap;
+}
+
+
+.recruitment-status-open {
+
+    background: #ecfdf5;
+
+    color: #047857;
+}
+
+
+.recruitment-status-closed {
+
+    background: #f1f5f9;
+
+    color: #64748b;
+}
+
+
+.recruitment-status-hold {
+
+    background: #fff7ed;
+
+    color: #c2410c;
+}
+
+
+.recruitment-status-draft {
+
+    background: #f3f4f6;
+
+    color: #6b7280;
+}
+
+
+.recruitment-status-default {
+
+    background: #eef2ff;
+
+    color: #4f46e5;
+}
+
+
+/* =========================================================
+   QUICK ACTIONS
+   ========================================================= */
+
+.recruitment-actions-body {
+
+    padding: 12px;
+}
+
+
+.recruitment-action {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 12px;
+
+    border: 1px solid transparent;
+
+    border-radius: 9px;
+
+    transition:
+        background 0.18s ease,
+        border-color 0.18s ease;
+}
+
+
+.recruitment-action:hover {
+
+    background: #f8fafc;
+
+    border-color: #e8ebf0;
+}
+
+
+.recruitment-action-icon {
+
+    width: 39px;
+    height: 39px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 9px;
+
+    font-size: 16px;
+}
+
+
+.recruitment-action-content {
+
+    min-width: 0;
+
+    flex: 1;
+}
+
+
+.recruitment-action-title {
+
+    color: #334155;
+
+    font-size: 11px;
+
+    font-weight: 700;
+}
+
+
+.recruitment-action-description {
+
+    margin-top: 2px;
+
+    color: #9aa4b3;
+
+    font-size: 9px;
+
+    line-height: 1.4;
+}
+
+
+.recruitment-action-arrow {
+
+    color: #c0c7d1;
+
+    font-size: 14px;
+}
+
+
+/* Action colors */
+
+.action-blue {
+
+    background: #eef4ff;
+}
+
+
+.action-purple {
+
+    background: #f3efff;
+}
+
+
+.action-orange {
+
+    background: #fff5e9;
+}
+
+
+.action-green {
+
+    background: #ecfdf5;
+}
+
+
+/* =========================================================
+   RECENT APPLICATIONS
+   ========================================================= */
+
+.recruitment-applications-card {
+
+    overflow: hidden;
+}
+
+
+.recruitment-application-row {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 20px;
+
+    padding: 16px 21px;
+
+    border-bottom: 1px solid #f0f2f5;
+
+    transition: background 0.18s ease;
+}
+
+
+.recruitment-application-row:last-child {
+
+    border-bottom: 0;
+}
+
+
+.recruitment-application-row:hover {
+
+    background: #fafbfc;
+}
+
+
+.recruitment-candidate {
+
+    min-width: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 11px;
+}
+
+
+.recruitment-candidate-avatar {
+
+    width: 34px;
+    height: 34px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: #eef2ff;
+
+    color: #4f46e5;
+
+    font-size: 11px;
+
+    font-weight: 750;
+}
+
+
+.recruitment-candidate-info {
+
+    min-width: 0;
+}
+
+
+.recruitment-candidate-name {
+
+    overflow: hidden;
+
+    color: #334155;
+
+    font-size: 11px;
+
+    font-weight: 700;
+
+    white-space: nowrap;
+
+    text-overflow: ellipsis;
+}
+
+
+.recruitment-candidate-position {
+
+    overflow: hidden;
+
+    margin-top: 3px;
+
+    color: #9aa4b3;
+
+    font-size: 9px;
+
+    white-space: nowrap;
+
+    text-overflow: ellipsis;
+}
+
+
+.recruitment-application-status {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    min-height: 24px;
+
+    padding: 0 9px;
+
+    border-radius: 999px;
+
+    font-size: 9px;
+
+    font-weight: 700;
+
+    white-space: nowrap;
+}
+
+
+.recruitment-application-default {
+
+    background: #eef4ff;
+
+    color: #2563eb;
+}
+
+
+.recruitment-application-purple {
+
+    background: #f3efff;
+
+    color: #7c3aed;
+}
+
+
+.recruitment-application-warning {
+
+    background: #fff7ed;
+
+    color: #c2410c;
+}
+
+
+.recruitment-application-success {
+
+    background: #ecfdf5;
+
+    color: #047857;
+}
+
+
+.recruitment-application-danger {
+
+    background: #fff1f2;
+
+    color: #be123c;
+}
+
+
+/* =========================================================
+   RESPONSIVE - LARGE TABLET
+   ========================================================= */
+
+@media (max-width: 1200px) {
+
+    .recruitment-stat-grid {
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+
+    .recruitment-pipeline-grid {
+
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+    }
+
+
+    .recruitment-main-grid {
+
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* =========================================================
+   RESPONSIVE - TABLET
+   ========================================================= */
+
+@media (max-width: 800px) {
+
+    .recruitment-page-header {
+
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        margin-bottom: 22px;
+    }
+
+
+    .recruitment-primary-btn {
+
+        width: 100%;
+    }
+
+
+    .recruitment-pipeline-grid {
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+}
+
+
+/* =========================================================
+   RESPONSIVE - MOBILE
+   ========================================================= */
+
+@media (max-width: 560px) {
+
+    .recruitment-page-title {
+
+        font-size: 22px;
+    }
+
+
+    .recruitment-page-description {
+
+        font-size: 11px;
+    }
+
+
+    .recruitment-stat-grid {
+
+        grid-template-columns: 1fr;
+
+        gap: 12px;
+    }
+
+
+    .recruitment-stat-card {
+
+        padding: 16px;
+    }
+
+
+    .recruitment-stat-value {
+
+        font-size: 25px;
+    }
+
+
+    .recruitment-pipeline {
+
+        padding: 16px;
+    }
+
+
+    .recruitment-pipeline-grid {
+
+        grid-template-columns: 1fr;
+    }
+
+
+    .recruitment-section-header {
+
+        padding: 16px;
+    }
+
+
+    .recruitment-job-row {
+
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        gap: 12px;
+
+        padding: 16px;
+    }
+
+
+    .recruitment-job-actions {
+
+        width: 100%;
+
+        justify-content: space-between;
+    }
+
+
+    .recruitment-application-row {
+
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        gap: 10px;
+
+        padding: 15px 16px;
+    }
+}
+
+</style>
+
+
+<!-- =========================================================
+     RECRUITMENT PAGE
+     ========================================================= -->
+
+<div class="recruitment-page">
+
+
+    <!-- =====================================================
+         PAGE HEADER
+         ===================================================== -->
+
+    <div class="recruitment-page-header">
+
+
+        <div class="recruitment-page-heading">
+
+
+            <!-- BREADCRUMB -->
+
+            <div class="recruitment-breadcrumb">
+
+                <a href="/dashboard">
+                    Dashboard
+                </a>
+
+                <span>/</span>
+
+                <span class="recruitment-breadcrumb-current">
+                    Recruitment
+                </span>
+
+            </div>
+
+
+            <!-- TITLE -->
+
+            <h1 class="recruitment-page-title">
+                Recruitment
+            </h1>
+
+
+            <p class="recruitment-page-description">
+                Manage job openings, candidates, interviews and hiring.
+            </p>
+
+        </div>
+
+
+        <!-- CREATE JOB -->
+
+        <a
+            href="/recruitment/create"
+            class="recruitment-primary-btn"
+        >
+
+            <span class="recruitment-primary-plus">
+                +
+            </span>
+
+            Create Job Opening
+
+        </a>
+
+    </div>
+
+
+    <!-- =====================================================
+         STATISTICS
+         ===================================================== -->
+
+    <div class="recruitment-stat-grid">
+
+
+        <!-- OPEN POSITIONS -->
+
+        <div class="recruitment-stat-card">
+
+            <div class="recruitment-stat-top">
+
+                <div class="recruitment-stat-content">
+
+                    <div class="recruitment-stat-label">
+                        Open Positions
+                    </div>
+
+                    <div class="recruitment-stat-value">
+                        <%= safeNumber(recruitmentStats.openPositions) %>
+                    </div>
+
+                    <div class="recruitment-stat-description">
+                        Active job openings
+                    </div>
+
+                </div>
+
+
+                <div class="recruitment-stat-icon recruitment-stat-icon-blue">
+                    💼
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- APPLICATIONS -->
+
+        <div class="recruitment-stat-card">
+
+            <div class="recruitment-stat-top">
+
+                <div class="recruitment-stat-content">
+
+                    <div class="recruitment-stat-label">
+                        Applications
+                    </div>
+
+                    <div class="recruitment-stat-value">
+                        <%= safeNumber(recruitmentStats.applications) %>
+                    </div>
+
+                    <div class="recruitment-stat-description">
+                        Candidate applications
+                    </div>
+
+                </div>
+
+
+                <div class="recruitment-stat-icon recruitment-stat-icon-purple">
+                    👥
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- INTERVIEWS -->
+
+        <div class="recruitment-stat-card">
+
+            <div class="recruitment-stat-top">
+
+                <div class="recruitment-stat-content">
+
+                    <div class="recruitment-stat-label">
+                        Interviews
+                    </div>
+
+                    <div class="recruitment-stat-value">
+                        <%= safeNumber(recruitmentStats.interviews) %>
+                    </div>
+
+                    <div class="recruitment-stat-description">
+                        Scheduled interviews
+                    </div>
+
+                </div>
+
+
+                <div class="recruitment-stat-icon recruitment-stat-icon-orange">
+                    📅
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- HIRED -->
+
+        <div class="recruitment-stat-card">
+
+            <div class="recruitment-stat-top">
+
+                <div class="recruitment-stat-content">
+
+                    <div class="recruitment-stat-label">
+                        Hired
+                    </div>
+
+                    <div class="recruitment-stat-value">
+                        <%= safeNumber(recruitmentStats.hired) %>
+                    </div>
+
+                    <div class="recruitment-stat-description">
+                        Successfully hired
+                    </div>
+
+                </div>
+
+
+                <div class="recruitment-stat-icon recruitment-stat-icon-green">
+                    ✓
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         RECRUITMENT PIPELINE
+         ===================================================== -->
+
+    <div class="recruitment-section-card recruitment-pipeline">
+
+
+        <div class="recruitment-pipeline-header">
+
+            <h2 class="recruitment-section-title">
+                Recruitment Pipeline
+            </h2>
+
+            <p class="recruitment-section-description">
+                Track candidates from application to hiring.
+            </p>
+
+        </div>
+
+
+        <div class="recruitment-pipeline-grid">
+
+
+            <!-- APPLIED -->
+
+            <div class="recruitment-pipeline-item">
+
+                <div class="recruitment-pipeline-top">
+
+                    <span class="recruitment-pipeline-label">
+                        Applied
+                    </span>
+
+                    <span class="recruitment-pipeline-icon pipeline-blue">
+                        📥
+                    </span>
+
+                </div>
+
+                <div class="recruitment-pipeline-number">
+                    <%= safeNumber(recruitmentStats.applications) %>
+                </div>
+
+                <div class="recruitment-pipeline-description">
+                    New applications
+                </div>
+
+            </div>
+
+
+            <!-- SCREENING -->
+
+            <div class="recruitment-pipeline-item">
+
+                <div class="recruitment-pipeline-top">
+
+                    <span class="recruitment-pipeline-label">
+                        Screening
+                    </span>
+
+                    <span class="recruitment-pipeline-icon pipeline-purple">
+                        🔎
+                    </span>
+
+                </div>
+
+                <div class="recruitment-pipeline-number">
+                    <%= safeNumber(recruitmentStats.screening) %>
+                </div>
+
+                <div class="recruitment-pipeline-description">
+                    Candidates under review
+                </div>
+
+            </div>
+
+
+            <!-- INTERVIEW -->
+
+            <div class="recruitment-pipeline-item">
+
+                <div class="recruitment-pipeline-top">
+
+                    <span class="recruitment-pipeline-label">
+                        Interview
+                    </span>
+
+                    <span class="recruitment-pipeline-icon pipeline-orange">
+                        🎯
+                    </span>
+
+                </div>
+
+                <div class="recruitment-pipeline-number">
+                    <%= safeNumber(recruitmentStats.interviews) %>
+                </div>
+
+                <div class="recruitment-pipeline-description">
+                    Scheduled interviews
+                </div>
+
+            </div>
+
+
+            <!-- OFFER -->
+
+            <div class="recruitment-pipeline-item">
+
+                <div class="recruitment-pipeline-top">
+
+                    <span class="recruitment-pipeline-label">
+                        Offer
+                    </span>
+
+                    <span class="recruitment-pipeline-icon pipeline-yellow">
+                        📄
+                    </span>
+
+                </div>
+
+                <div class="recruitment-pipeline-number">
+                    <%= safeNumber(recruitmentStats.offers) %>
+                </div>
+
+                <div class="recruitment-pipeline-description">
+                    Offers released
+                </div>
+
+            </div>
+
+
+            <!-- HIRED -->
+
+            <div class="recruitment-pipeline-item">
+
+                <div class="recruitment-pipeline-top">
+
+                    <span class="recruitment-pipeline-label">
+                        Hired
+                    </span>
+
+                    <span class="recruitment-pipeline-icon pipeline-green">
+                        ✓
+                    </span>
+
+                </div>
+
+                <div class="recruitment-pipeline-number">
+                    <%= safeNumber(recruitmentStats.hired) %>
+                </div>
+
+                <div class="recruitment-pipeline-description">
+                    Successfully hired
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         JOBS + QUICK ACTIONS
+         ===================================================== -->
+
+    <div class="recruitment-main-grid">
+
+
+        <!-- =================================================
+             JOB OPENINGS
+             ================================================= -->
+
+        <div class="recruitment-section-card recruitment-jobs-card">
+
+
+            <!-- HEADER -->
+
+            <div class="recruitment-section-header">
+
+                <div>
+
+                    <h2 class="recruitment-section-title">
+                        Job Openings
+                    </h2>
+
+                    <p class="recruitment-section-description">
+                        Current recruitment positions.
+                    </p>
+
+                </div>
+
+
+                <a
+                    href="/recruitment/create"
+                    class="recruitment-section-link"
+                >
+                    + Add Job
+                </a>
+
+            </div>
+
+
+            <!-- BODY -->
+
+            <div class="recruitment-jobs-body">
+
+
+                <% if (recruitmentJobList.length === 0) { %>
+
+
+                    <!-- EMPTY STATE -->
+
+                    <div class="recruitment-empty">
+
+                        <div class="recruitment-empty-icon">
+                            💼
+                        </div>
+
+                        <div class="recruitment-empty-title">
+                            No job openings yet
+                        </div>
+
+                        <div class="recruitment-empty-description">
+                            Create your first job opening to start
+                            receiving applications and building your
+                            recruitment pipeline.
+                        </div>
+
+                        <a
+                            href="/recruitment/create"
+                            class="recruitment-empty-btn"
+                        >
+                            Create Job Opening
+                        </a>
+
+                    </div>
+
+
+                <% } else { %>
+
+
+                    <!-- JOB LIST -->
+
+                    <% recruitmentJobList.forEach(function(job) { %>
+
+                        <div class="recruitment-job-row">
+
+
+                            <div class="recruitment-job-info">
+
+                                <div class="recruitment-job-title">
+                                    <%= job.title || "Untitled Position" %>
+                                </div>
+
+
+                                <div class="recruitment-job-meta">
+
+                                    <span class="recruitment-job-meta-item">
+                                        🏢
+                                        <%= job.department || "Department not specified" %>
+                                    </span>
+
+
+                                    <% if (job.location) { %>
+
+                                        <span class="recruitment-job-meta-item">
+                                            📍
+                                            <%= job.location %>
+                                        </span>
+
+                                    <% } %>
+
+
+                                    <% if (job.employmentType) { %>
+
+                                        <span class="recruitment-job-meta-item">
+                                            💼
+                                            <%= job.employmentType %>
+                                        </span>
+
+                                    <% } %>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="recruitment-job-actions">
+
+
+                                <span class="recruitment-status <%= getJobStatusClass(job.status) %>">
+
+                                    <%= job.status || "OPEN" %>
+
+                                </span>
+
+
+                                <span class="recruitment-job-applications">
+
+                                    <%= safeNumber(job.applications) %>
+                                    applications
+
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    <% }); %>
+
+
+                <% } %>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             QUICK ACTIONS
+             ================================================= -->
+
+        <div class="recruitment-section-card">
+
+
+            <div class="recruitment-section-header">
+
+                <div>
+
+                    <h2 class="recruitment-section-title">
+                        Quick Actions
+                    </h2>
+
+                    <p class="recruitment-section-description">
+                        Frequently used recruitment actions.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="recruitment-actions-body">
+
+
+                <!-- CREATE JOB -->
+
+                <a
+                    href="/recruitment/create"
+                    class="recruitment-action"
+                >
+
+                    <div class="recruitment-action-icon action-blue">
+                        💼
+                    </div>
+
+                    <div class="recruitment-action-content">
+
+                        <div class="recruitment-action-title">
+                            Create Job
+                        </div>
+
+                        <div class="recruitment-action-description">
+                            Create a new vacancy
+                        </div>
+
+                    </div>
+
+                    <div class="recruitment-action-arrow">
+                        →
+                    </div>
+
+                </a>
+
+
+                <!-- CANDIDATES -->
+
+                <a
+                    href="/recruitment/candidates"
+                    class="recruitment-action"
+                >
+
+                    <div class="recruitment-action-icon action-purple">
+                        👥
+                    </div>
+
+                    <div class="recruitment-action-content">
+
+                        <div class="recruitment-action-title">
+                            Candidates
+                        </div>
+
+                        <div class="recruitment-action-description">
+                            Manage applicants
+                        </div>
+
+                    </div>
+
+                    <div class="recruitment-action-arrow">
+                        →
+                    </div>
+
+                </a>
+
+
+                <!-- INTERVIEWS -->
+
+                <a
+                    href="/recruitment/interviews"
+                    class="recruitment-action"
+                >
+
+                    <div class="recruitment-action-icon action-orange">
+                        📅
+                    </div>
+
+                    <div class="recruitment-action-content">
+
+                        <div class="recruitment-action-title">
+                            Interviews
+                        </div>
+
+                        <div class="recruitment-action-description">
+                            Manage interview schedules
+                        </div>
+
+                    </div>
+
+                    <div class="recruitment-action-arrow">
+                        →
+                    </div>
+
+                </a>
+
+
+                <!-- OFFERS -->
+
+                <a
+                    href="/recruitment/offers"
+                    class="recruitment-action"
+                >
+
+                    <div class="recruitment-action-icon action-green">
+                        📄
+                    </div>
+
+                    <div class="recruitment-action-content">
+
+                        <div class="recruitment-action-title">
+                            Offers
+                        </div>
+
+                        <div class="recruitment-action-description">
+                            Manage job offers
+                        </div>
+
+                    </div>
+
+                    <div class="recruitment-action-arrow">
+                        →
+                    </div>
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         RECENT APPLICATIONS
+         ===================================================== -->
+
+    <div class="recruitment-section-card recruitment-applications-card">
+
+
+        <div class="recruitment-section-header">
+
+            <div>
+
+                <h2 class="recruitment-section-title">
+                    Recent Applications
+                </h2>
+
+                <p class="recruitment-section-description">
+                    Latest candidate applications.
+                </p>
+
+            </div>
+
+
+            <a
+                href="/recruitment/candidates"
+                class="recruitment-section-link"
+            >
+                View All
+            </a>
+
+        </div>
+
+
+        <% if (recruitmentApplicationList.length === 0) { %>
+
+
+            <!-- EMPTY -->
+
+            <div class="recruitment-empty">
+
+                <div class="recruitment-empty-icon">
+                    👥
+                </div>
+
+                <div class="recruitment-empty-title">
+                    No applications yet
+                </div>
+
+                <div class="recruitment-empty-description">
+                    Candidate applications will appear here once
+                    applicants start applying for open positions.
+                </div>
+
+            </div>
+
+
+        <% } else { %>
+
+
+            <!-- APPLICATION LIST -->
+
+            <% recruitmentApplicationList.forEach(function(application) { %>
+
+                <%
+                    const candidateName =
+                        application.name ||
+                        application.candidateName ||
+                        "Candidate";
+
+                    const candidatePosition =
+                        application.position ||
+                        application.jobTitle ||
+                        "Position not specified";
+
+                    const applicationStatus =
+                        application.status ||
+                        "APPLIED";
+
+                    const candidateInitial =
+                        String(candidateName)
+                            .charAt(0)
+                            .toUpperCase();
+                %>
+
+
+                <div class="recruitment-application-row">
+
+
+                    <div class="recruitment-candidate">
+
+
+                        <div class="recruitment-candidate-avatar">
+
+                            <%= candidateInitial %>
+
+                        </div>
+
+
+                        <div class="recruitment-candidate-info">
+
+                            <div class="recruitment-candidate-name">
+
+                                <%= candidateName %>
+
+                            </div>
+
+                            <div class="recruitment-candidate-position">
+
+                                <%= candidatePosition %>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <span
+                        class="recruitment-application-status <%= getApplicationStatusClass(applicationStatus) %>"
+                    >
+                        <%= applicationStatus %>
+                    </span>
+
+                </div>
+
+            <% }); %>
+
+
+        <% } %>
+
+    </div>
+
+
+</div>

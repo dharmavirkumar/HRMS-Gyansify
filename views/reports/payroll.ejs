@@ -1,0 +1,1376 @@
+<style>
+    .payroll-report-page {
+        padding: 30px;
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+
+    /* =====================================================
+       PAGE HEADING
+    ===================================================== */
+
+    .page-heading {
+        margin-bottom: 24px;
+    }
+
+    .page-heading h1 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 600;
+        color: #111827;
+    }
+
+    .page-heading p {
+        margin: 6px 0 0;
+        font-size: 11px;
+        color: #9ca3af;
+    }
+
+
+    /* =====================================================
+       ACTIONS
+    ===================================================== */
+
+    .report-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .report-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+
+        min-height: 34px;
+        padding: 8px 12px;
+
+        border: 1px solid #d1d5db;
+        border-radius: 7px;
+
+        background: #ffffff;
+        color: #374151;
+
+        font-size: 9px;
+        font-weight: 600;
+
+        cursor: pointer;
+        transition: .15s ease;
+
+        text-decoration: none;
+    }
+
+    .report-btn:hover {
+        background: #f9fafb;
+        border-color: #9ca3af;
+    }
+
+    .report-btn-primary {
+        background: #111827;
+        border-color: #111827;
+        color: #ffffff;
+    }
+
+    .report-btn-primary:hover {
+        background: #1f2937;
+        border-color: #1f2937;
+    }
+
+
+    /* =====================================================
+       STATS
+    ===================================================== */
+
+    .payroll-stats {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 15px;
+        margin-bottom: 22px;
+    }
+
+    .payroll-stat {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 18px;
+    }
+
+    .payroll-stat-label {
+        font-size: 9px;
+        color: #9ca3af;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .payroll-stat-value {
+        font-size: 21px;
+        font-weight: 600;
+        color: #111827;
+        word-break: break-word;
+    }
+
+    .payroll-stat-note {
+        margin-top: 5px;
+        font-size: 9px;
+        color: #9ca3af;
+    }
+
+
+    /* =====================================================
+       FILTER
+    ===================================================== */
+
+    .filter-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 17px;
+        margin-bottom: 20px;
+    }
+
+    .filter-title {
+        margin-bottom: 13px;
+        font-size: 11px;
+        font-weight: 600;
+        color: #111827;
+    }
+
+    .filter-grid {
+        display: grid;
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr))
+            auto;
+
+        gap: 10px;
+        align-items: end;
+    }
+
+    .filter-field {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        min-width: 0;
+    }
+
+    .filter-field label {
+        font-size: 9px;
+        color: #6b7280;
+        font-weight: 600;
+    }
+
+    .filter-field input,
+    .filter-field select {
+        width: 100%;
+        height: 36px;
+
+        padding: 0 10px;
+
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+
+        outline: none;
+        background: #ffffff;
+
+        color: #374151;
+        font-size: 10px;
+    }
+
+    .filter-field input:focus,
+    .filter-field select:focus {
+        border-color: #6b7280;
+        box-shadow: 0 0 0 2px rgba(17, 24, 39, .05);
+    }
+
+    .filter-submit {
+        height: 36px;
+        padding: 0 14px;
+
+        border: 1px solid #111827;
+        border-radius: 6px;
+
+        background: #111827;
+        color: #ffffff;
+
+        font-size: 9px;
+        font-weight: 600;
+
+        cursor: pointer;
+    }
+
+    .filter-submit:hover {
+        background: #1f2937;
+    }
+
+
+    /* =====================================================
+       TABLE
+    ===================================================== */
+
+    .table-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .table-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        gap: 15px;
+
+        padding: 16px 18px;
+
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .table-title {
+        margin: 0;
+        font-size: 12px;
+        font-weight: 600;
+        color: #111827;
+    }
+
+    .table-count {
+        font-size: 9px;
+        color: #9ca3af;
+        white-space: nowrap;
+    }
+
+    .table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .report-table {
+        width: 100%;
+        min-width: 1050px;
+        border-collapse: collapse;
+    }
+
+    .report-table th {
+        text-align: left;
+
+        padding: 11px 14px;
+
+        background: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
+
+        color: #9ca3af;
+
+        font-size: 8px;
+        font-weight: 700;
+
+        text-transform: uppercase;
+
+        white-space: nowrap;
+    }
+
+    .report-table td {
+        padding: 13px 14px;
+
+        border-bottom: 1px solid #f3f4f6;
+
+        color: #374151;
+
+        font-size: 10px;
+
+        white-space: nowrap;
+    }
+
+    .report-table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+    .report-table tbody tr:hover {
+        background: #fafafa;
+    }
+
+
+    /* =====================================================
+       EMPLOYEE
+    ===================================================== */
+
+    .employee-info {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+    }
+
+    .employee-avatar {
+        width: 31px;
+        height: 31px;
+        min-width: 31px;
+
+        border-radius: 7px;
+
+        background: #f3f4f6;
+        color: #374151;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        font-size: 10px;
+        font-weight: 700;
+    }
+
+    .employee-name {
+        font-weight: 600;
+        color: #111827;
+    }
+
+    .employee-id {
+        margin-top: 2px;
+        font-size: 8px;
+        color: #9ca3af;
+    }
+
+    .money {
+        font-weight: 600;
+        color: #111827;
+    }
+
+
+    /* =====================================================
+       STATUS
+    ===================================================== */
+
+    .status {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        padding: 4px 7px;
+
+        border-radius: 5px;
+
+        font-size: 8px;
+        font-weight: 700;
+
+        white-space: nowrap;
+    }
+
+    .status-paid {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .status-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-processing {
+        background: #e0f2fe;
+        color: #0369a1;
+    }
+
+    .status-failed {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .status-default {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+
+
+    /* =====================================================
+       EMPTY
+    ===================================================== */
+
+    .empty-state {
+        padding: 55px 20px;
+        text-align: center;
+    }
+
+    .empty-icon {
+        width: 45px;
+        height: 45px;
+
+        margin: 0 auto 12px;
+
+        border-radius: 9px;
+
+        background: #f3f4f6;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        font-size: 19px;
+    }
+
+    .empty-state h3 {
+        margin: 0;
+
+        font-size: 12px;
+
+        color: #111827;
+    }
+
+    .empty-state p {
+        margin: 5px 0 0;
+
+        font-size: 9px;
+
+        color: #9ca3af;
+    }
+
+
+    /* =====================================================
+       FOOTER
+    ===================================================== */
+
+    .report-footer {
+        display: flex;
+        justify-content: space-between;
+
+        gap: 15px;
+
+        margin-top: 14px;
+
+        font-size: 8px;
+        color: #9ca3af;
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ===================================================== */
+
+    @media (max-width: 1200px) {
+
+        .payroll-stats {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+    }
+
+
+    @media (max-width: 1000px) {
+
+        .filter-grid {
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+        }
+
+        .filter-submit {
+            width: 100%;
+        }
+
+    }
+
+
+    @media (max-width: 700px) {
+
+        .payroll-report-page {
+            padding: 20px;
+        }
+
+        .payroll-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .filter-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .report-actions {
+            justify-content: flex-start;
+        }
+
+        .report-footer {
+            flex-direction: column;
+        }
+
+    }
+
+
+    @media (max-width: 450px) {
+
+        .payroll-stats {
+            grid-template-columns: 1fr;
+        }
+
+        .page-heading h1 {
+            font-size: 19px;
+        }
+
+        .report-actions {
+            display: grid;
+            grid-template-columns: 1fr;
+        }
+
+        .report-btn {
+            width: 100%;
+        }
+
+    }
+
+
+    /* =====================================================
+       PRINT
+    ===================================================== */
+
+    @media print {
+
+        .report-actions,
+        .filter-card {
+            display: none !important;
+        }
+
+        .payroll-report-page {
+            max-width: none;
+            padding: 0;
+        }
+
+        .table-card {
+            border: 1px solid #d1d5db;
+        }
+
+        .report-table {
+            min-width: 0;
+        }
+
+    }
+</style>
+
+
+<%
+    /* =====================================================
+       SAFE DATA
+    ===================================================== */
+
+    const payrollStatsData =
+        locals &&
+        locals.stats &&
+        typeof locals.stats === "object"
+            ? locals.stats
+            : {};
+
+
+    const payrollRecordsData =
+        locals &&
+        Array.isArray(locals.payrollRecords)
+            ? locals.payrollRecords
+            : (
+                locals &&
+                Array.isArray(locals.records)
+                    ? locals.records
+                    : []
+            );
+
+
+    const currentQuery =
+        locals &&
+        locals.query &&
+        typeof locals.query === "object"
+            ? locals.query
+            : {};
+
+
+    const departmentsData =
+        locals &&
+        Array.isArray(locals.departments)
+            ? locals.departments
+            : [];
+
+
+    /* =====================================================
+       EMPLOYEE NAME
+    ===================================================== */
+
+    const getEmployeeName = (record) => {
+
+        if (
+            record &&
+            record.employee &&
+            typeof record.employee === "object"
+        ) {
+
+            const firstName =
+                record.employee.firstName || "";
+
+            const lastName =
+                record.employee.lastName || "";
+
+            const combinedName =
+                `${firstName} ${lastName}`.trim();
+
+            return (
+                record.employee.name ||
+                record.employee.fullName ||
+                combinedName ||
+                "Unknown Employee"
+            );
+
+        }
+
+        return (
+            record?.employeeName ||
+            record?.name ||
+            "Unknown Employee"
+        );
+
+    };
+
+
+    /* =====================================================
+       EMPLOYEE ID
+    ===================================================== */
+
+    const getEmployeeId = (record) => {
+
+        if (
+            record &&
+            record.employee &&
+            typeof record.employee === "object"
+        ) {
+
+            return (
+                record.employee.employeeId ||
+                record.employee.empId ||
+                record.employee.code ||
+                "-"
+            );
+
+        }
+
+        return (
+            record?.employeeId ||
+            record?.empId ||
+            record?.employeeCode ||
+            "-"
+        );
+
+    };
+
+
+    /* =====================================================
+       INITIAL
+    ===================================================== */
+
+    const getInitial = (name) => {
+
+        return (
+            String(name || "U")
+                .trim()
+                .charAt(0)
+                .toUpperCase()
+            || "U"
+        );
+
+    };
+
+
+    /* =====================================================
+       MONEY
+    ===================================================== */
+
+    const money = (value) => {
+
+        const number =
+            Number(value || 0);
+
+        return number.toLocaleString(
+            "en-IN",
+            {
+                style: "currency",
+                currency: "INR",
+                maximumFractionDigits: 0
+            }
+        );
+
+    };
+
+
+    /* =====================================================
+       DATE
+    ===================================================== */
+
+    const formatDate = (value) => {
+
+        if (!value) {
+            return "-";
+        }
+
+        const date =
+            new Date(value);
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+            return "-";
+        }
+
+        return date.toLocaleDateString(
+            "en-IN"
+        );
+
+    };
+
+
+    /* =====================================================
+       STATUS CLASS
+    ===================================================== */
+
+    const getStatusClass = (status) => {
+
+        const value =
+            String(status || "")
+                .toUpperCase()
+                .trim();
+
+        if (value === "PAID") {
+            return "status-paid";
+        }
+
+        if (value === "PENDING") {
+            return "status-pending";
+        }
+
+        if (value === "PROCESSING") {
+            return "status-processing";
+        }
+
+        if (value === "FAILED") {
+            return "status-failed";
+        }
+
+        return "status-default";
+
+    };
+
+
+    /* =====================================================
+       STATUS LABEL
+    ===================================================== */
+
+    const getStatusLabel = (status) => {
+
+        return String(
+            status || "PENDING"
+        )
+            .replace(/_/g, " ")
+            .toUpperCase();
+
+    };
+
+%>
+
+
+<section class="payroll-report-page">
+
+
+    <!-- =====================================================
+         PAGE HEADING
+    ====================================================== -->
+
+    <div class="page-heading">
+
+        <h1>
+            Payroll Report
+        </h1>
+
+        <p>
+            Review payroll processing, salaries,
+            deductions, net pay and payment status.
+        </p>
+
+    </div>
+
+
+    <!-- =====================================================
+         ACTIONS
+    ====================================================== -->
+
+    <div class="report-actions">
+
+
+        <a
+            href="/reports"
+            class="report-btn"
+        >
+            ← Reports
+        </a>
+
+
+        <button
+            type="button"
+            class="report-btn"
+            onclick="window.print()"
+        >
+            🖨 Print
+        </button>
+
+
+        <a
+            href="/reports/payroll/export"
+            class="report-btn report-btn-primary"
+        >
+            ↓ Export
+        </a>
+
+
+    </div>
+
+
+    <!-- =====================================================
+         STATS
+    ====================================================== -->
+
+    <div class="payroll-stats">
+
+
+        <div class="payroll-stat">
+
+            <div class="payroll-stat-label">
+                TOTAL PAYROLL
+            </div>
+
+            <div class="payroll-stat-value">
+
+                <%= money(
+                    payrollStatsData.totalPayroll
+                ) %>
+
+            </div>
+
+            <div class="payroll-stat-note">
+                Gross payroll
+            </div>
+
+        </div>
+
+
+        <div class="payroll-stat">
+
+            <div class="payroll-stat-label">
+                NET PAY
+            </div>
+
+            <div class="payroll-stat-value">
+
+                <%= money(
+                    payrollStatsData.netPay
+                ) %>
+
+            </div>
+
+            <div class="payroll-stat-note">
+                Employee payout
+            </div>
+
+        </div>
+
+
+        <div class="payroll-stat">
+
+            <div class="payroll-stat-label">
+                DEDUCTIONS
+            </div>
+
+            <div class="payroll-stat-value">
+
+                <%= money(
+                    payrollStatsData.deductions
+                ) %>
+
+            </div>
+
+            <div class="payroll-stat-note">
+                Total deductions
+            </div>
+
+        </div>
+
+
+        <div class="payroll-stat">
+
+            <div class="payroll-stat-label">
+                PAID
+            </div>
+
+            <div class="payroll-stat-value">
+
+                <%= payrollStatsData.paid ?? 0 %>
+
+            </div>
+
+            <div class="payroll-stat-note">
+                Completed payments
+            </div>
+
+        </div>
+
+
+        <div class="payroll-stat">
+
+            <div class="payroll-stat-label">
+                PENDING
+            </div>
+
+            <div class="payroll-stat-value">
+
+                <%= payrollStatsData.pending ?? 0 %>
+
+            </div>
+
+            <div class="payroll-stat-note">
+                Awaiting processing
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+    <!-- =====================================================
+         FILTERS
+    ====================================================== -->
+
+    <div class="filter-card">
+
+
+        <div class="filter-title">
+            Payroll Filters
+        </div>
+
+
+        <form
+            method="GET"
+            action="/reports/payroll"
+        >
+
+            <div class="filter-grid">
+
+
+                <div class="filter-field">
+
+                    <label for="month">
+                        Month
+                    </label>
+
+                    <input
+                        id="month"
+                        type="month"
+                        name="month"
+                        value="<%= currentQuery.month || '' %>"
+                    >
+
+                </div>
+
+
+                <div class="filter-field">
+
+                    <label for="department">
+                        Department
+                    </label>
+
+                    <select
+                        id="department"
+                        name="department"
+                    >
+
+                        <option value="">
+                            All Departments
+                        </option>
+
+
+                        <% departmentsData.forEach(department => { %>
+
+                            <%
+                                const departmentId =
+                                    department?._id ||
+                                    department?.id ||
+                                    department?.code ||
+                                    "";
+
+                                const departmentName =
+                                    department?.name ||
+                                    department?.departmentName ||
+                                    department?.title ||
+                                    "Department";
+                            %>
+
+
+                            <option
+                                value="<%= departmentId %>"
+                                <%= String(
+                                    currentQuery.department || ""
+                                ) === String(
+                                    departmentId
+                                )
+                                    ? "selected"
+                                    : ""
+                                %>
+                            >
+                                <%= departmentName %>
+                            </option>
+
+
+                        <% }) %>
+
+
+                    </select>
+
+                </div>
+
+
+                <div class="filter-field">
+
+                    <label for="status">
+                        Status
+                    </label>
+
+                    <select
+                        id="status"
+                        name="status"
+                    >
+
+                        <option value="">
+                            All Status
+                        </option>
+
+                        <option
+                            value="PAID"
+                            <%= String(
+                                currentQuery.status || ""
+                            ).toUpperCase() === "PAID"
+                                ? "selected"
+                                : ""
+                            %>
+                        >
+                            Paid
+                        </option>
+
+                        <option
+                            value="PENDING"
+                            <%= String(
+                                currentQuery.status || ""
+                            ).toUpperCase() === "PENDING"
+                                ? "selected"
+                                : ""
+                            %>
+                        >
+                            Pending
+                        </option>
+
+                        <option
+                            value="PROCESSING"
+                            <%= String(
+                                currentQuery.status || ""
+                            ).toUpperCase() === "PROCESSING"
+                                ? "selected"
+                                : ""
+                            %>
+                        >
+                            Processing
+                        </option>
+
+                        <option
+                            value="FAILED"
+                            <%= String(
+                                currentQuery.status || ""
+                            ).toUpperCase() === "FAILED"
+                                ? "selected"
+                                : ""
+                            %>
+                        >
+                            Failed
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="filter-submit"
+                >
+                    Apply Filters
+                </button>
+
+
+            </div>
+
+        </form>
+
+    </div>
+
+
+    <!-- =====================================================
+         TABLE
+    ====================================================== -->
+
+    <div class="table-card">
+
+
+        <div class="table-header">
+
+            <h2 class="table-title">
+                Payroll Records
+            </h2>
+
+
+            <span class="table-count">
+
+                <%= payrollRecordsData.length %>
+
+                record(s)
+
+            </span>
+
+        </div>
+
+
+        <% if (payrollRecordsData.length > 0) { %>
+
+
+            <div class="table-wrapper">
+
+                <table class="report-table">
+
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Employee
+                            </th>
+
+                            <th>
+                                Pay Period
+                            </th>
+
+                            <th>
+                                Gross Salary
+                            </th>
+
+                            <th>
+                                Deductions
+                            </th>
+
+                            <th>
+                                Net Pay
+                            </th>
+
+                            <th>
+                                Payment Date
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+
+                        <% payrollRecordsData.forEach(record => { %>
+
+
+                            <%
+                                const employeeName =
+                                    getEmployeeName(record);
+
+                                const employeeId =
+                                    getEmployeeId(record);
+
+
+                                const gross =
+                                    record?.grossSalary ??
+                                    record?.gross ??
+                                    record?.totalEarnings ??
+                                    record?.earnings ??
+                                    0;
+
+
+                                const deductions =
+                                    record?.deductions ??
+                                    record?.totalDeductions ??
+                                    record?.deductionAmount ??
+                                    0;
+
+
+                                const net =
+                                    record?.netSalary ??
+                                    record?.netPay ??
+                                    record?.salary ??
+                                    record?.netAmount ??
+                                    0;
+
+
+                                const period =
+                                    record?.payPeriod ||
+                                    record?.month ||
+                                    record?.payrollMonth ||
+                                    record?.period ||
+                                    "-";
+
+
+                                const paymentDate =
+                                    record?.paymentDate ||
+                                    record?.paidAt ||
+                                    record?.processedAt;
+
+
+                                const status =
+                                    record?.status ||
+                                    "PENDING";
+
+                            %>
+
+
+                            <tr>
+
+
+                                <td>
+
+                                    <div class="employee-info">
+
+
+                                        <div class="employee-avatar">
+
+                                            <%= getInitial(
+                                                employeeName
+                                            ) %>
+
+                                        </div>
+
+
+                                        <div>
+
+                                            <div class="employee-name">
+
+                                                <%= employeeName %>
+
+                                            </div>
+
+
+                                            <div class="employee-id">
+
+                                                <%= employeeId %>
+
+                                            </div>
+
+                                        </div>
+
+
+                                    </div>
+
+                                </td>
+
+
+                                <td>
+                                    <%= period %>
+                                </td>
+
+
+                                <td class="money">
+                                    <%= money(gross) %>
+                                </td>
+
+
+                                <td>
+                                    <%= money(deductions) %>
+                                </td>
+
+
+                                <td class="money">
+                                    <%= money(net) %>
+                                </td>
+
+
+                                <td>
+                                    <%= formatDate(paymentDate) %>
+                                </td>
+
+
+                                <td>
+
+                                    <span
+                                        class="status <%= getStatusClass(status) %>"
+                                    >
+                                        <%= getStatusLabel(status) %>
+                                    </span>
+
+                                </td>
+
+
+                            </tr>
+
+
+                        <% }) %>
+
+
+                    </tbody>
+
+
+                </table>
+
+            </div>
+
+
+        <% } else { %>
+
+
+            <div class="empty-state">
+
+                <div class="empty-icon">
+                    ₹
+                </div>
+
+                <h3>
+                    No Payroll Records Found
+                </h3>
+
+                <p>
+                    Payroll records will appear here
+                    once payroll processing is completed.
+                </p>
+
+            </div>
+
+
+        <% } %>
+
+
+    </div>
+
+
+    <!-- =====================================================
+         FOOTER
+    ====================================================== -->
+
+    <div class="report-footer">
+
+        <span>
+            Gyansify HRMS · Payroll Report
+        </span>
+
+        <span>
+            Generated on
+            <%= formatDate(new Date()) %>
+        </span>
+
+    </div>
+
+
+</section>

@@ -1,0 +1,860 @@
+<%
+    const currentUser =
+        typeof user !== "undefined" && user
+            ? user
+            : {};
+
+    const employeeList =
+        typeof employees !== "undefined" && Array.isArray(employees)
+            ? employees
+            : [];
+
+    const data =
+        typeof formData !== "undefined" && formData
+            ? formData
+            : {};
+%>
+
+
+<div class="page-container">
+
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <div class="page-header">
+
+        <div>
+
+            <h1>
+                Add Asset
+            </h1>
+
+            <p>
+                Add a new company asset to the inventory.
+            </p>
+
+        </div>
+
+
+        <div>
+
+            <a
+                href="/assets"
+                class="btn-secondary"
+            >
+                ← Back to Assets
+            </a>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =====================================================
+         ERROR
+    ====================================================== -->
+
+    <% if (typeof error !== "undefined" && error) { %>
+
+        <div class="alert-error">
+
+            <strong>
+                Error:
+            </strong>
+
+            <%= error %>
+
+        </div>
+
+    <% } %>
+
+
+
+    <!-- =====================================================
+         FORM
+    ====================================================== -->
+
+    <div class="card">
+
+
+        <div class="card-header">
+
+            <div>
+
+                <h2>
+                    Asset Information
+                </h2>
+
+                <p>
+                    Enter the details of the company asset.
+                </p>
+
+            </div>
+
+        </div>
+
+
+
+        <form
+            action="/assets/create"
+            method="POST"
+        >
+
+
+            <!-- =================================================
+                 BASIC INFORMATION
+            ================================================== -->
+
+            <div class="form-section">
+
+                <h3>
+                    Basic Information
+                </h3>
+
+
+                <div class="form-grid">
+
+
+                    <!-- ASSET ID -->
+
+                    <div class="form-group">
+
+                        <label for="assetId">
+
+                            Asset ID
+
+                            <span class="required">
+                                *
+                            </span>
+
+                        </label>
+
+                        <input
+                            type="text"
+                            id="assetId"
+                            name="assetId"
+                            value="<%= data.assetId || '' %>"
+                            placeholder="Example: AST-0001"
+                            required
+                        >
+
+                        <small>
+                            Unique identification number for this asset.
+                        </small>
+
+                    </div>
+
+
+
+                    <!-- ASSET NAME -->
+
+                    <div class="form-group">
+
+                        <label for="name">
+
+                            Asset Name
+
+                            <span class="required">
+                                *
+                            </span>
+
+                        </label>
+
+                        <input
+                            type="text"
+                            id="name"
+                            name="name"
+                            value="<%= data.name || '' %>"
+                            placeholder="Example: Dell Laptop"
+                            required
+                        >
+
+                    </div>
+
+
+
+                    <!-- CATEGORY -->
+
+                    <div class="form-group">
+
+                        <label for="category">
+
+                            Category
+
+                            <span class="required">
+                                *
+                            </span>
+
+                        </label>
+
+                        <select
+                            id="category"
+                            name="category"
+                            required
+                        >
+
+                            <option value="">
+                                Select Category
+                            </option>
+
+                            <option
+                                value="Laptop"
+                                <%= data.category === "Laptop" ? "selected" : "" %>
+                            >
+                                Laptop
+                            </option>
+
+                            <option
+                                value="Desktop"
+                                <%= data.category === "Desktop" ? "selected" : "" %>
+                            >
+                                Desktop
+                            </option>
+
+                            <option
+                                value="Monitor"
+                                <%= data.category === "Monitor" ? "selected" : "" %>
+                            >
+                                Monitor
+                            </option>
+
+                            <option
+                                value="Mobile"
+                                <%= data.category === "Mobile" ? "selected" : "" %>
+                            >
+                                Mobile
+                            </option>
+
+                            <option
+                                value="Tablet"
+                                <%= data.category === "Tablet" ? "selected" : "" %>
+                            >
+                                Tablet
+                            </option>
+
+                            <option
+                                value="Printer"
+                                <%= data.category === "Printer" ? "selected" : "" %>
+                            >
+                                Printer
+                            </option>
+
+                            <option
+                                value="Furniture"
+                                <%= data.category === "Furniture" ? "selected" : "" %>
+                            >
+                                Furniture
+                            </option>
+
+                            <option
+                                value="Other"
+                                <%= data.category === "Other" ? "selected" : "" %>
+                            >
+                                Other
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+
+                    <!-- BRAND -->
+
+                    <div class="form-group">
+
+                        <label for="brand">
+                            Brand
+                        </label>
+
+                        <input
+                            type="text"
+                            id="brand"
+                            name="brand"
+                            value="<%= data.brand || '' %>"
+                            placeholder="Example: Dell"
+                        >
+
+                    </div>
+
+
+
+                    <!-- MODEL -->
+
+                    <div class="form-group">
+
+                        <label for="model">
+                            Model
+                        </label>
+
+                        <input
+                            type="text"
+                            id="model"
+                            name="model"
+                            value="<%= data.model || '' %>"
+                            placeholder="Example: Latitude 5440"
+                        >
+
+                    </div>
+
+
+
+                    <!-- SERIAL NUMBER -->
+
+                    <div class="form-group">
+
+                        <label for="serialNumber">
+                            Serial Number
+                        </label>
+
+                        <input
+                            type="text"
+                            id="serialNumber"
+                            name="serialNumber"
+                            value="<%= data.serialNumber || '' %>"
+                            placeholder="Enter serial number"
+                        >
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- =================================================
+                 PURCHASE INFORMATION
+            ================================================== -->
+
+            <div class="form-section">
+
+                <h3>
+                    Purchase Information
+                </h3>
+
+
+                <div class="form-grid">
+
+
+                    <!-- PURCHASE DATE -->
+
+                    <div class="form-group">
+
+                        <label for="purchaseDate">
+                            Purchase Date
+                        </label>
+
+                        <input
+                            type="date"
+                            id="purchaseDate"
+                            name="purchaseDate"
+                            value="<%= data.purchaseDate || '' %>"
+                        >
+
+                    </div>
+
+
+
+                    <!-- PURCHASE PRICE -->
+
+                    <div class="form-group">
+
+                        <label for="purchasePrice">
+                            Purchase Price
+                        </label>
+
+                        <input
+                            type="number"
+                            id="purchasePrice"
+                            name="purchasePrice"
+                            value="<%= data.purchasePrice || '' %>"
+                            placeholder="0"
+                            min="0"
+                            step="0.01"
+                        >
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- =================================================
+                 ASSIGNMENT
+            ================================================== -->
+
+            <div class="form-section">
+
+                <h3>
+                    Assignment
+                </h3>
+
+
+                <div class="form-grid">
+
+
+                    <!-- ASSIGN EMPLOYEE -->
+
+                    <div class="form-group">
+
+                        <label for="assignedTo">
+                            Assign To Employee
+                        </label>
+
+                        <select
+                            id="assignedTo"
+                            name="assignedTo"
+                        >
+
+                            <option value="">
+                                Not Assigned
+                            </option>
+
+
+                            <% employeeList.forEach(employee => { %>
+
+                                <option
+                                    value="<%= employee._id %>"
+                                    <%= String(data.assignedTo || "") === String(employee._id) ? "selected" : "" %>
+                                >
+
+                                    <%= employee.firstName || "" %>
+
+                                    <%= employee.lastName || "" %>
+
+                                    <% if (employee.employeeId) { %>
+
+                                        -
+                                        <%= employee.employeeId %>
+
+                                    <% } %>
+
+                                </option>
+
+                            <% }) %>
+
+                        </select>
+
+                    </div>
+
+
+
+                    <!-- ASSIGNED DATE -->
+
+                    <div class="form-group">
+
+                        <label for="assignedDate">
+                            Assigned Date
+                        </label>
+
+                        <input
+                            type="date"
+                            id="assignedDate"
+                            name="assignedDate"
+                            value="<%= data.assignedDate || '' %>"
+                        >
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- =================================================
+                 ASSET STATUS
+            ================================================== -->
+
+            <div class="form-section">
+
+                <h3>
+                    Asset Status
+                </h3>
+
+
+                <div class="form-grid">
+
+
+                    <!-- CONDITION -->
+
+                    <div class="form-group">
+
+                        <label for="condition">
+                            Condition
+                        </label>
+
+                        <select
+                            id="condition"
+                            name="condition"
+                        >
+
+                            <option
+                                value="NEW"
+                                <%= !data.condition || data.condition === "NEW" ? "selected" : "" %>
+                            >
+                                New
+                            </option>
+
+                            <option
+                                value="GOOD"
+                                <%= data.condition === "GOOD" ? "selected" : "" %>
+                            >
+                                Good
+                            </option>
+
+                            <option
+                                value="FAIR"
+                                <%= data.condition === "FAIR" ? "selected" : "" %>
+                            >
+                                Fair
+                            </option>
+
+                            <option
+                                value="DAMAGED"
+                                <%= data.condition === "DAMAGED" ? "selected" : "" %>
+                            >
+                                Damaged
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+
+                    <!-- STATUS -->
+
+                    <div class="form-group">
+
+                        <label for="status">
+                            Status
+                        </label>
+
+                        <select
+                            id="status"
+                            name="status"
+                        >
+
+                            <option
+                                value="AVAILABLE"
+                                <%= !data.status || data.status === "AVAILABLE" ? "selected" : "" %>
+                            >
+                                Available
+                            </option>
+
+                            <option
+                                value="MAINTENANCE"
+                                <%= data.status === "MAINTENANCE" ? "selected" : "" %>
+                            >
+                                Maintenance
+                            </option>
+
+                            <option
+                                value="LOST"
+                                <%= data.status === "LOST" ? "selected" : "" %>
+                            >
+                                Lost
+                            </option>
+
+                            <option
+                                value="RETIRED"
+                                <%= data.status === "RETIRED" ? "selected" : "" %>
+                            >
+                                Retired
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+
+                    <!-- LOCATION -->
+
+                    <div class="form-group">
+
+                        <label for="location">
+                            Location
+                        </label>
+
+                        <input
+                            type="text"
+                            id="location"
+                            name="location"
+                            value="<%= data.location || '' %>"
+                            placeholder="Example: IT Department"
+                        >
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- =================================================
+                 DESCRIPTION
+            ================================================== -->
+
+            <div class="form-section">
+
+                <h3>
+                    Additional Information
+                </h3>
+
+
+                <div class="form-group">
+
+                    <label for="description">
+                        Description
+                    </label>
+
+                    <textarea
+                        id="description"
+                        name="description"
+                        rows="5"
+                        placeholder="Enter additional information about this asset..."
+                    ><%= data.description || '' %></textarea>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- =================================================
+                 FORM ACTIONS
+            ================================================== -->
+
+            <div class="form-actions">
+
+                <a
+                    href="/assets"
+                    class="btn-secondary"
+                >
+                    Cancel
+                </a>
+
+
+                <button
+                    type="submit"
+                    class="btn-primary"
+                >
+                    Save Asset
+                </button>
+
+            </div>
+
+
+        </form>
+
+    </div>
+
+</div>
+
+
+
+<!-- ============================================================
+     PAGE CSS
+============================================================ -->
+
+<style>
+
+    .page-container {
+        width: 100%;
+    }
+
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 25px;
+    }
+
+
+    .page-header h1 {
+        margin: 0 0 6px;
+    }
+
+
+    .page-header p {
+        margin: 0;
+        opacity: 0.7;
+    }
+
+
+    .card {
+        background: var(--card-bg, #ffffff);
+        border: 1px solid var(--border-color, #e5e7eb);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+
+    .card-header {
+        padding: 22px;
+        border-bottom: 1px solid var(--border-color, #e5e7eb);
+    }
+
+
+    .card-header h2 {
+        margin: 0 0 5px;
+    }
+
+
+    .card-header p {
+        margin: 0;
+        opacity: 0.65;
+    }
+
+
+    .form-section {
+        padding: 25px;
+        border-bottom: 1px solid var(--border-color, #e5e7eb);
+    }
+
+
+    .form-section h3 {
+        margin: 0 0 20px;
+        font-size: 17px;
+    }
+
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+    }
+
+
+    .form-group label {
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+
+    .required {
+        color: #dc2626;
+    }
+
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 11px 13px;
+        border: 1px solid var(--border-color, #d1d5db);
+        border-radius: 8px;
+        background: var(--input-bg, #ffffff);
+        font-size: 14px;
+        font-family: inherit;
+    }
+
+
+    .form-group textarea {
+        resize: vertical;
+    }
+
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #2563eb;
+    }
+
+
+    .form-group small {
+        font-size: 12px;
+        opacity: 0.6;
+    }
+
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        padding: 20px 25px;
+    }
+
+
+    .btn-primary,
+    .btn-secondary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        padding: 9px 17px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        box-sizing: border-box;
+    }
+
+
+    .btn-primary {
+        border: none;
+    }
+
+
+    .btn-secondary {
+        border: 1px solid var(--border-color, #d1d5db);
+    }
+
+
+    .alert-error {
+        margin-bottom: 20px;
+        padding: 14px 16px;
+        border-radius: 8px;
+        background: #fee2e2;
+        border: 1px solid #fecaca;
+        color: #991b1b;
+    }
+
+
+    @media (max-width: 700px) {
+
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+
+
+        .form-actions {
+            flex-direction: column-reverse;
+        }
+
+
+        .form-actions a,
+        .form-actions button {
+            width: 100%;
+        }
+
+    }
+
+</style>

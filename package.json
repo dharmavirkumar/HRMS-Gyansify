@@ -1,0 +1,36 @@
+{
+  "name": "gyansify-hrms",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "tailwind": "tailwindcss -i ./public/css/input.css -o ./public/css/output.css --watch",
+    "tailwind:build": "tailwindcss -i ./public/css/input.css -o ./public/css/output.css",
+    "seed:organization": "node seeds/seedOrganization.js",
+    "seed:leave-types": "node seeds/seedLeaveTypes.js",
+    "seed:leave-balances": "node seeds/seedLeaveBalances.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "connect-mongo": "^6.0.0",
+    "dotenv": "^18.0.5",
+    "ejs": "^6.0.1",
+    "express": "^5.2.1",
+    "express-ejs-layouts": "^2.5.1",
+    "express-session": "^1.19.0",
+    "method-override": "^3.0.0",
+    "mongoose": "^8.24.4",
+    "multer": "^2.4.0",
+    "nodemailer": "^10.0.16"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14",
+    "tailwindcss": "^3.4.17"
+  }
+}

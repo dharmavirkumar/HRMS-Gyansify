@@ -1,0 +1,218 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payroll History | Gyansify HRMS</title>
+    <link rel="stylesheet" href="/css/dashboard.css">
+
+    <style>
+        .payroll-page {
+            padding: 30px;
+            max-width: 1400px;
+            margin: auto;
+        }
+
+        .page-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        .page-heading h1 {
+            margin: 0 0 8px;
+            font-size: 28px;
+        }
+
+        .page-heading p {
+            margin: 0;
+            color: #64748b;
+        }
+
+        .primary-btn {
+            display: inline-block;
+            padding: 11px 18px;
+            background: #2563eb;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .history-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .table-scroll {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 850px;
+        }
+
+        th, td {
+            padding: 15px 18px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            white-space: nowrap;
+        }
+
+        th {
+            background: #f8fafc;
+            color: #475569;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        td {
+            color: #334155;
+            font-size: 14px;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .status.paid,
+        .status.approved {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status.failed,
+        .status.cancelled {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .empty-state {
+            padding: 45px 20px;
+            text-align: center;
+            color: #64748b;
+        }
+
+        .amount {
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        @media (max-width: 640px) {
+            .payroll-page {
+                padding: 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<main class="payroll-page">
+
+    <header class="page-heading">
+        <div>
+            <h1>Payroll History</h1>
+            <p>Review processed payrolls and employee salary totals.</p>
+        </div>
+
+        <a class="primary-btn" href="/payroll/process">
+            + Process Payroll
+        </a>
+    </header>
+
+    <section class="history-card">
+        <% const records = typeof payrolls !== "undefined" && Array.isArray(payrolls) ? payrolls : []; %>
+
+        <% if (records.length > 0) { %>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Payroll Number</th>
+                            <th>Payroll Period</th>
+                            <th>Employees</th>
+                            <th>Gross Salary</th>
+                            <th>Deductions</th>
+                            <th>Net Salary</th>
+                            <th>Status</th>
+                            <th>Payment Date</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <% records.forEach(payroll => { %>
+                            <tr>
+                                <td>
+                                    <strong>
+                                        <%= payroll.payrollNumber || "—" %>
+                                    </strong>
+                                </td>
+
+                                <td>
+                                    <%= String(payroll.payrollMonth || "").padStart(2, "0") %>
+                                    /
+                                    <%= payroll.payrollYear || "—" %>
+                                </td>
+
+                                <td>
+                                    <%= payroll.processedEmployees || 0 %>
+                                    /
+                                    <%= payroll.totalEmployees || 0 %>
+                                </td>
+
+                                <td class="amount">
+                                    ₹<%= Number(payroll.totalGrossSalary || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+                                </td>
+
+                                <td>
+                                    ₹<%= Number(payroll.totalDeductions || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+                                </td>
+
+                                <td class="amount">
+                                    ₹<%= Number(payroll.totalNetSalary || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+                                </td>
+
+                                <td>
+                                    <span class="status <%= String(payroll.status || "").toLowerCase() %>">
+                                        <%= payroll.status || "UNKNOWN" %>
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <%= payroll.paymentDate
+                                        ? new Date(payroll.paymentDate).toLocaleDateString("en-IN")
+                                        : "Not paid" %>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        <% } else { %>
+            <div class="empty-state">
+                <h3>No payroll records yet</h3>
+                <p>Once payroll is successfully processed, it will appear here.</p>
+                <a class="primary-btn" href="/payroll/process">
+                    Process Your First Payroll
+                </a>
+            </div>
+        <% } %>
+    </section>
+
+</main>
+</body>
+</html>

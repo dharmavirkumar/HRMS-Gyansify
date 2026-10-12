@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Attendance History - Gyansify HRMS
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="/css/dashboard.css"
+    >
+
+    <style>
+
+        .history-page {
+            padding: 30px;
+        }
+
+        .page-heading {
+            margin-bottom: 22px;
+        }
+
+        .page-heading h1 {
+            font-size: 22px;
+        }
+
+        .page-heading p {
+            margin-top: 5px;
+            color: #9ca3af;
+            font-size: 11px;
+        }
+
+        .filters {
+
+            background: white;
+
+            border: 1px solid #e5e7eb;
+
+            border-radius: 12px;
+
+            padding: 18px;
+
+            display: flex;
+
+            align-items: end;
+
+            gap: 15px;
+
+            margin-bottom: 20px;
+
+        }
+
+        .filter-group {
+
+            min-width: 150px;
+
+        }
+
+        .filter-group label {
+
+            display: block;
+
+            font-size: 10px;
+
+            color: #6b7280;
+
+            margin-bottom: 6px;
+
+            font-weight: 600;
+
+        }
+
+        .filter-group select {
+
+            width: 100%;
+
+            padding: 9px;
+
+            border: 1px solid #d1d5db;
+
+            border-radius: 7px;
+
+            font-size: 11px;
+
+            background: white;
+
+        }
+
+        .filter-button {
+
+            padding: 9px 18px;
+
+            background: #111827;
+
+            color: white;
+
+            border: 0;
+
+            border-radius: 7px;
+
+            cursor: pointer;
+
+            font-size: 11px;
+
+        }
+
+        .stats {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(6, 1fr);
+
+            gap: 12px;
+
+            margin-bottom: 20px;
+
+        }
+
+        .stat-card {
+
+            background: white;
+
+            border: 1px solid #e5e7eb;
+
+            border-radius: 10px;
+
+            padding: 16px;
+
+        }
+
+        .stat-label {
+
+            font-size: 9px;
+
+            color: #9ca3af;
+
+            margin-bottom: 7px;
+
+        }
+
+        .stat-value {
+
+            font-size: 20px;
+
+            font-weight: 600;
+
+        }
+
+        .table-card {
+
+            background: white;
+
+            border: 1px solid #e5e7eb;
+
+            border-radius: 12px;
+
+            overflow: hidden;
+
+        }
+
+        .table-header {
+
+            padding: 18px;
+
+            border-bottom: 1px solid #eee;
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+        }
+
+        .table-header h3 {
+
+            font-size: 14px;
+
+        }
+
+        table {
+
+            width: 100%;
+
+            border-collapse: collapse;
+
+        }
+
+        th {
+
+            text-align: left;
+
+            padding: 12px 18px;
+
+            background: #fafafa;
+
+            color: #9ca3af;
+
+            font-size: 9px;
+
+            font-weight: 600;
+
+        }
+
+        td {
+
+            padding: 13px 18px;
+
+            border-top: 1px solid #f0f1f3;
+
+            font-size: 10px;
+
+        }
+
+        .employee-name {
+
+            font-weight: 600;
+
+        }
+
+        .employee-id {
+
+            color: #9ca3af;
+
+            font-size: 9px;
+
+            margin-top: 3px;
+
+        }
+
+        .badge {
+
+            padding: 5px 9px;
+
+            border-radius: 20px;
+
+            font-size: 9px;
+
+            background: #f3f4f6;
+
+        }
+
+        .empty {
+
+            padding: 50px;
+
+            text-align: center;
+
+            color: #9ca3af;
+
+            font-size: 12px;
+
+        }
+
+        .back-link {
+
+            text-decoration: none;
+
+            color: #374151;
+
+            font-size: 11px;
+
+        }
+
+        @media(max-width:1000px) {
+
+            .stats {
+
+                grid-template-columns:
+                    repeat(3, 1fr);
+
+            }
+
+        }
+
+        @media(max-width:700px) {
+
+            .filters {
+
+                flex-direction: column;
+
+                align-items: stretch;
+
+            }
+
+            .stats {
+
+                grid-template-columns:
+                    repeat(2, 1fr);
+
+            }
+
+            .table-card {
+
+                overflow-x: auto;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="app">
+
+
+    <!-- ================================================= -->
+    <!-- SIDEBAR -->
+    <!-- ================================================= -->
+
+    <aside class="sidebar">
+
+        <div class="brand">
+
+            <div class="brand-logo">
+                G
+            </div>
+
+            <div>
+
+                <div class="brand-name">
+                    Gyansify
+                </div>
+
+                <div class="brand-subtitle">
+                    HRMS
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="menu-title">
+            MAIN
+        </div>
+
+
+        <nav class="sidebar-menu">
+
+            <a
+                href="/dashboard"
+                class="menu-item"
+            >
+                <span>▦</span>
+                Dashboard
+            </a>
+
+
+            <a
+                href="/employees"
+                class="menu-item"
+            >
+                <span>👥</span>
+                Employees
+            </a>
+
+
+            <a
+                href="/attendance"
+                class="menu-item active"
+            >
+                <span>◷</span>
+                Attendance
+            </a>
+
+
+            <a
+                href="/attendance/history"
+                class="menu-item"
+            >
+                <span>▤</span>
+                Attendance History
+            </a>
+
+
+            <a
+                href="/leave"
+                class="menu-item"
+            >
+                <span>▣</span>
+                Leave
+            </a>
+
+
+            <a
+                href="/payroll"
+                class="menu-item"
+            >
+                <span>₹</span>
+                Payroll
+            </a>
+
+
+            <a
+                href="/organization"
+                class="menu-item"
+            >
+                <span>⚙</span>
+                Organization
+            </a>
+
+        </nav>
+
+    </aside>
+
+
+
+    <!-- ================================================= -->
+    <!-- MAIN -->
+    <!-- ================================================= -->
+
+    <main class="main">
+
+
+        <header class="header">
+
+            <span class="page-title">
+                Attendance History
+            </span>
+
+        </header>
+
+
+
+        <section class="history-page">
+
+
+            <div class="page-heading">
+
+                <h1>
+                    Attendance History
+                </h1>
+
+                <p>
+                    Review employee attendance
+                    records by month.
+                </p>
+
+            </div>
+
+
+
+            <!-- ================================================= -->
+            <!-- FILTERS -->
+            <!-- ================================================= -->
+
+            <form
+                method="GET"
+                action="/attendance/history"
+                class="filters"
+            >
+
+
+                <div class="filter-group">
+
+                    <label>
+                        MONTH
+                    </label>
+
+                    <select name="month">
+
+                        <% const months = [
+                            "January",
+                            "February",
+                            "March",
+                            "April",
+                            "May",
+                            "June",
+                            "July",
+                            "August",
+                            "September",
+                            "October",
+                            "November",
+                            "December"
+                        ]; %>
+
+
+                        <% months.forEach(
+                            (monthName, index) => {
+
+                            const value =
+                                String(
+                                    index + 1
+                                ).padStart(
+                                    2,
+                                    "0"
+                                );
+
+                        %>
+
+                            <option
+                                value="<%= value %>"
+                                <%= filters.month === value
+                                    ? "selected"
+                                    : ""
+                                %>
+                            >
+                                <%= monthName %>
+                            </option>
+
+                        <% }) %>
+
+                    </select>
+
+                </div>
+
+
+
+                <div class="filter-group">
+
+                    <label>
+                        YEAR
+                    </label>
+
+                    <select name="year">
+
+                        <% for (
+                            let year = 2024;
+                            year <= 2035;
+                            year++
+                        ) { %>
+
+                            <option
+                                value="<%= year %>"
+                                <%= filters.year === year
+                                    ? "selected"
+                                    : ""
+                                %>
+                            >
+                                <%= year %>
+                            </option>
+
+                        <% } %>
+
+                    </select>
+
+                </div>
+
+
+
+                <div class="filter-group">
+
+                    <label>
+                        EMPLOYEE
+                    </label>
+
+                    <select name="employee">
+
+                        <option value="">
+                            All Employees
+                        </option>
+
+
+                        <% employees.forEach(
+                            employee => {
+                        %>
+
+                            <option
+                                value="<%= employee._id %>"
+                                <%= filters.employee ===
+                                    employee._id.toString()
+                                    ? "selected"
+                                    : ""
+                                %>
+                            >
+
+                                <%= employee.firstName %>
+                                <%= employee.lastName || "" %>
+
+                            </option>
+
+                        <% }) %>
+
+                    </select>
+
+                </div>
+
+
+
+                <button
+                    type="submit"
+                    class="filter-button"
+                >
+                    Apply Filter
+                </button>
+
+
+            </form>
+
+
+
+            <!-- ================================================= -->
+            <!-- STATS -->
+            <!-- ================================================= -->
+
+            <div class="stats">
+
+
+                <div class="stat-card">
+
+                    <div class="stat-label">
+                        RECORDS
+                    </div>
+
+                    <div class="stat-value">
+                        <%= stats.total %>
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-label">
+                        PRESENT
+                    </div>
+
+                    <div class="stat-value">
+                        <%= stats.present %>
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-label">
+                        LATE
+                    </div>
+
+                    <div class="stat-value">
+                        <%= stats.late %>
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-label">
+                        HALF DAY
+                    </div>
+
+                    <div class="stat-value">
+                        <%= stats.halfDay %>
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-label">
+                        LEAVE
+                    </div>
+
+                    <div class="stat-value">
+                        <%= stats.leave %>
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-label">
+                        WORK HOURS
+                    </div>
+
+                    <div class="stat-value">
+                        <%= stats.totalWorkHours %>
+                    </div>
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- ================================================= -->
+            <!-- TABLE -->
+            <!-- ================================================= -->
+
+            <div class="table-card">
+
+
+                <div class="table-header">
+
+                    <h3>
+                        Attendance Records
+                    </h3>
+
+
+                    <a
+                        href="/attendance"
+                        class="back-link"
+                    >
+                        ← Today's Attendance
+                    </a>
+
+                </div>
+
+
+
+                <% if (
+                    attendance.length === 0
+                ) { %>
+
+
+                    <div class="empty">
+
+                        No attendance records
+                        found for the selected
+                        period.
+
+                    </div>
+
+
+                <% } else { %>
+
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    DATE
+                                </th>
+
+                                <th>
+                                    EMPLOYEE
+                                </th>
+
+                                <th>
+                                    CHECK IN
+                                </th>
+
+                                <th>
+                                    CHECK OUT
+                                </th>
+
+                                <th>
+                                    WORK HOURS
+                                </th>
+
+                                <th>
+                                    OVERTIME
+                                </th>
+
+                                <th>
+                                    STATUS
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+
+                        <% attendance.forEach(
+                            record => {
+
+                                const employee =
+                                    record.employee;
+
+                        %>
+
+
+                            <tr>
+
+
+                                <td>
+
+                                    <%= new Date(
+                                        record.date +
+                                        "T00:00:00"
+                                    ).toLocaleDateString(
+                                        "en-IN"
+                                    ) %>
+
+                                </td>
+
+
+                                <td>
+
+                                    <div
+                                        class="employee-name"
+                                    >
+
+                                        <%= employee?.firstName || "-" %>
+                                        <%= employee?.lastName || "" %>
+
+                                    </div>
+
+
+                                    <div
+                                        class="employee-id"
+                                    >
+
+                                        <%= employee?.employeeId || "-" %>
+
+                                    </div>
+
+                                </td>
+
+
+                                <td>
+
+                                    <% if (
+                                        record.checkIn
+                                    ) { %>
+
+                                        <%= new Date(
+                                            record.checkIn
+                                        ).toLocaleTimeString(
+                                            "en-IN",
+                                            {
+                                                hour:
+                                                    "2-digit",
+                                                minute:
+                                                    "2-digit"
+                                            }
+                                        ) %>
+
+                                    <% } else { %>
+
+                                        -
+
+                                    <% } %>
+
+                                </td>
+
+
+                                <td>
+
+                                    <% if (
+                                        record.checkOut
+                                    ) { %>
+
+                                        <%= new Date(
+                                            record.checkOut
+                                        ).toLocaleTimeString(
+                                            "en-IN",
+                                            {
+                                                hour:
+                                                    "2-digit",
+                                                minute:
+                                                    "2-digit"
+                                            }
+                                        ) %>
+
+                                    <% } else { %>
+
+                                        -
+
+                                    <% } %>
+
+                                </td>
+
+
+                                <td>
+
+                                    <%
+                                        const workHours =
+                                            (
+                                                record.workMinutes ||
+                                                0
+                                            ) / 60;
+                                    %>
+
+                                    <%= workHours.toFixed(1) %>
+                                    hrs
+
+                                </td>
+
+
+                                <td>
+
+                                    <%
+                                        const overtime =
+                                            (
+                                                record.overtimeMinutes ||
+                                                0
+                                            ) / 60;
+                                    %>
+
+                                    <%= overtime.toFixed(1) %>
+                                    hrs
+
+                                </td>
+
+
+                                <td>
+
+                                    <span
+                                        class="badge"
+                                    >
+
+                                        <%= record.status %>
+
+                                    </span>
+
+                                </td>
+
+
+                            </tr>
+
+
+                        <% }) %>
+
+
+                        </tbody>
+
+                    </table>
+
+
+                <% } %>
+
+
+            </div>
+
+
+        </section>
+
+    </main>
+
+</div>
+
+
+</body>
+
+</html>

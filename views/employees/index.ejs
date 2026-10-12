@@ -1,0 +1,139 @@
+
+<%
+const employeeList = Array.isArray(employees) ? employees : [];
+
+const getName = (value) => {
+    if (!value) return "-";
+    if (typeof value === "string") return value;
+    return value.name || value.title || value.code || "-";
+};
+
+const getEmployeeName = (employee) => {
+    const name = `${employee.firstName || ""} ${employee.lastName || ""}`.trim();
+    return name || employee.name || employee.email || "Employee";
+};
+
+const getStatus = (status) => {
+    const value = String(status || "Active").toLowerCase();
+    return value.charAt(0).toUpperCase() + value.slice(1);
+};
+%>
+
+<style>
+.employee-page { max-width: 1180px; margin: 0 auto; padding-bottom: 30px; }
+.employee-page-header { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:24px; }
+.employee-page h1 { margin:0; font-size:24px; color:#111827; }
+.employee-page .subtitle { margin:6px 0 0; color:#6b7280; font-size:13px; }
+.employee-page .btn { display:inline-flex; align-items:center; justify-content:center; padding:10px 14px; border-radius:7px; background:#111827; color:white; text-decoration:none; font-size:12px; font-weight:600; border:0; cursor:pointer; }
+.employee-page .stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-bottom:20px; }
+.employee-page .stat,.employee-page .panel { background:#fff; border:1px solid #e5e7eb; border-radius:10px; }
+.employee-page .stat { padding:18px; }
+.employee-page .stat-label { color:#6b7280; font-size:12px; }
+.employee-page .stat-value { margin-top:8px; font-size:25px; font-weight:700; color:#111827; }
+.employee-page .panel { overflow:hidden; }
+.employee-page .panel-header { padding:17px 20px; border-bottom:1px solid #e5e7eb; }
+.employee-page .panel-header h2 { margin:0; font-size:15px; color:#111827; }
+.employee-page .table-wrap { overflow-x:auto; }
+.employee-page table { width:100%; border-collapse:collapse; min-width:760px; }
+.employee-page th,.employee-page td { padding:14px 16px; border-bottom:1px solid #f0f1f3; text-align:left; font-size:12px; }
+.employee-page th { color:#6b7280; background:#f9fafb; font-size:10px; text-transform:uppercase; letter-spacing:.4px; }
+.employee-page td { color:#374151; }
+.employee-page .person { font-weight:600; color:#111827; }
+.employee-page .muted { display:block; margin-top:4px; color:#9ca3af; font-size:11px; }
+.employee-page .status { display:inline-block; padding:5px 9px; border-radius:20px; background:#ecfdf5; color:#047857; font-size:10px; font-weight:600; }
+.employee-page .status.inactive { background:#fffbeb; color:#b45309; }
+.employee-page .status.exited { background:#f3f4f6; color:#6b7280; }
+.employee-page .actions { display:flex; gap:10px; white-space:nowrap; }
+.employee-page .action-link { color:#374151; text-decoration:none; font-weight:600; }
+.employee-page .action-link:hover { text-decoration:underline; }
+.employee-page .empty { padding:45px 20px; text-align:center; color:#6b7280; }
+@media(max-width:650px) {
+    .employee-page-header { align-items:flex-start; flex-direction:column; }
+    .employee-page .stats { grid-template-columns:1fr; }
+}
+</style>
+
+<div class="employee-page">
+
+    <div class="employee-page-header">
+        <div>
+            <h1>Employees</h1>
+            <p class="subtitle">Manage employee records, departments and employment details.</p>
+        </div>
+
+        <a class="btn" href="/employees/create">+ Add Employee</a>
+    </div>
+
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-label">Total Employees</div>
+            <div class="stat-value"><%= employeeList.length %></div>
+        </div>
+
+        <div class="stat">
+            <div class="stat-label">Active Employees</div>
+            <div class="stat-value"><%= employeeList.filter(e => String(e.status || "Active").toLowerCase() === "active").length %></div>
+        </div>
+
+        <div class="stat">
+            <div class="stat-label">Inactive / Exited</div>
+            <div class="stat-value"><%= employeeList.filter(e => ["inactive", "exited"].includes(String(e.status || "").toLowerCase())).length %></div>
+        </div>
+    </div>
+
+    <section class="panel">
+        <div class="panel-header">
+            <h2>Employee Directory</h2>
+        </div>
+
+        <div class="table-wrap">
+            <% if (employeeList.length > 0) { %>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Employee ID</th>
+                            <th>Department</th>
+                            <th>Designation</th>
+                            <th>Branch</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% employeeList.forEach(employee => { %>
+                            <tr>
+                                <td>
+                                    <span class="person"><%= getEmployeeName(employee) %></span>
+                                    <span class="muted"><%= employee.email || "-" %></span>
+                                </td>
+                                <td><%= employee.employeeId || "-" %></td>
+                                <td><%= getName(employee.department) %></td>
+                                <td><%= getName(employee.designation) %></td>
+                                <td><%= getName(employee.branch) %></td>
+                                <td>
+                                    <span class="status <%= String(employee.status || "").toLowerCase() %>">
+                                        <%= getStatus(employee.status) %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="actions">
+                                        <a class="action-link" href="/employees/<%= employee._id %>">View</a>
+                                        <a class="action-link" href="/employees/<%= employee._id %>/edit">Edit</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            <% } else { %>
+                <div class="empty">
+                    <h3>No employees found</h3>
+                    <p>Add your first employee to start building your employee directory.</p>
+                    <a class="btn" href="/employees/create">Add Employee</a>
+                </div>
+            <% } %>
+        </div>
+    </section>
+
+</div>

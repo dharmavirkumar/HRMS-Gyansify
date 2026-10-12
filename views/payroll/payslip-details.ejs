@@ -1,0 +1,236 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payslip Details | Gyansify HRMS</title>
+    <link rel="stylesheet" href="/css/dashboard.css">
+
+    <style>
+        .payslip-page {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 24px;
+        }
+
+        .payslip-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 28px;
+        }
+
+        .payslip-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .payslip-header h1 {
+            margin: 0 0 8px;
+        }
+
+        .muted {
+            color: #64748b;
+        }
+
+        .salary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 24px;
+        }
+
+        .salary-section {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 18px;
+        }
+
+        .salary-section h2 {
+            font-size: 17px;
+            margin: 0 0 16px;
+        }
+
+        .salary-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .salary-row:last-child {
+            border-bottom: 0;
+        }
+
+        .net-pay {
+            margin-top: 22px;
+            padding: 20px;
+            border-radius: 10px;
+            background: #eff6ff;
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 20px;
+        }
+
+        .action-btn {
+            border: 0;
+            border-radius: 8px;
+            padding: 10px 15px;
+            background: #2563eb;
+            color: white;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        @media (max-width: 650px) {
+            .salary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .payslip-page {
+                padding: 12px;
+            }
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+
+            .payslip-page {
+                margin: 0;
+                padding: 0;
+            }
+
+            .payslip-card {
+                border: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<main class="payslip-page">
+    <div class="payslip-header no-print">
+        <a class="action-btn" href="/payroll/payslips">← Back to Payslips</a>
+        <button class="action-btn" onclick="window.print()">Print / Save PDF</button>
+    </div>
+
+    <section class="payslip-card">
+        <header class="payslip-header">
+            <div>
+                <h1>Gyansify</h1>
+                <p class="muted">Employee Salary Payslip</p>
+            </div>
+
+            <div>
+                <strong>
+                    <%= payslip.payroll?.payrollNumber || "Payroll Record" %>
+                </strong>
+                <p class="muted">
+                    <%= String(payslip.payrollMonth || "").padStart(2, "0") %>
+                    /
+                    <%= payslip.payrollYear || "—" %>
+                </p>
+                <p>
+                    Status:
+                    <strong>
+                        <%= payslip.status || payslip.payroll?.status || "—" %>
+                    </strong>
+                </p>
+            </div>
+        </header>
+
+        <hr>
+
+        <h2>Employee Information</h2>
+        <p>
+            <strong>Name:</strong>
+            <%= payslip.employeeName ||
+                [payslip.employee?.firstName, payslip.employee?.lastName].filter(Boolean).join(" ") ||
+                "—" %>
+        </p>
+        <p>
+            <strong>Employee ID:</strong>
+            <%= payslip.employeeCode || payslip.employee?.employeeId || "—" %>
+        </p>
+        <p>
+            <strong>Email:</strong>
+            <%= payslip.email || payslip.employee?.email || "—" %>
+        </p>
+
+        <div class="salary-grid">
+            <section class="salary-section">
+                <h2>Earnings</h2>
+
+                <% const earnings = [
+                    ["Basic Salary", payslip.basicSalary],
+                    ["HRA", payslip.hra],
+                    ["Conveyance Allowance", payslip.conveyanceAllowance],
+                    ["Medical Allowance", payslip.medicalAllowance],
+                    ["Special Allowance", payslip.specialAllowance],
+                    ["Other Allowance", payslip.otherAllowance]
+                ]; %>
+
+                <% earnings.forEach(([label, value]) => { %>
+                    <div class="salary-row">
+                        <span><%= label %></span>
+                        <strong>₹<%= Number(value || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></strong>
+                    </div>
+                <% }); %>
+
+                <div class="salary-row">
+                    <strong>Gross Salary</strong>
+                    <strong>₹<%= Number(payslip.grossSalary || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></strong>
+                </div>
+            </section>
+
+            <section class="salary-section">
+                <h2>Deductions</h2>
+
+                <% const deductions = [
+                    ["Provident Fund", payslip.providentFund],
+                    ["Professional Tax", payslip.professionalTax],
+                    ["TDS", payslip.tds],
+                    ["Other Deduction", payslip.otherDeduction]
+                ]; %>
+
+                <% deductions.forEach(([label, value]) => { %>
+                    <div class="salary-row">
+                        <span><%= label %></span>
+                        <strong>₹<%= Number(value || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></strong>
+                    </div>
+                <% }); %>
+
+                <div class="salary-row">
+                    <strong>Total Deductions</strong>
+                    <strong>₹<%= Number(payslip.totalDeductions || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></strong>
+                </div>
+            </section>
+        </div>
+
+        <div class="net-pay">
+            <span>Net Salary</span>
+            <span>
+                ₹<%= Number(payslip.netSalary || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+            </span>
+        </div>
+
+        <p class="muted">
+            Payment date:
+            <%= payslip.payroll?.paymentDate
+                ? new Date(payslip.payroll.paymentDate).toLocaleDateString("en-IN")
+                : "Not recorded" %>
+        </p>
+    </section>
+</main>
+</body>
+</html>

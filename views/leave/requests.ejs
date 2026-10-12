@@ -1,0 +1,838 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leave Requests | Gyansify HRMS</title>
+    <link rel="stylesheet" href="/css/dashboard.css">
+
+    <style>
+        * { box-sizing: border-box; }
+
+        :root {
+            --primary: #2563eb;
+            --text: #172033;
+            --muted: #64748b;
+            --border: #e5eaf2;
+            --background: #f5f7fb;
+            --success: #15803d;
+            --danger: #b91c1c;
+            --warning: #b45309;
+        }
+
+        body {
+            margin: 0;
+            background: var(--background);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                Roboto, Arial, sans-serif;
+        }
+
+        button, input, select { font: inherit; }
+
+        .leave-page {
+            width: 100%;
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 30px 36px 45px;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 26px;
+        }
+
+        .breadcrumb {
+            margin: 0 0 10px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .breadcrumb a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .page-title {
+            margin: 0;
+            font-size: clamp(25px, 3vw, 32px);
+            font-weight: 750;
+            letter-spacing: -.8px;
+        }
+
+        .page-subtitle {
+            margin: 9px 0 0;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .header-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border: 1px solid #dbeafe;
+            border-radius: 10px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .header-tag span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .summary-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-width: 0;
+            padding: 20px;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            box-shadow: 0 3px 12px rgb(15 23 42 / 3%);
+        }
+
+        .summary-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 46px;
+            width: 46px;
+            height: 46px;
+            border-radius: 13px;
+            background: #eff6ff;
+            color: var(--primary);
+            font-size: 21px;
+        }
+
+        .summary-icon.orange { background: #fff7ed; color: #c2410c; }
+        .summary-icon.green { background: #f0fdf4; color: #15803d; }
+        .summary-icon.red { background: #fef2f2; color: #b91c1c; }
+
+        .summary-label {
+            margin: 0 0 6px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .summary-value {
+            margin: 0;
+            font-size: 25px;
+            font-weight: 750;
+            letter-spacing: -.5px;
+        }
+
+        .panel {
+            margin-bottom: 24px;
+            overflow: hidden;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 3px 12px rgb(15 23 42 / 3%);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding: 22px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-title { margin: 0; font-size: 17px; font-weight: 750; }
+
+        .panel-description {
+            margin: 7px 0 0;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .toolbar {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .search-box { width: min(100%, 260px); }
+
+        .search-box input, .filter-select {
+            width: 100%;
+            min-height: 41px;
+            padding: 10px 12px;
+            border: 1px solid #d7deea;
+            border-radius: 9px;
+            outline: none;
+            background: #fff;
+            color: var(--text);
+            font-size: 13px;
+        }
+
+        .search-box input:focus, .filter-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgb(37 99 235 / 10%);
+        }
+
+        .filter-select { width: 155px; }
+
+        .table-wrapper { width: 100%; overflow-x: auto; }
+
+        .requests-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .requests-table th {
+            padding: 15px 18px;
+            border-bottom: 1px solid var(--border);
+            background: #f8fafc;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 750;
+            letter-spacing: .45px;
+            text-transform: uppercase;
+        }
+
+        .requests-table td {
+            padding: 17px 18px;
+            border-bottom: 1px solid #edf0f5;
+            font-size: 13px;
+            vertical-align: middle;
+        }
+
+        .requests-table tbody tr:last-child td { border-bottom: none; }
+        .requests-table tbody tr:hover { background: #fbfdff; }
+
+        .employee-name { color: var(--text); font-weight: 700; }
+
+        .employee-meta {
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .leave-type { font-weight: 650; }
+        .date-range { color: #344054; font-size: 12px; }
+
+        .days-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 38px;
+            padding: 7px 9px;
+            border-radius: 8px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-weight: 750;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 30px;
+            font-size: 11px;
+            font-weight: 750;
+            text-transform: capitalize;
+        }
+
+        .status-badge::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .status-pending { background: #fff7ed; color: #b45309; }
+        .status-approved { background: #ecfdf3; color: #15803d; }
+        .status-rejected { background: #fef2f2; color: #b91c1c; }
+        .status-cancelled { background: #f1f5f9; color: #64748b; }
+
+        .action-group { display: flex; align-items: center; gap: 7px; }
+        .action-form { display: inline-flex; margin: 0; }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            min-height: 34px;
+            padding: 7px 10px;
+            border: 1px solid transparent;
+            border-radius: 7px;
+            font-size: 11px;
+            font-weight: 750;
+            cursor: pointer;
+            transition: background .2s, opacity .2s;
+        }
+
+        .btn:disabled { opacity: .6; cursor: wait; }
+
+        .btn-approve {
+            border-color: #bbf7d0;
+            background: #f0fdf4;
+            color: #15803d;
+        }
+
+        .btn-approve:hover { background: #dcfce7; }
+
+        .btn-reject {
+            border-color: #fecaca;
+            background: #fff;
+            color: #b91c1c;
+        }
+
+        .btn-reject:hover { background: #fef2f2; }
+
+        .no-action { color: #94a3b8; font-size: 12px; }
+
+        .reason-cell {
+            max-width: 220px;
+            overflow: hidden;
+            color: #475569;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .empty-state { padding: 48px 20px; text-align: center; }
+
+        .empty-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 58px;
+            height: 58px;
+            margin: 0 auto 15px;
+            border-radius: 16px;
+            background: #eff6ff;
+            color: var(--primary);
+            font-size: 26px;
+        }
+
+        .empty-state h3 { margin: 0 0 8px; font-size: 16px; }
+
+        .empty-state p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .empty-search {
+            display: none;
+            padding: 28px;
+            color: var(--muted);
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .alert {
+            margin-bottom: 20px;
+            padding: 13px 16px;
+            border: 1px solid;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .alert-success { border-color: #bbf7d0; background: #f0fdf4; color: #166534; }
+        .alert-error { border-color: #fecaca; background: #fef2f2; color: #991b1b; }
+
+        .policy-note {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 16px 18px;
+            border: 1px solid #dbeafe;
+            border-radius: 12px;
+            background: #eff6ff;
+            color: #1e40af;
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        @media (max-width: 1150px) {
+            .leave-page { padding: 24px 20px 35px; }
+            .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
+        @media (max-width: 650px) {
+            .leave-page { padding: 20px 14px 30px; }
+            .summary-grid { grid-template-columns: 1fr; gap: 10px; }
+            .summary-card { padding: 15px; }
+            .summary-value { font-size: 22px; }
+            .panel-header { padding: 18px; }
+            .toolbar { width: 100%; align-items: stretch; flex-direction: column; }
+            .search-box, .filter-select { width: 100%; }
+            .page-header { align-items: flex-start; flex-direction: column; }
+        }
+    </style>
+</head>
+
+<body>
+
+<%
+    // ============================================
+    // LEAVE REQUESTS — SAFE DATA INITIALIZATION
+    // ============================================
+
+    const requestList =
+        typeof leaveRequests !== "undefined" &&
+        Array.isArray(leaveRequests)
+            ? leaveRequests
+            : (
+                typeof requests !== "undefined" &&
+                Array.isArray(requests)
+                    ? requests
+                    : []
+            );
+
+    // ============================================
+    // STATUS NORMALIZATION
+    // ============================================
+
+    const normalizeStatus = value =>
+        String(value || "Pending")
+            .trim()
+            .toLowerCase();
+
+    // ============================================
+    // STATUS COUNTS
+    // ============================================
+
+    const pendingCount = requestList.filter(
+        item => normalizeStatus(item.status) === "pending"
+    ).length;
+
+    const approvedCount = requestList.filter(
+        item => normalizeStatus(item.status) === "approved"
+    ).length;
+
+    const rejectedCount = requestList.filter(
+        item => normalizeStatus(item.status) === "rejected"
+    ).length;
+
+    const cancelledCount = requestList.filter(
+        item => normalizeStatus(item.status) === "cancelled"
+    ).length;
+
+    const totalRequests = requestList.length;
+
+    // ============================================
+    // SAFE DATE FORMATTING
+    // ============================================
+
+    const formatDate = value => {
+        if (!value) return "—";
+
+        const date = new Date(value);
+
+        if (Number.isNaN(date.getTime())) {
+            return "—";
+        }
+
+        return date.toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+            timeZone: "Asia/Kolkata"
+        });
+    };
+
+    // ============================================
+    // EMPLOYEE NAME
+    // ============================================
+
+    const getEmployeeName = employee => {
+        if (!employee) {
+            return "Employee Unavailable";
+        }
+
+        const firstName = employee.firstName || "";
+        const lastName = employee.lastName || "";
+
+        const fullName = [firstName, lastName]
+            .filter(Boolean)
+            .join(" ")
+            .trim();
+
+        return (
+            fullName ||
+            employee.name ||
+            employee.email ||
+            employee.employeeCode ||
+            "Employee"
+        );
+    };
+
+    // ============================================
+    // STATUS CSS CLASS
+    // ============================================
+
+    const getStatusClass = status => {
+        const normalized = normalizeStatus(status);
+
+        const allowedStatuses = [
+            "pending",
+            "approved",
+            "rejected",
+            "cancelled"
+        ];
+
+        return allowedStatuses.includes(normalized)
+            ? normalized
+            : "pending";
+    };
+
+    // ============================================
+    // SAFE LEAVE TYPE LABEL
+    // ============================================
+
+    const getLeaveTypeName = leaveType => {
+        if (!leaveType) {
+            return "Leave";
+        }
+
+        if (typeof leaveType === "string") {
+            return leaveType;
+        }
+
+        return (
+            leaveType.name ||
+            leaveType.leaveTypeName ||
+            leaveType.title ||
+            "Leave"
+        );
+    };
+%>
+
+
+<main class="leave-page">
+    <header class="page-header">
+        <div>
+            <p class="breadcrumb">
+                <a href="/dashboard">Dashboard</a>
+                / Leave Management
+                / <strong>Leave Requests</strong>
+            </p>
+
+            <h1 class="page-title">Leave Requests</h1>
+            <p class="page-subtitle">
+                Review employee leave applications and manage approval decisions.
+            </p>
+        </div>
+
+        <div class="header-tag">
+            <span></span>
+            Leave Request Management
+        </div>
+    </header>
+
+    <% if (typeof success !== "undefined" && success) { %>
+        <div class="alert alert-success" role="status"><%= success %></div>
+    <% } %>
+
+    <% if (typeof error !== "undefined" && error) { %>
+        <div class="alert alert-error" role="alert"><%= error %></div>
+    <% } %>
+
+    <section class="summary-grid" aria-label="Leave request summary">
+        <article class="summary-card">
+            <div class="summary-icon">▤</div>
+            <div>
+                <p class="summary-label">Total Requests</p>
+                <p class="summary-value"><%= requestList.length %></p>
+            </div>
+        </article>
+
+        <article class="summary-card">
+            <div class="summary-icon orange">◷</div>
+            <div>
+                <p class="summary-label">Pending Review</p>
+                <p class="summary-value"><%= pendingCount %></p>
+            </div>
+        </article>
+
+        <article class="summary-card">
+            <div class="summary-icon green">✓</div>
+            <div>
+                <p class="summary-label">Approved</p>
+                <p class="summary-value"><%= approvedCount %></p>
+            </div>
+        </article>
+
+        <article class="summary-card">
+            <div class="summary-icon red">×</div>
+            <div>
+                <p class="summary-label">Rejected</p>
+                <p class="summary-value"><%= rejectedCount %></p>
+            </div>
+        </article>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <div>
+                <h2 class="panel-title">All Leave Requests</h2>
+                <p class="panel-description">
+                    Search by employee, leave type or reason. Filter requests by status.
+                </p>
+            </div>
+
+            <div class="toolbar">
+                <div class="search-box">
+                    <input
+                        type="search"
+                        id="requestSearch"
+                        placeholder="Search requests..."
+                        aria-label="Search leave requests"
+                    >
+                </div>
+
+                <select id="statusFilter" class="filter-select"
+                    aria-label="Filter by request status">
+                    <option value="all">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+            </div>
+        </div>
+
+        <% if (requestList.length > 0) { %>
+            <div class="table-wrapper">
+                <table class="requests-table">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Leave Type</th>
+                            <th>Leave Dates</th>
+                            <th>Days</th>
+                            <th>Reason</th>
+                            <th>Applied On</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="requestsTableBody">
+                        <% requestList.forEach(request => {
+                            const employee = request.employee || null;
+                            const leaveType = request.leaveType || null;
+                            const status = normalizeStatus(request.status);
+                            const statusClass = getStatusClass(status);
+                            const days = Number(request.totalDays || 0);
+                        %>
+                            <tr class="request-row" data-status="<%= status %>">
+                                <td>
+                                    <div class="employee-name">
+                                        <%= getEmployeeName(employee) %>
+                                    </div>
+                                    <div class="employee-meta">
+                                        <%= employee?.employeeId || employee?.email || "" %>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div class="leave-type">
+                                        <%= leaveType?.name || "Leave Type Unavailable" %>
+                                    </div>
+                                    <% if (leaveType?.code) { %>
+                                        <div class="employee-meta"><%= leaveType.code %></div>
+                                    <% } %>
+                                </td>
+
+                                <td>
+                                    <div class="date-range"><%= formatDate(request.fromDate) %></div>
+                                    <div class="employee-meta">
+                                        to <%= formatDate(request.toDate) %>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <span class="days-badge"><%= days %></span>
+                                </td>
+
+                                <td>
+                                    <div class="reason-cell"
+                                        title="<%= request.reason || 'No reason provided' %>">
+                                        <%= request.reason || "—" %>
+                                    </div>
+                                </td>
+
+                                <td><%= formatDate(request.createdAt || request.appliedAt) %></td>
+
+                                <td>
+                                    <span class="status-badge status-<%= statusClass %>">
+                                        <%= status %>
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <% if (status === "pending") { %>
+                                        <div class="action-group">
+                                            <!-- Must match routes/leave.routes.js -->
+                                            <form
+                                                class="action-form decision-form"
+                                                method="POST"
+                                                action="/leave/requests/<%= request._id %>/approve"
+                                                data-action="approve"
+                                            >
+                                                <button class="btn btn-approve" type="submit">
+                                                    ✓ Approve
+                                                </button>
+                                            </form>
+
+                                            <form
+                                                class="action-form decision-form"
+                                                method="POST"
+                                                action="/leave/requests/<%= request._id %>/reject"
+                                                data-action="reject"
+                                            >
+                                                <input type="hidden" name="remark" value="">
+                                                <button class="btn btn-reject" type="submit">
+                                                    ✕ Reject
+                                                </button>
+                                            </form>
+                                        </div>
+                                    <% } else { %>
+                                        <span class="no-action">No action</span>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="empty-search" id="emptySearchMessage">
+                No leave requests match your search or selected status.
+            </div>
+        <% } else { %>
+            <div class="empty-state">
+                <div class="empty-icon" aria-hidden="true">▤</div>
+                <h3>No leave requests yet</h3>
+                <p>Employee leave applications will appear here when submitted.</p>
+            </div>
+        <% } %>
+    </section>
+
+    <div class="policy-note">
+        <span aria-hidden="true">ⓘ</span>
+        <div>
+            <strong>Approval reminder</strong><br>
+            Before approving a request, verify leave dates, available balance,
+            overlapping requests and your organization's approval policy.
+            The backend must validate permissions, request status and leave balance.
+        </div>
+    </div>
+</main>
+
+<script>
+(() => {
+    const searchInput = document.getElementById("requestSearch");
+    const statusFilter = document.getElementById("statusFilter");
+    const tableBody = document.getElementById("requestsTableBody");
+    const emptySearchMessage = document.getElementById("emptySearchMessage");
+
+    function filterRequests() {
+        if (!tableBody) return;
+
+        const query = searchInput.value.trim().toLowerCase();
+        const selectedStatus = statusFilter.value;
+        const rows = tableBody.querySelectorAll(".request-row");
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const matchesSearch = row.textContent.toLowerCase().includes(query);
+            const matchesStatus =
+                selectedStatus === "all" ||
+                row.dataset.status === selectedStatus;
+
+            const visible = matchesSearch && matchesStatus;
+            row.style.display = visible ? "" : "none";
+
+            if (visible) visibleCount++;
+        });
+
+        if (emptySearchMessage) {
+            emptySearchMessage.style.display =
+                visibleCount === 0 ? "block" : "none";
+        }
+    }
+
+    searchInput?.addEventListener("input", filterRequests);
+    statusFilter?.addEventListener("change", filterRequests);
+
+    document.querySelectorAll(".decision-form").forEach(form => {
+        form.addEventListener("submit", event => {
+            const action = form.dataset.action;
+
+            if (action === "approve") {
+                if (!window.confirm(
+                    "Are you sure you want to approve this leave request?"
+                )) {
+                    event.preventDefault();
+                    return;
+                }
+            }
+
+            if (action === "reject") {
+                const reason = window.prompt(
+                    "Please enter the reason for rejecting this leave request:"
+                );
+
+                if (reason === null) {
+                    event.preventDefault();
+                    return;
+                }
+
+                if (!reason.trim()) {
+                    event.preventDefault();
+                    window.alert("A rejection reason is required.");
+                    return;
+                }
+
+                const remarkInput = form.querySelector('input[name="remark"]');
+                if (remarkInput) remarkInput.value = reason.trim();
+
+                if (!window.confirm(
+                    "Are you sure you want to reject this leave request?"
+                )) {
+                    event.preventDefault();
+                }
+            }
+        });
+    });
+})();
+</script>
+</body>
+</html>

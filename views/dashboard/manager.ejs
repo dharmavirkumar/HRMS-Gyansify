@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Gyansify HRMS - Manager Dashboard
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="/css/dashboard.css"
+    >
+
+    <style>
+
+        .manager-content {
+            padding: 30px;
+        }
+
+        .welcome {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .welcome h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .welcome p {
+            margin-top: 7px;
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        .primary-button {
+            display: inline-block;
+            padding: 10px 16px;
+            border-radius: 7px;
+            background: #111827;
+            color: #fff;
+            text-decoration: none;
+            font-size: 12px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .stat-label {
+            display: block;
+            color: #6b7280;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            margin-top: 8px;
+            font-size: 27px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .stat-description {
+            margin-top: 5px;
+            color: #9ca3af;
+            font-size: 10px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 18px 20px;
+            border-bottom: 1px solid #f0f1f3;
+        }
+
+        .card-header h3 {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .card-header p {
+            margin-top: 5px;
+            color: #9ca3af;
+            font-size: 10px;
+        }
+
+        .team-list {
+            padding: 5px 20px 15px;
+        }
+
+        .team-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f1f3;
+        }
+
+        .team-row:last-child {
+            border-bottom: none;
+        }
+
+        .avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .employee-info {
+            flex: 1;
+        }
+
+        .employee-info strong {
+            display: block;
+            font-size: 12px;
+            color: #111827;
+        }
+
+        .employee-info small {
+            display: block;
+            margin-top: 3px;
+            color: #9ca3af;
+            font-size: 10px;
+        }
+
+        .status {
+            padding: 5px 9px;
+            border-radius: 20px;
+            font-size: 9px;
+            font-weight: 600;
+        }
+
+        .status-present {
+            background: #ecfdf5;
+            color: #047857;
+        }
+
+        .status-leave {
+            background: #fff7ed;
+            color: #c2410c;
+        }
+
+        .status-absent {
+            background: #fef2f2;
+            color: #b91c1c;
+        }
+
+        .action-list {
+            padding: 10px 20px 20px;
+        }
+
+        .action-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 0;
+            border-bottom: 1px solid #f0f1f3;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .action-item:last-child {
+            border-bottom: none;
+        }
+
+        .action-icon {
+            width: 35px;
+            height: 35px;
+            border-radius: 8px;
+            background: #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-text {
+            flex: 1;
+        }
+
+        .action-text strong {
+            display: block;
+            font-size: 12px;
+            color: #111827;
+        }
+
+        .action-text small {
+            display: block;
+            margin-top: 3px;
+            color: #9ca3af;
+            font-size: 10px;
+        }
+
+        .arrow {
+            color: #9ca3af;
+        }
+
+        .empty {
+            padding: 40px 20px;
+            text-align: center;
+            color: #9ca3af;
+            font-size: 11px;
+        }
+
+        .attendance-box {
+            padding: 20px;
+        }
+
+        .attendance-progress {
+            height: 10px;
+            background: #f3f4f6;
+            border-radius: 20px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .attendance-progress span {
+            display: block;
+            height: 100%;
+            width: <%= attendancePercentage %>%;
+            background: #111827;
+            border-radius: 20px;
+        }
+
+        .attendance-numbers {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #6b7280;
+        }
+
+        @media(max-width:1000px) {
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+        @media(max-width:700px) {
+
+            .manager-content {
+                padding: 20px;
+            }
+
+            .welcome {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<%
+
+    /*
+     * =====================================================
+     * SAFE DATA
+     * =====================================================
+     */
+
+    const currentUser =
+        typeof user !== "undefined" && user
+            ? user
+            : {};
+
+    const dashboardStats =
+        typeof stats !== "undefined" && stats
+            ? stats
+            : {};
+
+    const teamMembers =
+        typeof employees !== "undefined" && Array.isArray(employees)
+            ? employees
+            : (
+                typeof team !== "undefined" && Array.isArray(team)
+                    ? team
+                    : []
+            );
+
+    const pendingLeaveRequests =
+        typeof pendingLeaves !== "undefined" &&
+        Array.isArray(pendingLeaves)
+            ? pendingLeaves
+            : [];
+
+    const totalEmployees =
+        Number(
+            dashboardStats.totalEmployees ||
+            dashboardStats.employeeCount ||
+            teamMembers.length ||
+            0
+        );
+
+    const presentToday =
+        Number(
+            dashboardStats.presentToday ||
+            dashboardStats.present ||
+            0
+        );
+
+    const onLeave =
+        Number(
+            dashboardStats.onLeave ||
+            dashboardStats.leave ||
+            pendingLeaveRequests.length ||
+            0
+        );
+
+    const absentToday =
+        Number(
+            dashboardStats.absentToday ||
+            dashboardStats.absent ||
+            0
+        );
+
+    const calculatedAttendance =
+        totalEmployees > 0
+            ? Math.round(
+                (presentToday / totalEmployees) * 100
+            )
+            : 0;
+
+    const attendancePercentage =
+        Math.min(
+            100,
+            Math.max(
+                0,
+                Number(
+                    dashboardStats.attendancePercentage ||
+                    calculatedAttendance ||
+                    0
+                )
+            )
+        );
+
+%>
+
+
+<div class="app">
+
+
+    <!-- ================================================= -->
+    <!-- SIDEBAR -->
+    <!-- ================================================= -->
+
+    <aside class="sidebar">
+
+        <div class="brand">
+
+            <div class="brand-logo">
+                G
+            </div>
+
+            <div>
+
+                <div class="brand-name">
+                    Gyansify
+                </div>
+
+                <div class="brand-subtitle">
+                    HRMS
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="menu-title">
+            MAIN
+        </div>
+
+
+        <nav class="sidebar-menu">
+
+
+            <a
+                href="/dashboard"
+                class="menu-item active"
+            >
+                <span>▦</span>
+                Dashboard
+            </a>
+
+
+            <a
+                href="/employees"
+                class="menu-item"
+            >
+                <span>👥</span>
+                My Team
+            </a>
+
+
+            <a
+                href="/attendance"
+                class="menu-item"
+            >
+                <span>◷</span>
+                Attendance
+            </a>
+
+
+            <a
+                href="/leave"
+                class="menu-item"
+            >
+                <span>▣</span>
+                Leave
+            </a>
+
+
+            <a
+                href="/performance"
+                class="menu-item"
+            >
+                <span>◈</span>
+                Performance
+            </a>
+
+
+            <a
+                href="/training"
+                class="menu-item"
+            >
+                <span>◇</span>
+                Training
+            </a>
+
+
+            <div class="menu-title">
+                MANAGEMENT
+            </div>
+
+
+            <a
+                href="/reports"
+                class="menu-item"
+            >
+                <span>▥</span>
+                Reports
+            </a>
+
+
+            <a
+                href="/helpdesk"
+                class="menu-item"
+            >
+                <span>?</span>
+                Helpdesk
+            </a>
+
+
+        </nav>
+
+
+        <div class="sidebar-bottom">
+
+            <a
+                href="/logout"
+                class="logout"
+            >
+                <span>↪</span>
+                Logout
+            </a>
+
+        </div>
+
+    </aside>
+
+
+
+    <!-- ================================================= -->
+    <!-- MAIN -->
+    <!-- ================================================= -->
+
+    <main class="main">
+
+
+        <!-- HEADER -->
+
+        <header class="header">
+
+            <div>
+
+                <button
+                    class="mobile-menu"
+                    onclick="toggleSidebar()"
+                    type="button"
+                >
+                    ☰
+                </button>
+
+                <span class="page-title">
+                    Manager Dashboard
+                </span>
+
+            </div>
+
+
+            <div class="header-right">
+
+                <button
+                    class="icon-button"
+                    type="button"
+                >
+                    🔔
+                </button>
+
+
+                <div class="profile">
+
+                    <div class="profile-avatar">
+
+                        <%= currentUser.name
+                            ? String(
+                                currentUser.name
+                            ).charAt(0).toUpperCase()
+                            : "M"
+                        %>
+
+                    </div>
+
+
+                    <div class="profile-info">
+
+                        <strong>
+
+                            <%= currentUser.name ||
+                                "Manager"
+                            %>
+
+                        </strong>
+
+
+                        <small>
+
+                            <%= currentUser.role
+                                ? String(
+                                    currentUser.role
+                                )
+                                .replace(/_/g, " ")
+                                : "MANAGER"
+                            %>
+
+                        </small>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+
+        <!-- ================================================= -->
+        <!-- CONTENT -->
+        <!-- ================================================= -->
+
+        <section class="manager-content">
+
+
+            <!-- ================================================= -->
+            <!-- WELCOME -->
+            <!-- ================================================= -->
+
+            <div class="welcome">
+
+                <div>
+
+                    <h1>
+
+                        Welcome,
+                        <%= currentUser.name || "Manager" %>
+                        👋
+
+                    </h1>
+
+
+                    <p>
+                        Here's an overview of your team's
+                        attendance, leave and activities.
+                    </p>
+
+                </div>
+
+
+                <a
+                    href="/leave/requests"
+                    class="primary-button"
+                >
+                    Review Requests
+                </a>
+
+            </div>
+
+
+
+            <!-- ================================================= -->
+            <!-- STATISTICS -->
+            <!-- ================================================= -->
+
+            <div class="stats-grid">
+
+
+                <div class="stat-card">
+
+                    <span class="stat-label">
+                        Team Members
+                    </span>
+
+                    <div class="stat-value">
+                        <%= totalEmployees %>
+                    </div>
+
+                    <div class="stat-description">
+                        Employees reporting to you
+                    </div>
+
+                </div>
+
+
+
+                <div class="stat-card">
+
+                    <span class="stat-label">
+                        Present Today
+                    </span>
+
+                    <div class="stat-value">
+                        <%= presentToday %>
+                    </div>
+
+                    <div class="stat-description">
+                        <%= attendancePercentage %>% attendance
+                    </div>
+
+                </div>
+
+
+
+                <div class="stat-card">
+
+                    <span class="stat-label">
+                        On Leave
+                    </span>
+
+                    <div class="stat-value">
+                        <%= onLeave %>
+                    </div>
+
+                    <div class="stat-description">
+                        Current leave requests
+                    </div>
+
+                </div>
+
+
+
+                <div class="stat-card">
+
+                    <span class="stat-label">
+                        Absent Today
+                    </span>
+
+                    <div class="stat-value">
+                        <%= absentToday %>
+                    </div>
+
+                    <div class="stat-description">
+                        Employees not present
+                    </div>
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- ================================================= -->
+            <!-- DASHBOARD GRID -->
+            <!-- ================================================= -->
+
+            <div class="dashboard-grid">
+
+
+                <!-- TEAM -->
+
+                <div class="card">
+
+                    <div class="card-header">
+
+                        <h3>
+                            My Team
+                        </h3>
+
+                        <p>
+                            Current team members
+                        </p>
+
+                    </div>
+
+
+                    <% if (
+                        teamMembers.length === 0
+                    ) { %>
+
+
+                        <div class="empty">
+
+                            No team members found.
+
+                        </div>
+
+
+                    <% } else { %>
+
+
+                        <div class="team-list">
+
+
+                            <% teamMembers.slice(
+                                0,
+                                8
+                            ).forEach(
+                                employee => {
+
+                                    const firstName =
+                                        employee.firstName ||
+                                        "";
+
+                                    const lastName =
+                                        employee.lastName ||
+                                        "";
+
+                                    const employeeName =
+                                        employee.name ||
+                                        `${firstName} ${lastName}`.trim() ||
+                                        "Employee";
+
+                                    const initials =
+                                        employeeName
+                                            .split(" ")
+                                            .map(
+                                                word =>
+                                                    word.charAt(0)
+                                            )
+                                            .join("")
+                                            .substring(0, 2)
+                                            .toUpperCase();
+
+                                    const employeeStatus =
+                                        employee.attendanceStatus ||
+                                        employee.todayStatus ||
+                                        "Present";
+
+                            %>
+
+
+                                <div class="team-row">
+
+
+                                    <div class="avatar">
+                                        <%= initials || "E" %>
+                                    </div>
+
+
+                                    <div class="employee-info">
+
+                                        <strong>
+                                            <%= employeeName %>
+                                        </strong>
+
+
+                                        <small>
+
+                                            <%= employee.designation ||
+                                                employee.jobTitle ||
+                                                employee.department ||
+                                                "Team Member"
+                                            %>
+
+                                        </small>
+
+                                    </div>
+
+
+                                    <% if (
+                                        employeeStatus === "Leave" ||
+                                        employeeStatus === "On Leave"
+                                    ) { %>
+
+                                        <span class="status status-leave">
+                                            On Leave
+                                        </span>
+
+
+                                    <% } else if (
+                                        employeeStatus === "Absent"
+                                    ) { %>
+
+                                        <span class="status status-absent">
+                                            Absent
+                                        </span>
+
+
+                                    <% } else { %>
+
+                                        <span class="status status-present">
+                                            Present
+                                        </span>
+
+                                    <% } %>
+
+
+                                </div>
+
+
+                            <% }) %>
+
+
+                        </div>
+
+
+                    <% } %>
+
+                </div>
+
+
+
+                <!-- ================================================= -->
+                <!-- QUICK ACTIONS -->
+                <!-- ================================================= -->
+
+                <div class="card">
+
+                    <div class="card-header">
+
+                        <h3>
+                            Quick Actions
+                        </h3>
+
+                        <p>
+                            Frequently used manager actions
+                        </p>
+
+                    </div>
+
+
+                    <div class="action-list">
+
+
+                        <a
+                            href="/leave/requests"
+                            class="action-item"
+                        >
+
+                            <div class="action-icon">
+                                📅
+                            </div>
+
+
+                            <div class="action-text">
+
+                                <strong>
+                                    Leave Requests
+                                </strong>
+
+                                <small>
+                                    Review and approve leave
+                                </small>
+
+                            </div>
+
+
+                            <span class="arrow">
+                                →
+                            </span>
+
+                        </a>
+
+
+
+                        <a
+                            href="/attendance"
+                            class="action-item"
+                        >
+
+                            <div class="action-icon">
+                                ◷
+                            </div>
+
+
+                            <div class="action-text">
+
+                                <strong>
+                                    Team Attendance
+                                </strong>
+
+                                <small>
+                                    View today's attendance
+                                </small>
+
+                            </div>
+
+
+                            <span class="arrow">
+                                →
+                            </span>
+
+                        </a>
+
+
+
+                        <a
+                            href="/performance"
+                            class="action-item"
+                        >
+
+                            <div class="action-icon">
+                                ◈
+                            </div>
+
+
+                            <div class="action-text">
+
+                                <strong>
+                                    Performance
+                                </strong>
+
+                                <small>
+                                    Review team performance
+                                </small>
+
+                            </div>
+
+
+                            <span class="arrow">
+                                →
+                            </span>
+
+                        </a>
+
+
+
+                        <a
+                            href="/reports"
+                            class="action-item"
+                        >
+
+                            <div class="action-icon">
+                                ▥
+                            </div>
+
+
+                            <div class="action-text">
+
+                                <strong>
+                                    Reports
+                                </strong>
+
+                                <small>
+                                    View team reports
+                                </small>
+
+                            </div>
+
+
+                            <span class="arrow">
+                                →
+                            </span>
+
+                        </a>
+
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- ================================================= -->
+            <!-- ATTENDANCE -->
+            <!-- ================================================= -->
+
+            <div class="dashboard-grid">
+
+
+                <div class="card">
+
+                    <div class="card-header">
+
+                        <h3>
+                            Today's Attendance
+                        </h3>
+
+                        <p>
+                            Team attendance overview
+                        </p>
+
+                    </div>
+
+
+                    <div class="attendance-box">
+
+
+                        <div class="attendance-progress">
+
+                            <span></span>
+
+                        </div>
+
+
+                        <div class="attendance-numbers">
+
+                            <span>
+                                Present:
+                                <strong>
+                                    <%= presentToday %>
+                                </strong>
+                            </span>
+
+
+                            <span>
+                                Total:
+                                <strong>
+                                    <%= totalEmployees %>
+                                </strong>
+                            </span>
+
+
+                            <span>
+                                <strong>
+                                    <%= attendancePercentage %>%
+                                </strong>
+                            </span>
+
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- ================================================= -->
+                <!-- PENDING LEAVES -->
+                <!-- ================================================= -->
+
+                <div class="card">
+
+                    <div class="card-header">
+
+                        <h3>
+                            Pending Leave Requests
+                        </h3>
+
+                        <p>
+                            Requests requiring your attention
+                        </p>
+
+                    </div>
+
+
+                    <% if (
+                        pendingLeaveRequests.length === 0
+                    ) { %>
+
+
+                        <div class="empty">
+
+                            No pending leave requests.
+
+                        </div>
+
+
+                    <% } else { %>
+
+
+                        <div class="action-list">
+
+
+                            <% pendingLeaveRequests
+                                .slice(0, 5)
+                                .forEach(
+                                    request => {
+                            %>
+
+
+                                <a
+                                    href="/leave/requests"
+                                    class="action-item"
+                                >
+
+                                    <div class="action-icon">
+                                        🏖️
+                                    </div>
+
+
+                                    <div class="action-text">
+
+                                        <strong>
+
+                                            <%= request.employee?.name ||
+                                                request.employee
+                                                    ? `${request.employee?.firstName || ""} ${request.employee?.lastName || ""}`.trim()
+                                                : "Employee"
+                                            %>
+
+                                        </strong>
+
+
+                                        <small>
+
+                                            <%= request.leaveType?.name ||
+                                                "Leave Request"
+                                            %>
+
+                                            ·
+
+                                            <%= request.totalDays || 0 %>
+                                            day(s)
+
+                                        </small>
+
+                                    </div>
+
+
+                                    <span class="arrow">
+                                        →
+                                    </span>
+
+                                </a>
+
+
+                            <% }) %>
+
+
+                        </div>
+
+
+                    <% } %>
+
+                </div>
+
+
+            </div>
+
+
+        </section>
+
+    </main>
+
+</div>
+
+
+
+<script>
+
+function toggleSidebar() {
+
+    const sidebar =
+        document.querySelector(".sidebar");
+
+    if (sidebar) {
+
+        sidebar.classList.toggle("show");
+
+    }
+
+}
+
+</script>
+
+
+</body>
+
+</html>

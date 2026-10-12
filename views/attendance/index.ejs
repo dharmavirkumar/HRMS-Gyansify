@@ -1,0 +1,728 @@
+
+<style>
+    .attendance-page {
+        padding: 30px;
+        color: #111827;
+    }
+
+    .page-heading {
+        margin-bottom: 24px;
+    }
+
+    .page-heading h1 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 700;
+    }
+
+    .page-heading p {
+        margin: 7px 0 0;
+        font-size: 12px;
+        color: #6b7280;
+    }
+
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 15px;
+        margin-bottom: 22px;
+    }
+
+    .stat-card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 20px;
+        transition: box-shadow .2s, transform .2s;
+    }
+
+    .stat-card:hover {
+        box-shadow: 0 8px 24px rgba(15, 23, 42, .06);
+        transform: translateY(-2px);
+    }
+
+    .stat-label {
+        color: #6b7280;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: .05em;
+        margin-bottom: 10px;
+    }
+
+    .stat-value {
+        color: #111827;
+        font-size: 27px;
+        font-weight: 700;
+    }
+
+    .attendance-card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        overflow: hidden;
+    }
+
+    .table-header {
+        padding: 20px 22px;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .table-header h3 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 700;
+    }
+
+    .table-subtitle {
+        margin-top: 5px;
+        color: #6b7280;
+        font-size: 11px;
+    }
+
+    .date {
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        padding: 9px 12px;
+        border-radius: 8px;
+        color: #374151;
+        font-size: 12px;
+    }
+
+    .filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 16px 22px;
+        border-bottom: 1px solid #f0f1f3;
+    }
+
+    .filter-input,
+    .filter-select {
+        height: 38px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        padding: 0 12px;
+        background: #fff;
+        color: #374151;
+        font-size: 12px;
+        outline: none;
+    }
+
+    .filter-input {
+        min-width: 240px;
+        flex: 1;
+    }
+
+    .filter-select {
+        min-width: 150px;
+        cursor: pointer;
+    }
+
+    .filter-input:focus,
+    .filter-select:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, .1);
+    }
+
+    .table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .attendance-table {
+        width: 100%;
+        min-width: 850px;
+        border-collapse: collapse;
+    }
+
+    .attendance-table th {
+        padding: 14px 18px;
+        background: #f9fafb;
+        color: #6b7280;
+        text-align: left;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: .04em;
+        white-space: nowrap;
+    }
+
+    .attendance-table td {
+        padding: 15px 18px;
+        border-top: 1px solid #f0f1f3;
+        font-size: 12px;
+        color: #374151;
+        vertical-align: middle;
+    }
+
+    .attendance-table tbody tr:hover {
+        background: #fafcff;
+    }
+
+    .employee {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+    }
+
+    .avatar {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        border-radius: 50%;
+        background: #eff6ff;
+        color: #1d4ed8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .employee-name {
+        color: #111827;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .employee-id {
+        margin-top: 4px;
+        color: #6b7280;
+        font-size: 10px;
+    }
+
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 20px;
+        font-size: 10px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .badge::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+    .badge-present {
+        color: #166534;
+        background: #dcfce7;
+    }
+
+    .badge-late {
+        color: #92400e;
+        background: #fef3c7;
+    }
+
+    .badge-half {
+        color: #1d4ed8;
+        background: #dbeafe;
+    }
+
+    .badge-absent {
+        color: #b91c1c;
+        background: #fee2e2;
+    }
+
+    .badge-default {
+        color: #6b7280;
+        background: #f3f4f6;
+    }
+
+    .time-value {
+        white-space: nowrap;
+        font-size: 12px;
+    }
+
+    .time-empty {
+        color: #9ca3af;
+    }
+
+    .action-form {
+        display: inline;
+    }
+
+    .action-button {
+        border: 1px solid #d1d5db;
+        background: #fff;
+        color: #374151;
+        padding: 8px 12px;
+        border-radius: 7px;
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .action-button:hover {
+        background: #eff6ff;
+        border-color: #93c5fd;
+        color: #1d4ed8;
+    }
+
+    .completed {
+        color: #15803d;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .empty-state {
+        padding: 55px 20px;
+        text-align: center;
+        color: #6b7280;
+    }
+
+    .empty-icon {
+        font-size: 32px;
+        margin-bottom: 12px;
+    }
+
+    .empty-title {
+        color: #111827;
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+
+    .empty-text {
+        font-size: 12px;
+        line-height: 1.6;
+    }
+
+    .filter-empty {
+        display: none;
+        padding: 24px;
+        text-align: center;
+        color: #6b7280;
+        font-size: 12px;
+    }
+
+    @media (max-width: 1100px) {
+        .stats {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 750px) {
+        .attendance-page {
+            padding: 20px;
+        }
+
+        .stats {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .filter-input {
+            min-width: 100%;
+        }
+
+        .filter-select {
+            flex: 1;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .attendance-page {
+            padding: 14px;
+        }
+
+        .stats {
+            grid-template-columns: 1fr;
+        }
+
+        .stat-card {
+            padding: 16px;
+        }
+    }
+</style>
+
+<%
+    // Safely initialize all controller-provided data.
+    const attendanceStats =
+        typeof stats !== "undefined" && stats
+            ? stats
+            : {};
+
+    const attendanceRows =
+        typeof rows !== "undefined" && Array.isArray(rows)
+            ? rows
+            : [];
+
+    const attendanceDate =
+        typeof date !== "undefined" && date
+            ? date
+            : new Date().toLocaleDateString("en-IN", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                timeZone: "Asia/Kolkata"
+            });
+
+    const safeEmployeeName = employee => {
+        if (!employee) return "Unknown Employee";
+
+        const name = [
+            employee.firstName,
+            employee.lastName
+        ].filter(Boolean).join(" ").trim();
+
+        return name ||
+            employee.name ||
+            employee.email ||
+            "Unknown Employee";
+    };
+
+    const safeDepartmentName = employee => {
+        const department = employee?.department;
+
+        if (!department) return "—";
+
+        if (typeof department === "string") {
+            return department;
+        }
+
+        return department.name ||
+            department.departmentName ||
+            "—";
+    };
+
+    const safeTime = value => {
+        if (!value) return "—";
+
+        const parsed = new Date(value);
+
+        if (Number.isNaN(parsed.getTime())) {
+            return "—";
+        }
+
+        return parsed.toLocaleTimeString("en-IN", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+            timeZone: "Asia/Kolkata"
+        });
+    };
+
+    const safeStatus = record => {
+        if (!record) return "Not Marked";
+
+        const raw = String(record.status || "Present")
+            .trim()
+            .toLowerCase();
+
+        if (raw === "late") return "Late";
+        if (raw === "half day" || raw === "halfday") return "Half Day";
+        if (raw === "absent") return "Absent";
+        if (raw === "leave" || raw === "on leave") return "On Leave";
+        if (raw === "present") return "Present";
+
+        return raw
+            .split(/[\s_-]+/)
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ");
+    };
+
+    const safeStatusClass = status => {
+        const normalized = String(status || "").toLowerCase();
+
+        if (normalized === "present") return "badge-present";
+        if (normalized === "late") return "badge-late";
+        if (normalized.includes("half")) return "badge-half";
+
+        if (
+            normalized === "absent" ||
+            normalized === "not marked"
+        ) {
+            return "badge-absent";
+        }
+
+        return "badge-default";
+    };
+%>
+
+<section class="attendance-page">
+    <div class="page-heading">
+        <h1>Today's Attendance</h1>
+        <p>Monitor employee attendance, check-ins and check-outs.</p>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-label">TOTAL EMPLOYEES</div>
+            <div class="stat-value"><%= attendanceStats.total ?? attendanceRows.length %></div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">PRESENT</div>
+            <div class="stat-value"><%= attendanceStats.present ?? 0 %></div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">LATE</div>
+            <div class="stat-value"><%= attendanceStats.late ?? 0 %></div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">HALF DAY</div>
+            <div class="stat-value"><%= attendanceStats.halfDay ?? 0 %></div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">NOT MARKED</div>
+            <div class="stat-value"><%= attendanceStats.absent ?? 0 %></div>
+        </div>
+    </div>
+
+    <div class="attendance-card">
+        <div class="table-header">
+            <div>
+                <h3>Employee Attendance</h3>
+                <div class="table-subtitle">Daily attendance records</div>
+            </div>
+
+            <div class="date"><%= attendanceDate %></div>
+        </div>
+
+        <div class="filters">
+            <input
+                type="search"
+                id="employeeSearch"
+                class="filter-input"
+                placeholder="Search employee or employee ID..."
+                autocomplete="off"
+                aria-label="Search employees"
+            >
+
+            <select id="departmentFilter" class="filter-select" aria-label="Filter by department">
+                <option value="">All Departments</option>
+            </select>
+
+            <select id="statusFilter" class="filter-select" aria-label="Filter by attendance status">
+                <option value="">All Status</option>
+                <option value="present">Present</option>
+                <option value="late">Late</option>
+                <option value="half day">Half Day</option>
+                <option value="absent">Not Marked / Absent</option>
+                <option value="on leave">On Leave</option>
+            </select>
+        </div>
+
+        <div class="table-wrapper">
+            <% if (attendanceRows.length > 0) { %>
+                <table class="attendance-table" id="attendanceTable">
+                    <thead>
+                        <tr>
+                            <th>EMPLOYEE</th>
+                            <th>DEPARTMENT</th>
+                            <th>CHECK IN</th>
+                            <th>CHECK OUT</th>
+                            <th>STATUS</th>
+                            <th>ACTION</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <% attendanceRows.forEach(row => {
+                            const employee = row?.employee || {};
+                            const record = row?.attendance || null;
+                            const fullName = safeEmployeeName(employee);
+                            const employeeCode =
+                                employee.employeeId ||
+                                employee.employeeCode ||
+                                employee._id ||
+                                "—";
+
+                            const department = safeDepartmentName(employee);
+                            const status = safeStatus(record);
+                            const normalizedStatus = status.toLowerCase();
+
+                            const initials = fullName
+                                .split(/\s+/)
+                                .filter(Boolean)
+                                .slice(0, 2)
+                                .map(part => part.charAt(0).toUpperCase())
+                                .join("") || "?";
+
+                            const employeeMongoId = employee._id
+                                ? String(employee._id)
+                                : "";
+                        %>
+                            <tr
+                                class="attendance-row"
+                                data-name="<%= fullName.toLowerCase() %>"
+                                data-id="<%= String(employeeCode).toLowerCase() %>"
+                                data-department="<%= department.toLowerCase() %>"
+                                data-status="<%= normalizedStatus %>"
+                            >
+                                <td>
+                                    <div class="employee">
+                                        <div class="avatar"><%= initials %></div>
+                                        <div>
+                                            <div class="employee-name"><%= fullName %></div>
+                                            <div class="employee-id"><%= employeeCode %></div>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td><%= department %></td>
+
+                                <td>
+                                    <span class="<%= record?.checkIn ? 'time-value' : 'time-empty' %>">
+                                        <%= safeTime(record?.checkIn) %>
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <span class="<%= record?.checkOut ? 'time-value' : 'time-empty' %>">
+                                        <%= safeTime(record?.checkOut) %>
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <span class="badge <%= safeStatusClass(status) %>">
+                                        <%= status %>
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <% if (!record && employeeMongoId) { %>
+                                        <form
+                                            class="action-form"
+                                            action="/attendance/check-in/<%= employeeMongoId %>"
+                                            method="POST"
+                                            onsubmit="return confirm('Check in this employee?');"
+                                        >
+                                            <button type="submit" class="action-button">
+                                                Check In
+                                            </button>
+                                        </form>
+                                    <% } else if (record && !record.checkOut && employeeMongoId) { %>
+                                        <form
+                                            class="action-form"
+                                            action="/attendance/check-out/<%= employeeMongoId %>"
+                                            method="POST"
+                                            onsubmit="return confirm('Check out this employee?');"
+                                        >
+                                            <button type="submit" class="action-button">
+                                                Check Out
+                                            </button>
+                                        </form>
+                                    <% } else if (record && record.checkOut) { %>
+                                        <span class="completed">Completed</span>
+                                    <% } else { %>
+                                        <span class="time-empty">Unavailable</span>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+
+                <div id="filterEmpty" class="filter-empty">
+                    No employees match your search or selected filters.
+                </div>
+            <% } else { %>
+                <div class="empty-state">
+                    <div class="empty-icon">◷</div>
+                    <div class="empty-title">No employees found</div>
+                    <div class="empty-text">
+                        No attendance rows were provided for today.
+                        Check that active employees are being loaded by the controller.
+                    </div>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("employeeSearch");
+    const departmentFilter = document.getElementById("departmentFilter");
+    const statusFilter = document.getElementById("statusFilter");
+    const table = document.getElementById("attendanceTable");
+    const filterEmpty = document.getElementById("filterEmpty");
+
+    if (!searchInput || !departmentFilter || !statusFilter || !table) {
+        return;
+    }
+
+    const rows = Array.from(
+        table.querySelectorAll("tbody .attendance-row")
+    );
+
+    const departments = [
+        ...new Set(
+            rows
+                .map(row => row.dataset.department || "")
+                .filter(value => value && value !== "—")
+        )
+    ].sort();
+
+    departments.forEach(department => {
+        const option = document.createElement("option");
+        option.value = department;
+        option.textContent = department.replace(/\b\w/g, letter =>
+            letter.toUpperCase()
+        );
+        departmentFilter.appendChild(option);
+    });
+
+    function filterRows() {
+        const search = searchInput.value.toLowerCase().trim();
+        const department = departmentFilter.value.toLowerCase();
+        const status = statusFilter.value.toLowerCase();
+
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const name = row.dataset.name || "";
+            const id = row.dataset.id || "";
+            const rowDepartment = row.dataset.department || "";
+            const rowStatus = row.dataset.status || "";
+
+            const matchesSearch =
+                !search || name.includes(search) || id.includes(search);
+
+            const matchesDepartment =
+                !department || rowDepartment === department;
+
+            let matchesStatus = !status;
+
+            if (status === "absent") {
+                matchesStatus =
+                    rowStatus === "not marked" ||
+                    rowStatus === "absent";
+            } else if (status) {
+                matchesStatus = rowStatus === status;
+            }
+
+            const visible =
+                matchesSearch && matchesDepartment && matchesStatus;
+
+            row.style.display = visible ? "" : "none";
+
+            if (visible) visibleCount++;
+        });
+
+        if (filterEmpty) {
+            filterEmpty.style.display =
+                rows.length > 0 && visibleCount === 0 ? "block" : "none";
+        }
+    }
+
+    searchInput.addEventListener("input", filterRows);
+    departmentFilter.addEventListener("change", filterRows);
+    statusFilter.addEventListener("change", filterRows);
+});
+</script>

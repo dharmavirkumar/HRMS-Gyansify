@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Employee Report - Gyansify HRMS
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="/css/dashboard.css"
+    >
+
+    <style>
+
+        /* =====================================================
+           EMPLOYEE REPORT
+        ===================================================== */
+
+        .employee-report-page {
+            padding: 30px;
+        }
+
+
+        .page-heading {
+            margin-bottom: 24px;
+        }
+
+
+        .page-heading h1 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+
+        .page-heading p {
+            margin-top: 6px;
+            font-size: 11px;
+            color: #9ca3af;
+        }
+
+
+        /* =====================================================
+           ACTIONS
+        ===================================================== */
+
+        .report-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+
+        .report-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 7px;
+            background: #ffffff;
+            color: #374151;
+            text-decoration: none;
+            font-size: 9px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+
+        .report-btn:hover {
+            background: #f9fafb;
+            border-color: #9ca3af;
+        }
+
+
+        .report-btn-primary {
+            background: #111827;
+            border-color: #111827;
+            color: #ffffff;
+        }
+
+
+        .report-btn-primary:hover {
+            background: #1f2937;
+            color: #ffffff;
+        }
+
+
+        /* =====================================================
+           STATS
+        ===================================================== */
+
+        .employee-stats {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin-bottom: 22px;
+        }
+
+
+        .employee-stat {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 17px;
+        }
+
+
+        .employee-stat-label {
+            font-size: 9px;
+            color: #9ca3af;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+
+        .employee-stat-value {
+            font-size: 22px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+
+        .employee-stat-note {
+            margin-top: 5px;
+            font-size: 9px;
+            color: #9ca3af;
+        }
+
+
+        /* =====================================================
+           FILTER
+        ===================================================== */
+
+        .filter-card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 17px;
+            margin-bottom: 20px;
+        }
+
+
+        .filter-title {
+            margin-bottom: 13px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns:
+                1.5fr
+                1fr
+                1fr
+                1fr
+                auto;
+
+            gap: 10px;
+            align-items: end;
+        }
+
+
+        .filter-field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+
+        .filter-field label {
+            font-size: 9px;
+            color: #6b7280;
+            font-weight: 600;
+        }
+
+
+        .filter-field input,
+        .filter-field select {
+
+            width: 100%;
+            height: 36px;
+
+            padding:
+                0 10px;
+
+            border:
+                1px solid #d1d5db;
+
+            border-radius: 6px;
+
+            background: #ffffff;
+
+            color: #374151;
+
+            font-size: 10px;
+
+            outline: none;
+
+            box-sizing: border-box;
+        }
+
+
+        .filter-field input:focus,
+        .filter-field select:focus {
+            border-color: #9ca3af;
+        }
+
+
+        .filter-submit {
+
+            height: 36px;
+
+            padding:
+                0 14px;
+
+            border:
+                1px solid #111827;
+
+            border-radius: 6px;
+
+            background: #111827;
+
+            color: #ffffff;
+
+            font-size: 9px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+        }
+
+
+        /* =====================================================
+           TABLE
+        ===================================================== */
+
+        .employee-table-card {
+
+            background: #ffffff;
+
+            border:
+                1px solid #e5e7eb;
+
+            border-radius: 12px;
+
+            overflow: hidden;
+        }
+
+
+        .table-header {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            padding: 16px 18px;
+
+            border-bottom:
+                1px solid #e5e7eb;
+        }
+
+
+        .table-title {
+
+            margin: 0;
+
+            font-size: 12px;
+
+            font-weight: 600;
+
+            color: #111827;
+        }
+
+
+        .table-count {
+
+            font-size: 9px;
+
+            color: #9ca3af;
+        }
+
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+
+        .employee-table {
+
+            width: 100%;
+
+            min-width: 950px;
+
+            border-collapse: collapse;
+        }
+
+
+        .employee-table th {
+
+            text-align: left;
+
+            padding:
+                11px 14px;
+
+            background: #f9fafb;
+
+            border-bottom:
+                1px solid #e5e7eb;
+
+            color: #9ca3af;
+
+            font-size: 8px;
+
+            font-weight: 700;
+
+            text-transform: uppercase;
+
+            letter-spacing: .3px;
+
+            white-space: nowrap;
+        }
+
+
+        .employee-table td {
+
+            padding:
+                13px 14px;
+
+            border-bottom:
+                1px solid #f3f4f6;
+
+            color: #374151;
+
+            font-size: 10px;
+
+            vertical-align: middle;
+        }
+
+
+        .employee-table tbody tr:hover {
+            background: #fafafa;
+        }
+
+
+        .employee-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+
+        /* =====================================================
+           EMPLOYEE
+        ===================================================== */
+
+        .employee-info {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 9px;
+        }
+
+
+        .employee-avatar {
+
+            width: 31px;
+
+            height: 31px;
+
+            border-radius: 7px;
+
+            background: #f3f4f6;
+
+            color: #374151;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-size: 10px;
+
+            font-weight: 700;
+
+            flex-shrink: 0;
+        }
+
+
+        .employee-name {
+
+            font-size: 10px;
+
+            font-weight: 600;
+
+            color: #111827;
+        }
+
+
+        .employee-id {
+
+            margin-top: 2px;
+
+            font-size: 8px;
+
+            color: #9ca3af;
+        }
+
+
+        /* =====================================================
+           STATUS
+        ===================================================== */
+
+        .status {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            padding:
+                4px 7px;
+
+            border-radius: 5px;
+
+            font-size: 8px;
+
+            font-weight: 700;
+        }
+
+
+        .status-active {
+
+            background: #dcfce7;
+
+            color: #166534;
+        }
+
+
+        .status-inactive {
+
+            background: #f3f4f6;
+
+            color: #6b7280;
+        }
+
+
+        .status-onleave {
+
+            background: #fef3c7;
+
+            color: #92400e;
+        }
+
+
+        .status-terminated {
+
+            background: #fee2e2;
+
+            color: #991b1b;
+        }
+
+
+        .status-default {
+
+            background: #f3f4f6;
+
+            color: #6b7280;
+        }
+
+
+        /* =====================================================
+           EMPTY
+        ===================================================== */
+
+        .empty-state {
+
+            padding: 55px 20px;
+
+            text-align: center;
+        }
+
+
+        .empty-icon {
+
+            width: 45px;
+
+            height: 45px;
+
+            margin:
+                0 auto 12px;
+
+            border-radius: 9px;
+
+            background: #f3f4f6;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-size: 19px;
+        }
+
+
+        .empty-state h3 {
+
+            margin: 0;
+
+            font-size: 12px;
+
+            color: #111827;
+        }
+
+
+        .empty-state p {
+
+            margin-top: 5px;
+
+            font-size: 9px;
+
+            color: #9ca3af;
+        }
+
+
+        /* =====================================================
+           FOOTER
+        ===================================================== */
+
+        .report-footer {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            margin-top: 14px;
+
+            font-size: 8px;
+
+            color: #9ca3af;
+        }
+
+
+        /* =====================================================
+           PRINT
+        ===================================================== */
+
+        @media print {
+
+            .report-actions,
+            .filter-card {
+                display: none !important;
+            }
+
+            .employee-report-page {
+                padding: 0;
+            }
+
+            .employee-table-card {
+                border: none;
+            }
+
+        }
+
+
+        /* =====================================================
+           RESPONSIVE
+        ===================================================== */
+
+        @media(max-width:1100px) {
+
+            .employee-stats {
+
+                grid-template-columns:
+                    repeat(3, 1fr);
+
+            }
+
+
+            .filter-grid {
+
+                grid-template-columns:
+                    repeat(2, 1fr);
+
+            }
+
+        }
+
+
+        @media(max-width:700px) {
+
+            .employee-report-page {
+
+                padding: 20px;
+
+            }
+
+
+            .employee-stats {
+
+                grid-template-columns:
+                    repeat(2, 1fr);
+
+            }
+
+
+            .filter-grid {
+
+                grid-template-columns:
+                    1fr;
+
+            }
+
+
+            .report-actions {
+
+                justify-content: flex-start;
+
+                flex-wrap: wrap;
+
+            }
+
+        }
+
+
+        @media(max-width:450px) {
+
+            .employee-stats {
+
+                grid-template-columns:
+                    1fr;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+   <%- include('../partials/navbar') %>
+
+<%
+    /* =====================================================
+       SAFE LOCALS
+    ===================================================== */
+
+    const employeeReportStats =
+        typeof stats !== "undefined" && stats
+            ? stats
+            : {};
+
+    const employeeRecords =
+        typeof employees !== "undefined" &&
+        Array.isArray(employees)
+            ? employees
+            : (
+                typeof records !== "undefined" &&
+                Array.isArray(records)
+                    ? records
+                    : []
+            );
+
+
+    const getEmployeeName = (employee) => {
+
+        if (!employee) {
+            return "Unknown Employee";
+        }
+
+        if (employee.name) {
+            return employee.name;
+        }
+
+        if (employee.fullName) {
+            return employee.fullName;
+        }
+
+        const fullName =
+            `${employee.firstName || ""}
+             ${employee.lastName || ""}`.trim();
+
+        return fullName || "Unknown Employee";
+
+    };
+
+
+    const getEmployeeId = (employee) => {
+
+        if (!employee) {
+            return "-";
+        }
+
+        return (
+            employee.employeeId ||
+            employee.empId ||
+            employee.employeeCode ||
+            "-"
+        );
+
+    };
+
+
+    const getDepartment = (employee) => {
+
+        if (!employee) {
+            return "-";
+        }
+
+        if (
+            employee.department &&
+            typeof employee.department === "object"
+        ) {
+
+            return (
+                employee.department.name ||
+                employee.department.title ||
+                "-"
+            );
+
+        }
+
+        return (
+            employee.departmentName ||
+            employee.department ||
+            "-"
+        );
+
+    };
+
+
+    const getDesignation = (employee) => {
+
+        if (!employee) {
+            return "-";
+        }
+
+        if (
+            employee.designation &&
+            typeof employee.designation === "object"
+        ) {
+
+            return (
+                employee.designation.name ||
+                employee.designation.title ||
+                "-"
+            );
+
+        }
+
+        return (
+            employee.designationName ||
+            employee.designation ||
+            "-"
+        );
+
+    };
+
+
+    const getStatusClass = (status) => {
+
+        const value =
+            String(status || "")
+                .toUpperCase()
+                .trim();
+
+        if (value === "ACTIVE") {
+            return "status-active";
+        }
+
+        if (
+            value === "INACTIVE" ||
+            value === "RESIGNED"
+        ) {
+            return "status-inactive";
+        }
+
+        if (
+            value === "ON_LEAVE" ||
+            value === "ON LEAVE"
+        ) {
+            return "status-onleave";
+        }
+
+        if (
+            value === "TERMINATED"
+        ) {
+            return "status-terminated";
+        }
+
+        return "status-default";
+
+    };
+
+
+    const getInitial = (name) => {
+
+        return String(name || "U")
+            .charAt(0)
+            .toUpperCase();
+
+    };
+
+%>
+
+
+<div class="app">
+
+
+
+
+
+    <!-- =================================================
+         MAIN
+    ================================================= -->
+
+    <main class="main">
+
+
+        <header class="header">
+
+            <span class="page-title">
+                Employee Report
+            </span>
+
+        </header>
+
+
+        <section class="employee-report-page">
+
+
+            <!-- =================================================
+                 HEADING
+            ================================================= -->
+
+            <div class="page-heading">
+
+                <h1>
+                    Employee Report
+                </h1>
+
+                <p>
+                    Review employee information,
+                    workforce distribution and employment status.
+                </p>
+
+            </div>
+
+
+            <!-- =================================================
+                 ACTIONS
+            ================================================= -->
+
+            <div class="report-actions">
+
+                <a
+                    href="/reports"
+                    class="report-btn"
+                >
+                    ← Reports
+                </a>
+
+
+                <button
+                    type="button"
+                    class="report-btn"
+                    onclick="window.print()"
+                >
+                    🖨 Print
+                </button>
+
+
+                <a
+                    href="/reports/employees/export"
+                    class="report-btn report-btn-primary"
+                >
+                    ↓ Export
+                </a>
+
+            </div>
+
+
+            <!-- =================================================
+                 STATISTICS
+            ================================================= -->
+
+            <div class="employee-stats">
+
+
+                <div class="employee-stat">
+
+                    <div class="employee-stat-label">
+                        TOTAL EMPLOYEES
+                    </div>
+
+                    <div class="employee-stat-value">
+                        <%= employeeReportStats.totalEmployees
+                            ?? employeeReportStats.employees
+                            ?? 0 %>
+                    </div>
+
+                    <div class="employee-stat-note">
+                        Workforce
+                    </div>
+
+                </div>
+
+
+                <div class="employee-stat">
+
+                    <div class="employee-stat-label">
+                        ACTIVE
+                    </div>
+
+                    <div class="employee-stat-value">
+                        <%= employeeReportStats.active
+                            ?? employeeReportStats.activeEmployees
+                            ?? 0 %>
+                    </div>
+
+                    <div class="employee-stat-note">
+                        Currently employed
+                    </div>
+
+                </div>
+
+
+                <div class="employee-stat">
+
+                    <div class="employee-stat-label">
+                        INACTIVE
+                    </div>
+
+                    <div class="employee-stat-value">
+                        <%= employeeReportStats.inactive
+                            ?? employeeReportStats.inactiveEmployees
+                            ?? 0 %>
+                    </div>
+
+                    <div class="employee-stat-note">
+                        Inactive employees
+                    </div>
+
+                </div>
+
+
+                <div class="employee-stat">
+
+                    <div class="employee-stat-label">
+                        DEPARTMENTS
+                    </div>
+
+                    <div class="employee-stat-value">
+                        <%= employeeReportStats.departments
+                            ?? 0 %>
+                    </div>
+
+                    <div class="employee-stat-note">
+                        Organization units
+                    </div>
+
+                </div>
+
+
+                <div class="employee-stat">
+
+                    <div class="employee-stat-label">
+                        NEW JOINERS
+                    </div>
+
+                    <div class="employee-stat-value">
+                        <%= employeeReportStats.newJoiners
+                            ?? 0 %>
+                    </div>
+
+                    <div class="employee-stat-note">
+                        Recent employees
+                    </div>
+
+                </div>
+
+
+            </div>
+
+
+            <!-- =================================================
+                 FILTER
+            ================================================= -->
+
+            <div class="filter-card">
+
+                <div class="filter-title">
+                    Employee Filters
+                </div>
+
+
+                <form
+                    method="GET"
+                    action="/reports/employees"
+                >
+
+                    <div class="filter-grid">
+
+
+                        <div class="filter-field">
+
+                            <label for="search">
+                                Search
+                            </label>
+
+                            <input
+                                type="text"
+                                id="search"
+                                name="search"
+                                value="<%= typeof query !== 'undefined' ? (query.search || '') : '' %>"
+                                placeholder="Name, email or employee ID"
+                            >
+
+                        </div>
+
+
+                        <div class="filter-field">
+
+                            <label for="department">
+                                Department
+                            </label>
+
+                            <select
+                                id="department"
+                                name="department"
+                            >
+
+                                <option value="">
+                                    All Departments
+                                </option>
+
+                                <% if (
+                                    typeof departments !== "undefined" &&
+                                    Array.isArray(departments)
+                                ) { %>
+
+                                    <% departments.forEach(department => { %>
+
+                                        <option
+                                            value="<%= department._id || department.id || department.name %>"
+                                        >
+                                            <%= department.name || department.title || department %>
+                                        </option>
+
+                                    <% }) %>
+
+                                <% } %>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="filter-field">
+
+                            <label for="status">
+                                Status
+                            </label>
+
+                            <select
+                                id="status"
+                                name="status"
+                            >
+
+                                <option value="">
+                                    All Status
+                                </option>
+
+                                <option value="ACTIVE">
+                                    Active
+                                </option>
+
+                                <option value="INACTIVE">
+                                    Inactive
+                                </option>
+
+                                <option value="ON_LEAVE">
+                                    On Leave
+                                </option>
+
+                                <option value="TERMINATED">
+                                    Terminated
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="filter-field">
+
+                            <label for="employmentType">
+                                Employment Type
+                            </label>
+
+                            <select
+                                id="employmentType"
+                                name="employmentType"
+                            >
+
+                                <option value="">
+                                    All Types
+                                </option>
+
+                                <option value="FULL_TIME">
+                                    Full Time
+                                </option>
+
+                                <option value="PART_TIME">
+                                    Part Time
+                                </option>
+
+                                <option value="CONTRACT">
+                                    Contract
+                                </option>
+
+                                <option value="INTERN">
+                                    Intern
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <button
+                            type="submit"
+                            class="filter-submit"
+                        >
+                            Apply
+                        </button>
+
+
+                    </div>
+
+                </form>
+
+            </div>
+
+
+            <!-- =================================================
+                 EMPLOYEE TABLE
+            ================================================= -->
+
+            <div class="employee-table-card">
+
+
+                <div class="table-header">
+
+                    <h2 class="table-title">
+                        Employee Records
+                    </h2>
+
+                    <span class="table-count">
+
+                        <%= employeeRecords.length %>
+                        record(s)
+
+                    </span>
+
+                </div>
+
+
+                <% if (employeeRecords.length > 0) { %>
+
+
+                    <div class="table-wrapper">
+
+                        <table class="employee-table">
+
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Employee
+                                    </th>
+
+                                    <th>
+                                        Department
+                                    </th>
+
+                                    <th>
+                                        Designation
+                                    </th>
+
+                                    <th>
+                                        Email
+                                    </th>
+
+                                    <th>
+                                        Joining Date
+                                    </th>
+
+                                    <th>
+                                        Employment Type
+                                    </th>
+
+                                    <th>
+                                        Status
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody>
+
+
+                                <% employeeRecords.forEach(employee => { %>
+
+
+                                    <%
+                                        const employeeName =
+                                            getEmployeeName(employee);
+
+                                        const employeeId =
+                                            getEmployeeId(employee);
+
+                                        const employeeDepartment =
+                                            getDepartment(employee);
+
+                                        const employeeDesignation =
+                                            getDesignation(employee);
+
+                                        const employeeEmail =
+                                            employee.email ||
+                                            employee.workEmail ||
+                                            "-";
+
+                                        const joiningDate =
+                                            employee.joiningDate ||
+                                            employee.dateOfJoining ||
+                                            employee.joinedAt ||
+                                            null;
+
+                                        const employmentType =
+                                            employee.employmentType ||
+                                            employee.employeeType ||
+                                            "-";
+
+                                        const employeeStatus =
+                                            employee.status ||
+                                            "ACTIVE";
+                                    %>
+
+
+                                    <tr>
+
+
+                                        <!-- EMPLOYEE -->
+
+                                        <td>
+
+                                            <div class="employee-info">
+
+                                                <div class="employee-avatar">
+
+                                                    <%= getInitial(employeeName) %>
+
+                                                </div>
+
+
+                                                <div>
+
+                                                    <div class="employee-name">
+                                                        <%= employeeName %>
+                                                    </div>
+
+                                                    <div class="employee-id">
+                                                        <%= employeeId %>
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+
+                                        </td>
+
+
+                                        <!-- DEPARTMENT -->
+
+                                        <td>
+
+                                            <%= employeeDepartment %>
+
+                                        </td>
+
+
+                                        <!-- DESIGNATION -->
+
+                                        <td>
+
+                                            <%= employeeDesignation %>
+
+                                        </td>
+
+
+                                        <!-- EMAIL -->
+
+                                        <td>
+
+                                            <%= employeeEmail %>
+
+                                        </td>
+
+
+                                        <!-- JOINING DATE -->
+
+                                        <td>
+
+                                            <% if (joiningDate) { %>
+
+                                                <%= new Date(
+                                                    joiningDate
+                                                ).toLocaleDateString(
+                                                    "en-IN",
+                                                    {
+                                                        day: "2-digit",
+                                                        month: "short",
+                                                        year: "numeric"
+                                                    }
+                                                ) %>
+
+                                            <% } else { %>
+
+                                                -
+
+                                            <% } %>
+
+                                        </td>
+
+
+                                        <!-- EMPLOYMENT TYPE -->
+
+                                        <td>
+
+                                            <%= String(
+                                                employmentType
+                                            )
+                                            .replace(/_/g, " ")
+                                            .replace(
+                                                /\b\w/g,
+                                                char => char.toUpperCase()
+                                            ) %>
+
+                                        </td>
+
+
+                                        <!-- STATUS -->
+
+                                        <td>
+
+                                            <span
+                                                class="status <%= getStatusClass(employeeStatus) %>"
+                                            >
+
+                                                <%= String(employeeStatus)
+                                                    .replace(/_/g, " ")
+                                                    .toUpperCase() %>
+
+                                            </span>
+
+                                        </td>
+
+
+                                    </tr>
+
+
+                                <% }) %>
+
+
+                            </tbody>
+
+
+                        </table>
+
+                    </div>
+
+
+                <% } else { %>
+
+
+                    <div class="empty-state">
+
+                        <div class="empty-icon">
+                            👥
+                        </div>
+
+                        <h3>
+                            No employee records found
+                        </h3>
+
+                        <p>
+                            Try changing your filters
+                            or add employees to the organization.
+                        </p>
+
+                    </div>
+
+
+                <% } %>
+
+
+            </div>
+
+
+            <!-- =================================================
+                 FOOTER
+            ================================================= -->
+
+            <div class="report-footer">
+
+                <span>
+                    Gyansify HRMS · Employee Report
+                </span>
+
+                <span>
+
+                    Generated on
+
+                    <%= new Date().toLocaleDateString(
+                        "en-IN"
+                    ) %>
+
+                </span>
+
+            </div>
+
+
+        </section>
+
+
+    </main>
+
+
+</div>
+
+
+</body>
+
+</html>

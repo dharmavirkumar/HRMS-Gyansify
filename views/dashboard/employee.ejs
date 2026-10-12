@@ -1,0 +1,1176 @@
+
+<%
+"use strict";
+
+// =====================================================
+// GYANSIFY HRMS — EMPLOYEE DASHBOARD
+// Top navbar layout: no sidebar, no duplicate header
+// =====================================================
+
+const currentUser =
+    typeof user !== "undefined" && user && typeof user === "object"
+        ? user
+        : {};
+
+const currentEmployee =
+    typeof employee !== "undefined" && employee && typeof employee === "object"
+        ? employee
+        : {};
+
+const dashboardStats =
+    typeof stats !== "undefined" && stats && typeof stats === "object"
+        ? stats
+        : {};
+
+const attendanceData =
+    typeof attendance !== "undefined" && attendance && typeof attendance === "object"
+        ? attendance
+        : {};
+
+const balances =
+    typeof leaveBalances !== "undefined" && Array.isArray(leaveBalances)
+        ? leaveBalances.filter(item => item && typeof item === "object")
+        : [];
+
+const requests =
+    typeof leaveRequests !== "undefined" && Array.isArray(leaveRequests)
+        ? leaveRequests.filter(item => item && typeof item === "object")
+        : [];
+
+const firstDefined = (...values) =>
+    values.find(value => value !== undefined && value !== null && value !== "");
+
+const toNumber = value => {
+    if (value === null || value === undefined || value === "") return 0;
+    const result = Number(value);
+    return Number.isFinite(result) ? result : 0;
+};
+
+const getText = value => {
+    if (value === null || value === undefined || value === "") return "-";
+
+    if (typeof value === "object") {
+        return String(
+            value.name ||
+            value.fullName ||
+            value.code ||
+            value.title ||
+            value.employeeId ||
+            value._id ||
+            "-"
+        );
+    }
+
+    return String(value);
+};
+
+const formatDays = value => {
+    const number = toNumber(value);
+    return Number.isInteger(number) ? String(number) : number.toFixed(1);
+};
+
+const getDate = value => {
+    if (!value) return "-";
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "-";
+
+    return date.toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        timeZone: "Asia/Kolkata"
+    });
+};
+
+const getTime = value => {
+    if (!value) return "--:--";
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+
+    return date.toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+        timeZone: "Asia/Kolkata"
+    });
+};
+
+const normalizeStatus = value =>
+    String(value || "Pending")
+        .trim()
+        .toLowerCase()
+        .replace(/[_-]+/g, " ")
+        .replace(/\s+/g, " ");
+
+const getRoleName = role => {
+    if (typeof role === "string") return role.trim();
+
+    if (role && typeof role === "object") {
+        return String(role.name || role.code || role.role || "").trim();
+    }
+
+    return "";
+};
+
+const roleNames = [
+    ...(currentUser.role ? [currentUser.role] : []),
+    ...(Array.isArray(currentUser.roles) ? currentUser.roles : [])
+]
+    .map(getRoleName)
+    .filter(Boolean);
+
+const roleName = [
+    ...new Set(roleNames.map(role => role.replace(/_/g, " ")))
+].join(", ") || "Employee";
+
+const employeeName = [
+    currentEmployee.firstName,
+    currentEmployee.lastName
+]
+    .filter(value => typeof value === "string" && value.trim())
+    .join(" ")
+    || currentEmployee.name
+    || currentUser.name
+    || currentUser.fullName
+    || [currentUser.firstName, currentUser.lastName].filter(Boolean).join(" ")
+    || "Employee";
+
+const initials = employeeName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part.charAt(0).toUpperCase())
+    .join("") || "E";
+
+const employeeEmail = currentEmployee.email || currentUser.email || "-";
+
+const employeeId =
+    currentEmployee.employeeId ||
+    currentEmployee.employeeCode ||
+    currentEmployee._id ||
+    "-";
+
+const departmentName = getText(currentEmployee.department);
+const designationName = getText(currentEmployee.designation);
+
+const pendingStatuses = [
+    "pending",
+    "submitted",
+    "under review",
+    "awaiting approval"
+];
+
+const approvedStatuses = [
+    "approved",
+    "approve",
+    "accepted"
+];
+
+const getRequestStatus = request =>
+    normalizeStatus(
+        firstDefined(
+            request.status,
+            request.leaveStatus,
+            request.approvalStatus,
+            request.requestStatus,
+            "Pending"
+        )
+    );
+
+const pendingRequestsCount = requests.filter(request =>
+    pendingStatuses.includes(getRequestStatus(request))
+).length;
+
+const approvedRequestsCount = requests.filter(request =>
+    approvedStatuses.includes(getRequestStatus(request))
+).length;
+
+// Controller statistics take priority when supplied.
+const pendingCount = firstDefined(
+    dashboardStats.pendingLeaves,
+    dashboardStats.pendingLeaveRequests
+) !== undefined
+    ? toNumber(firstDefined(
+        dashboardStats.pendingLeaves,
+        dashboardStats.pendingLeaveRequests
+    ))
+    : pendingRequestsCount;
+
+const approvedCount = firstDefined(
+    dashboardStats.approvedLeaves,
+    dashboardStats.approvedLeaveRequests,
+    dashboardStats.approved
+) !== undefined
+    ? toNumber(firstDefined(
+        dashboardStats.approvedLeaves,
+        dashboardStats.approvedLeaveRequests,
+        dashboardStats.approved
+    ))
+    : approvedRequestsCount;
+
+const getAvailableBalance = item => {
+    const directBalance = firstDefined(item.available, item.remaining);
+
+    if (directBalance !== undefined) {
+        return toNumber(directBalance);
+    }
+
+    return (
+        toNumber(firstDefined(item.allocated, item.totalAllocated, 0)) +
+        toNumber(item.carriedForward) +
+        toNumber(item.adjustment) -
+        toNumber(firstDefined(item.used, item.taken, 0))
+    );
+};
+
+const calculatedBalance = balances.reduce(
+    (total, item) => total + getAvailableBalance(item),
+    0
+);
+
+const leaveBalance = toNumber(
+    firstDefined(dashboardStats.leaveBalance, calculatedBalance)
+);
+
+const attendancePercentage = Math.max(
+    0,
+    Math.min(
+        100,
+        toNumber(firstDefined(
+            dashboardStats.attendancePercentage,
+            attendanceData.percentage,
+            0
+        ))
+    )
+);
+
+const today = new Date().toLocaleDateString("en-IN", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    timeZone: "Asia/Kolkata"
+});
+
+const attendanceStatus = String(attendanceData.status || "Not Marked");
+const normalizedAttendanceStatus = normalizeStatus(attendanceStatus);
+
+const attendanceStatusClass =
+    normalizedAttendanceStatus === "present" ? "ed-status-approved" :
+    normalizedAttendanceStatus === "late" ? "ed-status-warning" :
+    normalizedAttendanceStatus === "half day" ? "ed-status-warning" :
+    normalizedAttendanceStatus === "absent" ? "ed-status-rejected" :
+    "ed-status-neutral";
+
+const getRequestStatusClass = status => {
+    if (approvedStatuses.includes(status)) return "approved";
+    if (["rejected", "declined"].includes(status)) return "rejected";
+    if (["cancelled", "canceled"].includes(status)) return "cancelled";
+    if (pendingStatuses.includes(status)) return "pending";
+    return "neutral";
+};
+
+const leaveTypeName = item => {
+    const leaveType = item.leaveType;
+
+    if (leaveType && typeof leaveType === "object") {
+        return getText(leaveType.name || leaveType.code);
+    }
+
+    return getText(firstDefined(
+        item.leaveTypeName,
+        leaveType,
+        item.name,
+        "Leave"
+    ));
+};
+
+const requestDays = request =>
+    toNumber(firstDefined(
+        request.totalDays,
+        request.days,
+        request.duration,
+        0
+    ));
+
+const profileUrl = "/employees";
+const leaveUrl = "/leave";
+const applyLeaveUrl = "/leave/apply";
+const requestsUrl = "/leave/my";
+const attendanceUrl = "/attendance";
+const payslipsUrl = "/payroll/payslips";
+%>
+
+<style>
+.employee-dashboard {
+    --ed-primary: #4f46e5;
+    --ed-primary-dark: #4338ca;
+    --ed-light: #eef2ff;
+    --ed-text: #111827;
+    --ed-muted: #6b7280;
+    --ed-border: #e5e7eb;
+    --ed-bg: #f7f8fc;
+    color: var(--ed-text);
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+    background: var(--ed-bg);
+}
+
+.employee-dashboard,
+.employee-dashboard * {
+    box-sizing: border-box;
+}
+
+.employee-dashboard a {
+    color: inherit;
+}
+
+.employee-dashboard button {
+    font: inherit;
+}
+
+.employee-dashboard .ed-content {
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 32px clamp(16px, 3vw, 42px) 42px;
+}
+
+.employee-dashboard .ed-welcome {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 27px;
+}
+
+.employee-dashboard .ed-eyebrow {
+    margin: 0 0 8px;
+    color: var(--ed-primary);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.3px;
+    text-transform: uppercase;
+}
+
+.employee-dashboard .ed-welcome h1 {
+    margin: 0;
+    font-size: clamp(24px, 2.4vw, 32px);
+    font-weight: 800;
+    letter-spacing: -.8px;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.employee-dashboard .ed-welcome p:not(.ed-eyebrow) {
+    margin: 10px 0 0;
+    color: var(--ed-muted);
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+.employee-dashboard .ed-primary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 42px;
+    padding: 0 17px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    background: var(--ed-primary);
+    border: 1px solid var(--ed-primary);
+    border-radius: 9px;
+    transition: background .2s, transform .2s;
+}
+
+.employee-dashboard .ed-primary-button:hover {
+    color: #fff;
+    background: var(--ed-primary-dark);
+    transform: translateY(-1px);
+}
+
+.employee-dashboard .ed-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+.employee-dashboard .ed-stat-card {
+    min-width: 0;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid var(--ed-border);
+    border-radius: 14px;
+    box-shadow: 0 3px 12px #11182705;
+    transition: transform .2s, box-shadow .2s;
+}
+
+.employee-dashboard .ed-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px #1118270a;
+}
+
+.employee-dashboard .ed-stat-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 9px;
+}
+
+.employee-dashboard .ed-stat-label {
+    color: var(--ed-muted);
+    font-size: 11px;
+    font-weight: 650;
+}
+
+.employee-dashboard .ed-stat-icon {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    font-size: 18px;
+    background: #eef2ff;
+    border-radius: 11px;
+}
+
+.employee-dashboard .ed-stat-icon.green { background: #ecfdf5; }
+.employee-dashboard .ed-stat-icon.orange { background: #fff7ed; }
+.employee-dashboard .ed-stat-icon.blue { background: #eff6ff; }
+
+.employee-dashboard .ed-stat-value {
+    display: block;
+    margin-top: 15px;
+    font-size: 29px;
+    font-weight: 800;
+    letter-spacing: -.8px;
+    overflow-wrap: anywhere;
+}
+
+.employee-dashboard .ed-stat-description {
+    display: block;
+    margin-top: 6px;
+    color: #9ca3af;
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+.employee-dashboard .ed-dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 20px;
+}
+
+.employee-dashboard .ed-card {
+    min-width: 0;
+    margin-bottom: 20px;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid var(--ed-border);
+    border-radius: 14px;
+    box-shadow: 0 3px 12px #11182705;
+}
+
+.employee-dashboard .ed-dashboard-grid .ed-card {
+    margin-bottom: 0;
+}
+
+.employee-dashboard .ed-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 19px 21px;
+    border-bottom: 1px solid #f0f1f5;
+}
+
+.employee-dashboard .ed-card-header h3 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.employee-dashboard .ed-card-header p {
+    margin: 5px 0 0;
+    color: #9ca3af;
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+.employee-dashboard .ed-card-body {
+    padding: 22px;
+}
+
+.employee-dashboard .ed-profile-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 23px 18px;
+}
+
+.employee-dashboard .ed-profile-item {
+    min-width: 0;
+}
+
+.employee-dashboard .ed-profile-item label {
+    display: block;
+    margin-bottom: 7px;
+    color: #9ca3af;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .4px;
+    text-transform: uppercase;
+}
+
+.employee-dashboard .ed-profile-item strong {
+    display: block;
+    color: #1f2937;
+    font-size: 12px;
+    font-weight: 650;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+.employee-dashboard .ed-text-link {
+    color: var(--ed-primary);
+    font-size: 10px;
+    font-weight: 750;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.employee-dashboard .ed-text-link:hover {
+    text-decoration: underline;
+}
+
+.employee-dashboard .ed-attendance-box {
+    padding: 5px 0;
+    text-align: center;
+}
+
+.employee-dashboard .ed-attendance-date {
+    margin: 0 0 16px;
+    color: var(--ed-muted);
+    font-size: 11px;
+}
+
+.employee-dashboard .ed-attendance-status,
+.employee-dashboard .ed-status {
+    display: inline-block;
+    padding: 7px 12px;
+    font-size: 10px;
+    font-weight: 750;
+    text-transform: capitalize;
+    border-radius: 30px;
+}
+
+.employee-dashboard .ed-attendance-times {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 23px;
+}
+
+.employee-dashboard .ed-time-box {
+    min-width: 0;
+    padding: 15px 8px;
+    background: #f9fafb;
+    border: 1px solid #f0f1f5;
+    border-radius: 10px;
+}
+
+.employee-dashboard .ed-time-box span,
+.employee-dashboard .ed-time-box strong {
+    display: block;
+}
+
+.employee-dashboard .ed-time-box span {
+    margin-bottom: 8px;
+    color: var(--ed-muted);
+    font-size: 10px;
+}
+
+.employee-dashboard .ed-time-box strong {
+    font-size: 15px;
+    overflow-wrap: anywhere;
+}
+
+.employee-dashboard .ed-status-approved {
+    color: #047857;
+    background: #ecfdf5;
+}
+
+.employee-dashboard .ed-status-pending,
+.employee-dashboard .ed-status-warning {
+    color: #b45309;
+    background: #fffbeb;
+}
+
+.employee-dashboard .ed-status-rejected {
+    color: #b91c1c;
+    background: #fef2f2;
+}
+
+.employee-dashboard .ed-status-neutral,
+.employee-dashboard .ed-status-cancelled {
+    color: #6b7280;
+    background: #f3f4f6;
+}
+
+.employee-dashboard .ed-leave-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.employee-dashboard .ed-leave-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 16px 21px;
+    border-bottom: 1px solid #f0f1f5;
+}
+
+.employee-dashboard .ed-leave-row:last-child {
+    border-bottom: 0;
+}
+
+.employee-dashboard .ed-leave-name {
+    font-size: 12px;
+    font-weight: 750;
+    overflow-wrap: anywhere;
+}
+
+.employee-dashboard .ed-leave-code {
+    margin-top: 5px;
+    color: #9ca3af;
+    font-size: 10px;
+}
+
+.employee-dashboard .ed-leave-days {
+    flex-shrink: 0;
+    color: var(--ed-muted);
+    font-size: 10px;
+    text-align: right;
+}
+
+.employee-dashboard .ed-leave-days strong {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--ed-text);
+    font-size: 19px;
+}
+
+.employee-dashboard .ed-empty {
+    padding: 35px 20px;
+    color: #9ca3af;
+    font-size: 12px;
+    text-align: center;
+    line-height: 1.7;
+}
+
+.employee-dashboard .ed-empty p {
+    margin: 0 0 14px;
+}
+
+.employee-dashboard .ed-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.employee-dashboard .ed-request-table {
+    width: 100%;
+    border-collapse: collapse;
+    white-space: nowrap;
+}
+
+.employee-dashboard .ed-request-table th {
+    padding: 14px 17px;
+    color: #6b7280;
+    font-size: 10px;
+    font-weight: 750;
+    text-align: left;
+    background: #f9fafb;
+}
+
+.employee-dashboard .ed-request-table td {
+    padding: 15px 17px;
+    color: #374151;
+    font-size: 11px;
+    border-top: 1px solid #f0f1f5;
+}
+
+.employee-dashboard .ed-request-table tbody tr:hover {
+    background: #fafaff;
+}
+
+.employee-dashboard .ed-status {
+    padding: 6px 10px;
+    font-size: 9px;
+}
+
+.employee-dashboard .ed-quick-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    padding: 20px;
+}
+
+.employee-dashboard .ed-quick-action {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    min-width: 0;
+    padding: 16px;
+    text-decoration: none;
+    border: 1px solid var(--ed-border);
+    border-radius: 11px;
+    transition: background .2s, border-color .2s, transform .2s;
+}
+
+.employee-dashboard .ed-quick-action:hover {
+    background: #fafaff;
+    border-color: #c7d2fe;
+    transform: translateY(-1px);
+}
+
+.employee-dashboard .ed-quick-icon {
+    display: grid;
+    place-items: center;
+    width: 39px;
+    height: 39px;
+    flex-shrink: 0;
+    font-size: 18px;
+    background: var(--ed-light);
+    border-radius: 10px;
+}
+
+.employee-dashboard .ed-quick-action strong,
+.employee-dashboard .ed-quick-action small {
+    display: block;
+}
+
+.employee-dashboard .ed-quick-action strong {
+    margin: 2px 0 6px;
+    font-size: 11px;
+}
+
+.employee-dashboard .ed-quick-action small {
+    color: #9ca3af;
+    font-size: 10px;
+    line-height: 1.6;
+}
+
+.employee-dashboard .ed-footer {
+    padding: 5px 0 0;
+    color: #9ca3af;
+    font-size: 10px;
+    line-height: 1.7;
+    text-align: center;
+}
+
+@media (max-width: 1100px) {
+    .employee-dashboard .ed-stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .employee-dashboard .ed-content {
+        padding-right: 22px;
+        padding-left: 22px;
+    }
+}
+
+@media (max-width: 760px) {
+    .employee-dashboard .ed-dashboard-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 15px;
+    }
+
+    .employee-dashboard .ed-welcome {
+        align-items: flex-start;
+        flex-direction: column;
+        margin-bottom: 22px;
+    }
+
+    .employee-dashboard .ed-welcome h1 {
+        font-size: 25px;
+    }
+
+    .employee-dashboard .ed-card-header {
+        padding: 16px;
+    }
+
+    .employee-dashboard .ed-card-body {
+        padding: 17px;
+    }
+
+    .employee-dashboard .ed-quick-actions {
+        padding: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .employee-dashboard .ed-content {
+        padding: 22px 13px 28px;
+    }
+
+    .employee-dashboard .ed-stats-grid {
+        gap: 10px;
+    }
+
+    .employee-dashboard .ed-stat-card {
+        padding: 14px;
+    }
+
+    .employee-dashboard .ed-stat-label {
+        font-size: 10px;
+    }
+
+    .employee-dashboard .ed-stat-icon {
+        width: 31px;
+        height: 31px;
+        font-size: 15px;
+    }
+
+    .employee-dashboard .ed-stat-value {
+        margin-top: 12px;
+        font-size: 24px;
+    }
+
+    .employee-dashboard .ed-stat-description {
+        font-size: 9px;
+    }
+
+    .employee-dashboard .ed-profile-grid {
+        gap: 20px 12px;
+    }
+
+    .employee-dashboard .ed-quick-actions {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .employee-dashboard .ed-leave-row {
+        padding: 14px 16px;
+    }
+}
+</style>
+
+<!-- Shared top navbar; sidebar and duplicate page header removed -->
+<%- include("../partials/navbar") %>
+
+<div class="employee-dashboard">
+    <main class="ed-content">
+
+        <!-- Welcome -->
+        <section class="ed-welcome">
+            <div>
+                <p class="ed-eyebrow">Employee self service</p>
+                <h1>Welcome, <%= employeeName %> 👋</h1>
+                <p><%= today %> · Here's your HRMS overview.</p>
+            </div>
+
+            <a href="<%= applyLeaveUrl %>" class="ed-primary-button">
+                <span aria-hidden="true">＋</span>
+                Apply for Leave
+            </a>
+        </section>
+
+        <!-- Statistics -->
+        <section class="ed-stats-grid" aria-label="Employee statistics">
+
+            <article class="ed-stat-card">
+                <div class="ed-stat-top">
+                    <span class="ed-stat-label">Leave Balance</span>
+                    <span class="ed-stat-icon" aria-hidden="true">📅</span>
+                </div>
+                <strong class="ed-stat-value"><%= formatDays(leaveBalance) %></strong>
+                <span class="ed-stat-description">Available leave days</span>
+            </article>
+
+            <article class="ed-stat-card">
+                <div class="ed-stat-top">
+                    <span class="ed-stat-label">Pending Requests</span>
+                    <span class="ed-stat-icon orange" aria-hidden="true">⌛</span>
+                </div>
+                <strong class="ed-stat-value"><%= pendingCount %></strong>
+                <span class="ed-stat-description">Awaiting approval</span>
+            </article>
+
+            <article class="ed-stat-card">
+                <div class="ed-stat-top">
+                    <span class="ed-stat-label">Approved Leaves</span>
+                    <span class="ed-stat-icon green" aria-hidden="true">✓</span>
+                </div>
+                <strong class="ed-stat-value"><%= approvedCount %></strong>
+                <span class="ed-stat-description">Approved leave requests</span>
+            </article>
+
+            <article class="ed-stat-card">
+                <div class="ed-stat-top">
+                    <span class="ed-stat-label">Attendance</span>
+                    <span class="ed-stat-icon blue" aria-hidden="true">◷</span>
+                </div>
+                <strong class="ed-stat-value"><%= attendancePercentage %>%</strong>
+                <span class="ed-stat-description">Attendance percentage</span>
+            </article>
+
+        </section>
+
+        <!-- Profile and attendance -->
+        <section class="ed-dashboard-grid">
+
+            <article class="ed-card">
+                <header class="ed-card-header">
+                    <div>
+                        <h3>My Profile</h3>
+                        <p>Your employee information</p>
+                    </div>
+                    <a href="<%= profileUrl %>" class="ed-text-link">View profile</a>
+                </header>
+
+                <div class="ed-card-body">
+                    <div class="ed-profile-grid">
+
+                        <div class="ed-profile-item">
+                            <label>Employee ID</label>
+                            <strong><%= getText(employeeId) %></strong>
+                        </div>
+
+                        <div class="ed-profile-item">
+                            <label>Email Address</label>
+                            <strong><%= getText(employeeEmail) %></strong>
+                        </div>
+
+                        <div class="ed-profile-item">
+                            <label>Department</label>
+                            <strong><%= departmentName %></strong>
+                        </div>
+
+                        <div class="ed-profile-item">
+                            <label>Designation</label>
+                            <strong><%= designationName %></strong>
+                        </div>
+
+                        <div class="ed-profile-item">
+                            <label>Employment Status</label>
+                            <strong><%= getText(currentEmployee.status || "Active") %></strong>
+                        </div>
+
+                        <div class="ed-profile-item">
+                            <label>Role</label>
+                            <strong><%= roleName %></strong>
+                        </div>
+
+                    </div>
+                </div>
+            </article>
+
+            <article class="ed-card">
+                <header class="ed-card-header">
+                    <div>
+                        <h3>Today's Attendance</h3>
+                        <p>Your attendance summary</p>
+                    </div>
+                    <a href="<%= attendanceUrl %>" class="ed-text-link">View records</a>
+                </header>
+
+                <div class="ed-card-body">
+                    <div class="ed-attendance-box">
+                        <p class="ed-attendance-date"><%= today %></p>
+
+                        <span class="ed-attendance-status <%= attendanceStatusClass %>">
+                            <%= attendanceStatus %>
+                        </span>
+
+                        <div class="ed-attendance-times">
+                            <div class="ed-time-box">
+                                <span>Check-in Time</span>
+                                <strong><%= getTime(firstDefined(
+                                    attendanceData.checkIn,
+                                    attendanceData.checkInTime
+                                )) %></strong>
+                            </div>
+
+                            <div class="ed-time-box">
+                                <span>Check-out Time</span>
+                                <strong><%= getTime(firstDefined(
+                                    attendanceData.checkOut,
+                                    attendanceData.checkOutTime
+                                )) %></strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+        </section>
+
+        <!-- Leave balance -->
+        <section class="ed-card">
+            <header class="ed-card-header">
+                <div>
+                    <h3>My Leave Balance</h3>
+                    <p>Available leave entitlements</p>
+                </div>
+                <a href="<%= leaveUrl %>" class="ed-text-link">View leave</a>
+            </header>
+
+            <% if (balances.length === 0) { %>
+                <div class="ed-empty">
+                    <p>No leave balance information is available yet.</p>
+                    <span>Please contact HR if you believe this is incorrect.</span>
+                </div>
+            <% } else { %>
+                <div class="ed-leave-list">
+                    <% balances.forEach(balance => {
+                        const type = balance.leaveType;
+                        const name = leaveTypeName(balance);
+                        const code =
+                            (type && typeof type === "object" ? type.code : "") ||
+                            balance.leaveCode ||
+                            "";
+                        const availableDays = getAvailableBalance(balance);
+                    %>
+                        <div class="ed-leave-row">
+                            <div>
+                                <div class="ed-leave-name"><%= name %></div>
+                                <% if (code) { %>
+                                    <div class="ed-leave-code"><%= code %></div>
+                                <% } %>
+                            </div>
+
+                            <div class="ed-leave-days">
+                                <strong><%= formatDays(availableDays) %></strong>
+                                days available
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } %>
+        </section>
+
+        <!-- Recent leave requests -->
+        <section class="ed-card">
+            <header class="ed-card-header">
+                <div>
+                    <h3>My Recent Leave Requests</h3>
+                    <p>Track your latest leave applications</p>
+                </div>
+                <a href="<%= requestsUrl %>" class="ed-text-link">View all</a>
+            </header>
+
+            <% if (requests.length === 0) { %>
+                <div class="ed-empty">
+                    <p>You haven't submitted any leave requests yet.</p>
+                    <a href="<%= applyLeaveUrl %>" class="ed-primary-button">
+                        ＋ Apply for Leave
+                    </a>
+                </div>
+            <% } else { %>
+                <div class="ed-table-wrapper">
+                    <table class="ed-request-table">
+                        <thead>
+                            <tr>
+                                <th>Leave Type</th>
+                                <th>From Date</th>
+                                <th>To Date</th>
+                                <th>Days</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <% requests.slice(0, 5).forEach(request => {
+                                const status = getRequestStatus(request);
+                                const statusClass = getRequestStatusClass(status);
+
+                                const fromDate = firstDefined(
+                                    request.fromDate,
+                                    request.startDate,
+                                    request.start
+                                );
+
+                                const toDate = firstDefined(
+                                    request.toDate,
+                                    request.endDate,
+                                    request.end
+                                );
+                            %>
+                                <tr>
+                                    <td><%= leaveTypeName(request) %></td>
+                                    <td><%= getDate(fromDate) %></td>
+                                    <td><%= getDate(toDate) %></td>
+                                    <td><%= formatDays(requestDays(request)) %></td>
+                                    <td>
+                                        <span class="ed-status ed-status-<%= statusClass %>">
+                                            <%= status %>
+                                        </span>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } %>
+        </section>
+
+        <!-- Quick actions -->
+        <section class="ed-card">
+            <header class="ed-card-header">
+                <div>
+                    <h3>Quick Actions</h3>
+                    <p>Frequently used employee services</p>
+                </div>
+            </header>
+
+            <div class="ed-quick-actions">
+
+                <a href="<%= applyLeaveUrl %>" class="ed-quick-action">
+                    <span class="ed-quick-icon" aria-hidden="true">📅</span>
+                    <span>
+                        <strong>Apply for Leave</strong>
+                        <small>Submit a new leave application</small>
+                    </span>
+                </a>
+
+                <a href="<%= requestsUrl %>" class="ed-quick-action">
+                    <span class="ed-quick-icon" aria-hidden="true">📋</span>
+                    <span>
+                        <strong>My Leave Requests</strong>
+                        <small>Check your leave status and history</small>
+                    </span>
+                </a>
+
+                <a href="<%= attendanceUrl %>" class="ed-quick-action">
+                    <span class="ed-quick-icon" aria-hidden="true">◷</span>
+                    <span>
+                        <strong>Attendance</strong>
+                        <small>Review your attendance records</small>
+                    </span>
+                </a>
+
+                <a href="<%= payslipsUrl %>" class="ed-quick-action">
+                    <span class="ed-quick-icon" aria-hidden="true">₹</span>
+                    <span>
+                        <strong>My Payslips</strong>
+                        <small>Access your salary slips</small>
+                    </span>
+                </a>
+
+            </div>
+        </section>
+
+        <footer class="ed-footer">
+            © <%= new Date().getFullYear() %> Gyansify HRMS. All rights reserved.
+        </footer>
+
+    </main>
+</div>

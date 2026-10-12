@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Recruitment Report - Gyansify HRMS
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="/css/dashboard.css"
+    >
+
+    <style>
+
+        .recruitment-report-page {
+            padding: 30px;
+        }
+
+        .page-heading {
+            margin-bottom: 24px;
+        }
+
+        .page-heading h1 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .page-heading p {
+            margin-top: 6px;
+            font-size: 11px;
+            color: #9ca3af;
+        }
+
+        .report-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .report-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 7px;
+            background: #fff;
+            color: #374151;
+            text-decoration: none;
+            font-size: 9px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .report-btn:hover {
+            background: #f9fafb;
+        }
+
+        .report-btn-primary {
+            background: #111827;
+            border-color: #111827;
+            color: #fff;
+        }
+
+        .recruitment-stats {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 14px;
+            margin-bottom: 22px;
+        }
+
+        .recruitment-stat {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 17px;
+        }
+
+        .recruitment-stat-label {
+            font-size: 9px;
+            color: #9ca3af;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .recruitment-stat-value {
+            font-size: 21px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .recruitment-stat-note {
+            margin-top: 5px;
+            font-size: 9px;
+            color: #9ca3af;
+        }
+
+        .pipeline {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin-bottom: 22px;
+        }
+
+        .pipeline-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 9px;
+            padding: 13px;
+        }
+
+        .pipeline-label {
+            font-size: 8px;
+            color: #9ca3af;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .pipeline-value {
+            margin-top: 7px;
+            font-size: 18px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .filter-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 17px;
+            margin-bottom: 20px;
+        }
+
+        .filter-title {
+            margin-bottom: 13px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr 1fr auto;
+            gap: 10px;
+            align-items: end;
+        }
+
+        .filter-field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-field label {
+            font-size: 9px;
+            color: #6b7280;
+            font-weight: 600;
+        }
+
+        .filter-field input,
+        .filter-field select {
+            width: 100%;
+            height: 36px;
+            padding: 0 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: #fff;
+            color: #374151;
+            font-size: 10px;
+            box-sizing: border-box;
+        }
+
+        .filter-submit {
+            height: 36px;
+            padding: 0 14px;
+            border: 1px solid #111827;
+            border-radius: 6px;
+            background: #111827;
+            color: #fff;
+            font-size: 9px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .table-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 18px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .table-title {
+            margin: 0;
+            font-size: 12px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .table-count {
+            font-size: 9px;
+            color: #9ca3af;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        .report-table {
+            width: 100%;
+            min-width: 1050px;
+            border-collapse: collapse;
+        }
+
+        .report-table th {
+            text-align: left;
+            padding: 11px 14px;
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            color: #9ca3af;
+            font-size: 8px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .report-table td {
+            padding: 13px 14px;
+            border-bottom: 1px solid #f3f4f6;
+            color: #374151;
+            font-size: 10px;
+        }
+
+        .report-table tbody tr:hover {
+            background: #fafafa;
+        }
+
+        .candidate-info {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .candidate-avatar {
+            width: 31px;
+            height: 31px;
+            border-radius: 7px;
+            background: #f3f4f6;
+            color: #374151;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .candidate-name {
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .candidate-email {
+            margin-top: 2px;
+            font-size: 8px;
+            color: #9ca3af;
+        }
+
+        .status {
+            display: inline-flex;
+            padding: 4px 7px;
+            border-radius: 5px;
+            font-size: 8px;
+            font-weight: 700;
+        }
+
+        .status-screening {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-interview {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
+        .status-selected {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-rejected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-hired {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-offer {
+            background: #ede9fe;
+            color: #6d28d9;
+        }
+
+        .status-default {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .empty-state {
+            padding: 55px 20px;
+            text-align: center;
+        }
+
+        .empty-icon {
+            width: 45px;
+            height: 45px;
+            margin: 0 auto 12px;
+            border-radius: 9px;
+            background: #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 19px;
+        }
+
+        .empty-state h3 {
+            margin: 0;
+            font-size: 12px;
+            color: #111827;
+        }
+
+        .empty-state p {
+            margin-top: 5px;
+            font-size: 9px;
+            color: #9ca3af;
+        }
+
+        .report-footer {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 14px;
+            font-size: 8px;
+            color: #9ca3af;
+        }
+
+        @media(max-width:1100px) {
+
+            .recruitment-stats {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .pipeline {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .filter-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+        }
+
+        @media(max-width:700px) {
+
+            .recruitment-report-page {
+                padding: 20px;
+            }
+
+            .recruitment-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .pipeline {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .filter-grid {
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+        @media(max-width:450px) {
+
+            .recruitment-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .pipeline {
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+        @media print {
+
+            .report-actions,
+            .filter-card {
+                display: none !important;
+            }
+
+            .recruitment-report-page {
+                padding: 0;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<%
+    const recruitmentStats =
+        typeof stats !== "undefined" && stats
+            ? stats
+            : {};
+
+    const recruitmentRecords =
+        typeof candidates !== "undefined" &&
+        Array.isArray(candidates)
+            ? candidates
+            : (
+                typeof applications !== "undefined" &&
+                Array.isArray(applications)
+                    ? applications
+                    : (
+                        typeof records !== "undefined" &&
+                        Array.isArray(records)
+                            ? records
+                            : []
+                    )
+            );
+
+    const getCandidateName = (record) => {
+
+        if (
+            record &&
+            record.candidate &&
+            typeof record.candidate === "object"
+        ) {
+            return record.candidate.name ||
+                record.candidate.fullName ||
+                "Unknown Candidate";
+        }
+
+        return record?.candidateName ||
+            record?.name ||
+            "Unknown Candidate";
+    };
+
+    const getEmail = (record) => {
+
+        if (
+            record &&
+            record.candidate &&
+            typeof record.candidate === "object"
+        ) {
+            return record.candidate.email || "-";
+        }
+
+        return record?.email ||
+            record?.candidateEmail ||
+            "-";
+    };
+
+    const getStatusClass = (status) => {
+
+        const value =
+            String(status || "")
+                .toUpperCase()
+                .trim();
+
+        if (
+            value === "SCREENING" ||
+            value === "SHORTLISTED"
+        ) {
+            return "status-screening";
+        }
+
+        if (
+            value === "INTERVIEW" ||
+            value === "INTERVIEW_SCHEDULED"
+        ) {
+            return "status-interview";
+        }
+
+        if (
+            value === "SELECTED"
+        ) {
+            return "status-selected";
+        }
+
+        if (
+            value === "REJECTED"
+        ) {
+            return "status-rejected";
+        }
+
+        if (
+            value === "HIRED"
+        ) {
+            return "status-hired";
+        }
+
+        if (
+            value === "OFFER" ||
+            value === "OFFERED"
+        ) {
+            return "status-offer";
+        }
+
+        return "status-default";
+    };
+
+    const getInitial = (name) =>
+        String(name || "U")
+            .charAt(0)
+            .toUpperCase();
+%>
+
+
+<div class="app">
+
+    <aside class="sidebar">
+
+        <div class="brand">
+
+            <div class="brand-logo">G</div>
+
+            <div>
+                <div class="brand-name">Gyansify</div>
+                <div class="brand-subtitle">HRMS</div>
+            </div>
+
+        </div>
+
+        <div class="menu-title">
+            MAIN
+        </div>
+
+        <nav class="sidebar-menu">
+
+            <a href="/dashboard" class="menu-item">
+                <span>▦</span>
+                Dashboard
+            </a>
+
+            <a href="/employees" class="menu-item">
+                <span>👥</span>
+                Employees
+            </a>
+
+            <a href="/attendance" class="menu-item">
+                <span>◷</span>
+                Attendance
+            </a>
+
+            <a href="/leave" class="menu-item">
+                <span>▣</span>
+                Leave
+            </a>
+
+            <a href="/payroll" class="menu-item">
+                <span>₹</span>
+                Payroll
+            </a>
+
+            <a href="/organization" class="menu-item">
+                <span>⚙</span>
+                Organization
+            </a>
+
+            <a href="/recruitment" class="menu-item active">
+                <span>◫</span>
+                Recruitment
+            </a>
+
+            <a href="/reports" class="menu-item">
+                <span>▤</span>
+                Reports
+            </a>
+
+            <a href="/settings" class="menu-item">
+                <span>⚙</span>
+                Settings
+            </a>
+
+        </nav>
+
+    </aside>
+
+
+    <main class="main">
+
+        <header class="header">
+
+            <span class="page-title">
+                Recruitment Report
+            </span>
+
+        </header>
+
+
+        <section class="recruitment-report-page">
+
+
+            <div class="page-heading">
+
+                <h1>
+                    Recruitment Report
+                </h1>
+
+                <p>
+                    Track job openings, candidates,
+                    interviews, offers and hiring performance.
+                </p>
+
+            </div>
+
+
+            <div class="report-actions">
+
+                <a
+                    href="/reports"
+                    class="report-btn"
+                >
+                    ← Reports
+                </a>
+
+                <button
+                    type="button"
+                    class="report-btn"
+                    onclick="window.print()"
+                >
+                    🖨 Print
+                </button>
+
+                <a
+                    href="/reports/recruitment/export"
+                    class="report-btn report-btn-primary"
+                >
+                    ↓ Export
+                </a>
+
+            </div>
+
+
+            <div class="recruitment-stats">
+
+                <div class="recruitment-stat">
+                    <div class="recruitment-stat-label">
+                        OPEN POSITIONS
+                    </div>
+                    <div class="recruitment-stat-value">
+                        <%= recruitmentStats.openPositions ?? 0 %>
+                    </div>
+                    <div class="recruitment-stat-note">
+                        Active openings
+                    </div>
+                </div>
+
+                <div class="recruitment-stat">
+                    <div class="recruitment-stat-label">
+                        CANDIDATES
+                    </div>
+                    <div class="recruitment-stat-value">
+                        <%= recruitmentStats.candidates ?? 0 %>
+                    </div>
+                    <div class="recruitment-stat-note">
+                        Total applicants
+                    </div>
+                </div>
+
+                <div class="recruitment-stat">
+                    <div class="recruitment-stat-label">
+                        INTERVIEWS
+                    </div>
+                    <div class="recruitment-stat-value">
+                        <%= recruitmentStats.interviews ?? 0 %>
+                    </div>
+                    <div class="recruitment-stat-note">
+                        Scheduled interviews
+                    </div>
+                </div>
+
+                <div class="recruitment-stat">
+                    <div class="recruitment-stat-label">
+                        OFFERS
+                    </div>
+                    <div class="recruitment-stat-value">
+                        <%= recruitmentStats.offers ?? 0 %>
+                    </div>
+                    <div class="recruitment-stat-note">
+                        Offers issued
+                    </div>
+                </div>
+
+                <div class="recruitment-stat">
+                    <div class="recruitment-stat-label">
+                        HIRED
+                    </div>
+                    <div class="recruitment-stat-value">
+                        <%= recruitmentStats.hired ?? 0 %>
+                    </div>
+                    <div class="recruitment-stat-note">
+                        Successful hires
+                    </div>
+                </div>
+
+                <div class="recruitment-stat">
+                    <div class="recruitment-stat-label">
+                        REJECTED
+                    </div>
+                    <div class="recruitment-stat-value">
+                        <%= recruitmentStats.rejected ?? 0 %>
+                    </div>
+                    <div class="recruitment-stat-note">
+                        Closed candidates
+                    </div>
+                </div>
+
+            </div>
+
+
+            <div class="pipeline">
+
+                <div class="pipeline-card">
+                    <div class="pipeline-label">
+                        Applied
+                    </div>
+                    <div class="pipeline-value">
+                        <%= recruitmentStats.applied ?? 0 %>
+                    </div>
+                </div>
+
+                <div class="pipeline-card">
+                    <div class="pipeline-label">
+                        Screening
+                    </div>
+                    <div class="pipeline-value">
+                        <%= recruitmentStats.screening ?? 0 %>
+                    </div>
+                </div>
+
+                <div class="pipeline-card">
+                    <div class="pipeline-label">
+                        Interview
+                    </div>
+                    <div class="pipeline-value">
+                        <%= recruitmentStats.interviews ?? 0 %>
+                    </div>
+                </div>
+
+                <div class="pipeline-card">
+                    <div class="pipeline-label">
+                        Selected
+                    </div>
+                    <div class="pipeline-value">
+                        <%= recruitmentStats.selected ?? 0 %>
+                    </div>
+                </div>
+
+                <div class="pipeline-card">
+                    <div class="pipeline-label">
+                        Offer
+                    </div>
+                    <div class="pipeline-value">
+                        <%= recruitmentStats.offers ?? 0 %>
+                    </div>
+                </div>
+
+                <div class="pipeline-card">
+                    <div class="pipeline-label">
+                        Hired
+                    </div>
+                    <div class="pipeline-value">
+                        <%= recruitmentStats.hired ?? 0 %>
+                    </div>
+                </div>
+
+            </div>
+
+
+            <div class="filter-card">
+
+                <div class="filter-title">
+                    Recruitment Filters
+                </div>
+
+                <form
+                    method="GET"
+                    action="/reports/recruitment"
+                >
+
+                    <div class="filter-grid">
+
+                        <div class="filter-field">
+
+                            <label>
+                                Search
+                            </label>
+
+                            <input
+                                type="text"
+                                name="search"
+                                placeholder="Candidate name or email"
+                                value="<%= typeof query !== 'undefined' ? (query.search || '') : '' %>"
+                            >
+
+                        </div>
+
+                        <div class="filter-field">
+
+                            <label>
+                                Position
+                            </label>
+
+                            <select name="position">
+
+                                <option value="">
+                                    All Positions
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                        <div class="filter-field">
+
+                            <label>
+                                Status
+                            </label>
+
+                            <select name="status">
+
+                                <option value="">
+                                    All Status
+                                </option>
+
+                                <option value="SCREENING">
+                                    Screening
+                                </option>
+
+                                <option value="INTERVIEW">
+                                    Interview
+                                </option>
+
+                                <option value="SELECTED">
+                                    Selected
+                                </option>
+
+                                <option value="OFFER">
+                                    Offer
+                                </option>
+
+                                <option value="HIRED">
+                                    Hired
+                                </option>
+
+                                <option value="REJECTED">
+                                    Rejected
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                        <button
+                            type="submit"
+                            class="filter-submit"
+                        >
+                            Apply
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+
+            <div class="table-card">
+
+                <div class="table-header">
+
+                    <h2 class="table-title">
+                        Candidate Applications
+                    </h2>
+
+                    <span class="table-count">
+                        <%= recruitmentRecords.length %> record(s)
+                    </span>
+
+                </div>
+
+
+                <% if (recruitmentRecords.length > 0) { %>
+
+                    <div class="table-wrapper">
+
+                        <table class="report-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Candidate
+                                    </th>
+
+                                    <th>
+                                        Position
+                                    </th>
+
+                                    <th>
+                                        Department
+                                    </th>
+
+                                    <th>
+                                        Applied On
+                                    </th>
+
+                                    <th>
+                                        Interview
+                                    </th>
+
+                                    <th>
+                                        Recruiter
+                                    </th>
+
+                                    <th>
+                                        Status
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                                <% recruitmentRecords.forEach(record => {
+
+                                    const candidateName =
+                                        getCandidateName(record);
+
+                                    const candidateEmail =
+                                        getEmail(record);
+
+                                    const position =
+                                        record.positionName ||
+                                        record.jobTitle ||
+                                        record.position ||
+                                        record.job?.title ||
+                                        "-";
+
+                                    const department =
+                                        record.departmentName ||
+                                        record.department ||
+                                        record.job?.department ||
+                                        "-";
+
+                                    const appliedOn =
+                                        record.appliedAt ||
+                                        record.applicationDate ||
+                                        record.createdAt;
+
+                                    const interviewDate =
+                                        record.interviewDate ||
+                                        record.interview?.date;
+
+                                    const recruiter =
+                                        record.recruiterName ||
+                                        record.recruiter?.name ||
+                                        "-";
+
+                                    const status =
+                                        record.status ||
+                                        "SCREENING";
+
+                                %>
+
+                                    <tr>
+
+                                        <td>
+
+                                            <div class="candidate-info">
+
+                                                <div class="candidate-avatar">
+                                                    <%= getInitial(candidateName) %>
+                                                </div>
+
+                                                <div>
+
+                                                    <div class="candidate-name">
+                                                        <%= candidateName %>
+                                                    </div>
+
+                                                    <div class="candidate-email">
+                                                        <%= candidateEmail %>
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+
+                                        </td>
+
+                                        <td>
+                                            <%= position %>
+                                        </td>
+
+                                        <td>
+                                            <%= department %>
+                                        </td>
+
+                                        <td>
+                                            <%= appliedOn
+                                                ? new Date(appliedOn).toLocaleDateString("en-IN")
+                                                : "-" %>
+                                        </td>
+
+                                        <td>
+                                            <%= interviewDate
+                                                ? new Date(interviewDate).toLocaleDateString("en-IN")
+                                                : "-" %>
+                                        </td>
+
+                                        <td>
+                                            <%= recruiter %>
+                                        </td>
+
+                                        <td>
+
+                                            <span
+                                                class="status <%= getStatusClass(status) %>"
+                                            >
+                                                <%= String(status)
+                                                    .replace(/_/g, " ")
+                                                    .toUpperCase() %>
+                                            </span>
+
+                                        </td>
+
+                                    </tr>
+
+                                <% }) %>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                <% } else { %>
+
+                    <div class="empty-state">
+
+                        <div class="empty-icon">
+                            ◫
+                        </div>
+
+                        <h3>
+                            No recruitment records found
+                        </h3>
+
+                        <p>
+                            Recruitment applications will appear
+                            here once candidates are added.
+                        </p>
+
+                    </div>
+
+                <% } %>
+
+            </div>
+
+
+            <div class="report-footer">
+
+                <span>
+                    Gyansify HRMS · Recruitment Report
+                </span>
+
+                <span>
+                    Generated on
+                    <%= new Date().toLocaleDateString("en-IN") %>
+                </span>
+
+            </div>
+
+
+        </section>
+
+    </main>
+
+</div>
+
+</body>
+
+</html>

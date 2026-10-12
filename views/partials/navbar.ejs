@@ -1,0 +1,926 @@
+
+<%
+    // =========================================================
+    // GYANSIFY HRMS — SAFE NAVBAR LOCALS
+    // =========================================================
+
+    const navbarUser =
+        (typeof user !== "undefined" && user) ||
+        (typeof currentUser !== "undefined" && currentUser) ||
+        (typeof session !== "undefined" && session?.user) ||
+        null;
+
+    const navbarUserName = String(
+        navbarUser?.name ||
+        navbarUser?.fullName ||
+        [
+            navbarUser?.firstName,
+            navbarUser?.lastName
+        ].filter(Boolean).join(" ") ||
+        navbarUser?.email ||
+        "My Account"
+    );
+
+    const navbarRawRole =
+        navbarUser?.role?.code ||
+        navbarUser?.role?.name ||
+        navbarUser?.role ||
+        navbarUser?.roles?.[0]?.code ||
+        navbarUser?.roles?.[0]?.name ||
+        navbarUser?.roles?.[0] ||
+        "EMPLOYEE";
+
+    const navbarUserRole = String(navbarRawRole)
+        .trim()
+        .replace(/\s+/g, "_")
+        .toUpperCase();
+
+    const navbarIsEmployee = navbarUserRole === "EMPLOYEE";
+    const navbarIsManager = navbarUserRole === "MANAGER";
+
+    const navbarIsHR = [
+        "SUPER_ADMIN",
+        "HR_ADMIN",
+        "HR_EXECUTIVE",
+        "HR_MANAGER"
+    ].includes(navbarUserRole);
+
+    const navbarIsAdmin = [
+        "SUPER_ADMIN",
+        "HR_ADMIN"
+    ].includes(navbarUserRole);
+
+    const navbarInitials = navbarUserName
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map(part => part.charAt(0).toUpperCase())
+        .join("") || "G";
+
+    const navbarPath =
+        (typeof currentPath !== "undefined" && currentPath) ||
+        (typeof req !== "undefined" && req?.originalUrl) ||
+        (typeof req !== "undefined" && req?.path) ||
+        "/";
+
+    const navbarLogo = "/images/gyansify-logo.png";
+
+    const navbarLinkActive = (path) =>
+        navbarPath === path ||
+        navbarPath.startsWith(path + "/");
+
+    const navbarApplyActive = (path) =>
+        navbarPath === path ||
+        navbarPath.startsWith(path + "/");
+
+    const navbarDashboardActive =
+        navbarLinkActive("/dashboard");
+
+    const navbarIsProfilePage =
+        navbarLinkActive("/employees/me");
+
+    const navbarIsMyLeave =
+        navbarLinkActive("/leave/my") ||
+        navbarPath === "/leave/apply";
+
+    const navbarIsMyAttendance =
+        navbarLinkActive("/attendance/my");
+
+    const navbarIsMyPayslips =
+        navbarLinkActive("/payroll/payslips");
+%>
+
+<style>
+    /* =========================================================
+       GYANSIFY HRMS — PREMIUM RESPONSIVE NAVBAR
+    ========================================================= */
+
+    .public-navbar,
+    .public-navbar * {
+        box-sizing: border-box;
+    }
+
+    .public-navbar {
+        --gn-primary: #064b8e;
+        --gn-primary-dark: #03396d;
+        --gn-accent: #f4971d;
+        --gn-text: #263449;
+        --gn-muted: #718096;
+        --gn-border: #e5eaf1;
+        --gn-surface: #ffffff;
+        --gn-hover: #f0f6fc;
+
+        position: sticky;
+        top: 0;
+        z-index: 1500;
+        width: 100%;
+        background: var(--gn-surface);
+        border-bottom: 1px solid var(--gn-border);
+        box-shadow: 0 3px 14px rgba(15, 23, 42, 0.045);
+        font-family: Inter, -apple-system, BlinkMacSystemFont,
+            "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    .public-navbar a {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .public-navbar-inner {
+        width: 100%;
+        max-width: 1800px;
+        min-height: 78px;
+        margin: 0 auto;
+        padding: 10px 26px;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+    }
+
+    /* BRAND */
+
+    .public-brand {
+        min-width: 0;
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        text-decoration: none;
+    }
+
+    .public-brand-logo {
+        position: relative;
+        width: 46px;
+        height: 46px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        border: 1px solid #e7edf5;
+        border-radius: 13px;
+        background: #ffffff;
+        box-shadow: 0 2px 5px rgba(15, 23, 42, .035);
+    }
+
+    .public-brand-logo img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        padding: 3px;
+        object-fit: contain;
+    }
+
+    .public-brand-fallback {
+        display: none;
+        color: var(--gn-primary);
+        font-size: 24px;
+        font-weight: 850;
+    }
+
+    .public-brand-copy {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .public-brand-name {
+        color: var(--gn-primary);
+        font-size: 24px;
+        font-weight: 850;
+        line-height: 1.05;
+        letter-spacing: -0.8px;
+        white-space: nowrap;
+    }
+
+    .public-brand-name .brand-accent {
+        color: var(--gn-accent);
+    }
+
+    .public-brand-subtitle {
+        margin-top: 5px;
+        color: #667992;
+        font-size: 9px;
+        font-weight: 750;
+        line-height: 1.3;
+        letter-spacing: .075em;
+        white-space: nowrap;
+    }
+
+    /* MOBILE TOGGLE */
+
+    .public-nav-toggle {
+        width: 42px;
+        height: 42px;
+        flex-shrink: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--gn-border);
+        border-radius: 10px;
+        background: #ffffff;
+        color: var(--gn-text);
+        cursor: pointer;
+        transition: background .18s ease, border-color .18s ease;
+    }
+
+    .public-nav-toggle:hover {
+        background: var(--gn-hover);
+        border-color: #cbd9e9;
+    }
+
+    .public-nav-toggle svg {
+        width: 21px;
+        height: 21px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.9;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .public-nav-toggle .icon-close {
+        display: none;
+    }
+
+    .public-nav-toggle[aria-expanded="true"] .icon-menu {
+        display: none;
+    }
+
+    .public-nav-toggle[aria-expanded="true"] .icon-close {
+        display: block;
+    }
+
+    /* NAVIGATION LAYOUT */
+
+    .public-nav-right {
+        min-width: 0;
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 17px;
+    }
+
+    .public-nav-links {
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 17px;
+    }
+
+    .public-nav-link {
+        position: relative;
+        min-height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 9px 0;
+        color: #4b5b71;
+        font-size: 13px;
+        font-weight: 650;
+        line-height: 1.3;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: color .18s ease;
+    }
+
+    .public-nav-link:hover,
+    .public-nav-link.active {
+        color: var(--gn-primary);
+    }
+
+    .public-nav-link.active {
+        font-weight: 800;
+    }
+
+    .public-nav-link.active::after {
+        position: absolute;
+        right: 0;
+        bottom: 1px;
+        left: 0;
+        height: 3px;
+        border-radius: 3px;
+        background: var(--gn-primary);
+        content: "";
+    }
+
+    /* USER PROFILE */
+
+    .public-nav-user {
+        min-width: 0;
+        max-width: 190px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .public-nav-avatar {
+        width: 42px;
+        height: 42px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #e6ecff;
+        border-radius: 50%;
+        background: #eef2ff;
+        color: #4338ca;
+        font-size: 14px;
+        font-weight: 850;
+    }
+
+    .public-nav-user-info {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .public-nav-user-name {
+        display: block;
+        max-width: 140px;
+        overflow: hidden;
+        color: #253247;
+        font-size: 13px;
+        font-weight: 800;
+        line-height: 1.25;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .public-nav-user-role {
+        display: block;
+        color: var(--gn-muted);
+        font-size: 10px;
+        font-weight: 750;
+        line-height: 1.25;
+        letter-spacing: .055em;
+        text-transform: uppercase;
+    }
+
+    .public-nav-divider {
+        width: 1px;
+        height: 34px;
+        flex-shrink: 0;
+        background: var(--gn-border);
+    }
+
+    /* BUTTONS */
+
+    .public-nav-cta,
+    .public-nav-logout {
+        min-height: 42px;
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 15px;
+        border: 1px solid transparent;
+        border-radius: 10px;
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.2;
+        text-decoration: none;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: background .18s ease, color .18s ease,
+            border-color .18s ease, transform .18s ease;
+    }
+
+    .public-nav-cta {
+        background: var(--gn-primary);
+        border-color: var(--gn-primary);
+        color: #ffffff;
+    }
+
+    .public-nav-cta:hover {
+        background: var(--gn-primary-dark);
+        border-color: var(--gn-primary-dark);
+        color: #ffffff;
+        transform: translateY(-1px);
+    }
+
+    .public-nav-logout {
+        background: #ffffff;
+        border-color: #dce5ef;
+        color: #4b5b71;
+    }
+
+    .public-nav-logout:hover {
+        background: #fff5f5;
+        border-color: #fecaca;
+        color: #b91c1c;
+    }
+
+    .public-nav-cta svg,
+    .public-nav-logout svg,
+    .public-nav-link svg {
+        width: 17px;
+        height: 17px;
+        flex-shrink: 0;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .public-nav-logout-form {
+        flex-shrink: 0;
+        margin: 0;
+    }
+
+    /* ACCESSIBILITY */
+
+    .public-navbar a:focus-visible,
+    .public-navbar button:focus-visible {
+        outline: 3px solid rgba(6, 75, 142, .28);
+        outline-offset: 3px;
+    }
+
+    /* LAPTOP */
+
+    @media (max-width: 1450px) {
+        .public-navbar-inner {
+            gap: 17px;
+            padding-right: 20px;
+            padding-left: 20px;
+        }
+
+        .public-brand-name {
+            font-size: 22px;
+        }
+
+        .public-nav-right {
+            gap: 13px;
+        }
+
+        .public-nav-links {
+            gap: 13px;
+        }
+
+        .public-nav-link {
+            font-size: 12px;
+        }
+
+        .public-nav-cta,
+        .public-nav-logout {
+            padding-right: 12px;
+            padding-left: 12px;
+        }
+    }
+
+    /* TABLET / COMPACT NAVIGATION */
+
+    @media (max-width: 1100px) {
+        .public-navbar-inner {
+            min-height: 72px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 18px;
+        }
+
+        .public-nav-toggle {
+            display: inline-flex;
+            margin-left: auto;
+        }
+
+        .public-nav-right {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            left: 0;
+            max-height: calc(100dvh - 74px);
+            overflow-x: hidden;
+            overflow-y: auto;
+            display: none;
+            align-items: stretch;
+            flex-direction: column;
+            justify-content: flex-start;
+            gap: 14px;
+            padding: 18px;
+            background: #ffffff;
+            border-bottom: 1px solid var(--gn-border);
+            box-shadow: 0 14px 28px rgba(15, 23, 42, .12);
+        }
+
+        .public-nav-right.is-open {
+            display: flex;
+        }
+
+        .public-nav-user {
+            max-width: none;
+            padding: 2px 0 10px;
+        }
+
+        .public-nav-user-name {
+            max-width: 100%;
+        }
+
+        .public-nav-divider {
+            width: 100%;
+            height: 1px;
+        }
+
+        .public-nav-links {
+            width: 100%;
+            display: flex;
+            align-items: stretch;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .public-nav-link {
+            min-height: 44px;
+            justify-content: flex-start;
+            padding: 11px 13px;
+            border-radius: 9px;
+            font-size: 13px;
+            white-space: normal;
+        }
+
+        .public-nav-link.active::after {
+            top: 10px;
+            right: auto;
+            bottom: 10px;
+            left: 0;
+            width: 3px;
+            height: auto;
+        }
+
+        .public-nav-link:hover,
+        .public-nav-link.active {
+            background: var(--gn-hover);
+        }
+
+        .public-nav-cta,
+        .public-nav-logout {
+            width: 100%;
+            min-height: 44px;
+        }
+
+        .public-nav-logout-form {
+            width: 100%;
+        }
+    }
+
+    /* MOBILE */
+
+    @media (max-width: 480px) {
+        .public-navbar-inner {
+            min-height: 66px;
+            padding: 9px 12px;
+            gap: 10px;
+        }
+
+        .public-brand {
+            gap: 8px;
+        }
+
+        .public-brand-logo {
+            width: 39px;
+            height: 39px;
+            border-radius: 10px;
+        }
+
+        .public-brand-name {
+            font-size: 20px;
+        }
+
+        .public-brand-subtitle {
+            font-size: 7px;
+            letter-spacing: .035em;
+        }
+
+        .public-nav-toggle {
+            width: 39px;
+            height: 39px;
+        }
+
+        .public-nav-right {
+            padding: 14px 12px 18px;
+            max-height: calc(100dvh - 66px);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .public-navbar *,
+        .public-navbar *::before,
+        .public-navbar *::after {
+            scroll-behavior: auto !important;
+            transition-duration: .01ms !important;
+            animation-duration: .01ms !important;
+        }
+    }
+</style>
+
+<header class="public-navbar">
+    <div class="public-navbar-inner">
+
+        <!-- BRAND -->
+        <a href="/dashboard" class="public-brand" aria-label="Gyansify HRMS dashboard">
+            <span class="public-brand-logo">
+                <img
+                    src="<%= navbarLogo %>"
+                    alt="Gyansify"
+                    onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+                >
+                <span class="public-brand-fallback" aria-hidden="true">G</span>
+            </span>
+
+            <span class="public-brand-copy">
+                <span class="public-brand-name">Gyans<span class="brand-accent">ify</span></span>
+                <span class="public-brand-subtitle">HUMAN RESOURCE MANAGEMENT</span>
+            </span>
+        </a>
+
+        <!-- MOBILE MENU BUTTON -->
+        <button
+            type="button"
+            class="public-nav-toggle"
+            id="publicNavToggle"
+            aria-label="Open navigation menu"
+            aria-expanded="false"
+            aria-controls="publicNavRight"
+        >
+            <svg class="icon-menu" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 6h16"></path>
+                <path d="M4 12h16"></path>
+                <path d="M4 18h16"></path>
+            </svg>
+
+            <svg class="icon-close" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m6 6 12 12"></path>
+                <path d="M18 6 6 18"></path>
+            </svg>
+        </button>
+
+        <nav
+            class="public-nav-right"
+            id="publicNavRight"
+            aria-label="Main navigation"
+        >
+
+           
+
+                <span class="public-nav-divider" aria-hidden="true"></span>
+
+                <!-- ROLE-BASED LINKS -->
+                <div class="public-nav-links">
+
+                    <a
+                        class="public-nav-link <%= navbarDashboardActive ? 'active' : '' %>"
+                        href="/dashboard"
+                        <%= navbarDashboardActive ? 'aria-current="page"' : '' %>
+                    >Dashboard</a>
+
+                    <% if (navbarIsEmployee) { %>
+
+                        <a
+                            class="public-nav-link <%= navbarIsProfilePage ? 'active' : '' %>"
+                            href="/employees/me"
+                            <%= navbarIsProfilePage ? 'aria-current="page"' : '' %>
+                        >My Profile</a>
+
+                        <a
+                            class="public-nav-link <%= navbarIsMyAttendance ? 'active' : '' %>"
+                            href="/attendance/my"
+                            <%= navbarIsMyAttendance ? 'aria-current="page"' : '' %>
+                        >My Attendance</a>
+
+                        <a
+                            class="public-nav-link <%= navbarIsMyLeave ? 'active' : '' %>"
+                            href="/leave/my"
+                            <%= navbarIsMyLeave ? 'aria-current="page"' : '' %>
+                        >My Leave</a>
+
+                        <a
+                            class="public-nav-link <%= navbarIsMyPayslips ? 'active' : '' %>"
+                            href="/payroll/payslips"
+                            <%= navbarIsMyPayslips ? 'aria-current="page"' : '' %>
+                        >My Payslips</a>
+
+                    <% } else if (navbarIsManager) { %>
+
+                        <a
+                            class="public-nav-link <%= navbarIsProfilePage ? 'active' : '' %>"
+                            href="/employees/me"
+                        >My Profile</a>
+
+                        <a
+                            class="public-nav-link <%= navbarLinkActive('/employees') && !navbarIsProfilePage ? 'active' : '' %>"
+                            href="/employees"
+                        >Employees</a>
+
+                        <a
+                            class="public-nav-link <%= navbarLinkActive('/attendance') ? 'active' : '' %>"
+                            href="/attendance"
+                        >Attendance</a>
+
+                        <a
+                            class="public-nav-link <%= navbarLinkActive('/leave') ? 'active' : '' %>"
+                            href="/leave"
+                        >Leave</a>
+
+                        <a
+                            class="public-nav-link <%= navbarLinkActive('/performance') ? 'active' : '' %>"
+                            href="/performance"
+                        >Performance</a>
+
+                    <% } else if (navbarIsHR) { %>
+
+                        <a
+                            class="public-nav-link <%= navbarLinkActive('/employees') ? 'active' : '' %>"
+                            href="/employees"
+                        >Employees</a>
+
+                        <a
+                            class="public-nav-link <%= navbarLinkActive('/recruitment') ? 'active' : '' %>"
+                            href="/recruitment"
+                        >Recruitment</a>
+
+                        <a
+                            class="public-nav-link <%= navbarLinkActive('/attendance') ? 'active' : '' %>"
+                            href="/attendance"
+                        >Attendance</a>
+
+                        <a
+                            class="public-nav-link <%= navbarLinkActive('/leave') ? 'active' : '' %>"
+                            href="/leave"
+                        >Leave</a>
+
+                        <a
+                            class="public-nav-link <%= navbarLinkActive('/payroll') ? 'active' : '' %>"
+                            href="/payroll"
+                        >Payroll</a>
+
+                        <a
+                            class="public-nav-link <%= navbarLinkActive('/reports') ? 'active' : '' %>"
+                            href="/reports"
+                        >Reports</a>
+
+                        <% if (navbarIsAdmin) { %>
+
+                            <a
+                                class="public-nav-link <%= navbarLinkActive('/organization') ? 'active' : '' %>"
+                                href="/organization"
+                            >Organization</a>
+
+                            <a
+                                class="public-nav-link <%= navbarLinkActive('/settings') ? 'active' : '' %>"
+                                href="/settings"
+                            >Settings</a>
+
+                        <% } %>
+
+                    <% } else { %>
+
+                        <a
+                            class="public-nav-link <%= navbarIsProfilePage ? 'active' : '' %>"
+                            href="/employees/me"
+                        >My Profile</a>
+
+                        <a
+                            class="public-nav-link <%= navbarIsMyAttendance ? 'active' : '' %>"
+                            href="/attendance/my"
+                        >My Attendance</a>
+
+                        <a
+                            class="public-nav-link <%= navbarIsMyLeave ? 'active' : '' %>"
+                            href="/leave/my"
+                        >My Leave</a>
+
+                    <% } %>
+                </div>
+<span class="public-nav-divider" aria-hidden="true"></span>
+                <!-- DASHBOARD SHORTCUT -->
+                <!-- <a class="public-nav-cta" href="/dashboard">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+                        <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+                        <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+                        <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+                    </svg>
+                    Dashboard
+                </a> -->
+
+                 <% if (!navbarUser) { %>
+
+                <!-- PUBLIC NAVIGATION -->
+                <div class="public-nav-links">
+                    <a class="public-nav-link" href="/#features">Features</a>
+                    <a class="public-nav-link" href="/#modules">Modules</a>
+                    <a class="public-nav-link" href="/#how-it-works">How It Works</a>
+                    <a class="public-nav-link" href="/#about">About Us</a>
+                </div>
+
+                <a class="public-nav-cta" href="/login">
+                    Sign in
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M5 12h14"></path>
+                        <path d="m13 6 6 6-6 6"></path>
+                    </svg>
+                </a>
+
+            <% } else { %>
+
+                <!-- USER IDENTITY -->
+                <div class="public-nav-user">
+                    <span class="public-nav-avatar" aria-hidden="true">
+                        <%= navbarInitials %>
+                    </span>
+
+                    <span class="public-nav-user-info">
+                        <span class="public-nav-user-name"><%= navbarUserName %></span>
+                        <span class="public-nav-user-role">
+                            <%= navbarUserRole.replace(/_/g, " ") %>
+                        </span>
+                    </span>
+                </div>
+
+                <!-- POST LOGOUT -->
+                <form
+                    class="public-nav-logout-form"
+                    action="/logout"
+                    method="POST"
+                >
+                    <button class="public-nav-logout" type="submit">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M10 17l5-5-5-5"></path>
+                            <path d="M15 12H3"></path>
+                            <path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6"></path>
+                        </svg>
+                        Logout
+                    </button>
+                </form>
+
+            <% } %>
+        </nav>
+    </div>
+</header>
+
+<script>
+(function () {
+    "use strict";
+
+    const toggle = document.getElementById("publicNavToggle");
+    const nav = document.getElementById("publicNavRight");
+
+    if (!toggle || !nav || toggle.dataset.initialized === "true") {
+        return;
+    }
+
+    toggle.dataset.initialized = "true";
+
+    function closeMenu() {
+        nav.classList.remove("is-open");
+        toggle.setAttribute("aria-expanded", "false");
+        toggle.setAttribute("aria-label", "Open navigation menu");
+    }
+
+    function openMenu() {
+        nav.classList.add("is-open");
+        toggle.setAttribute("aria-expanded", "true");
+        toggle.setAttribute("aria-label", "Close navigation menu");
+    }
+
+    toggle.addEventListener("click", function () {
+        if (nav.classList.contains("is-open")) {
+            closeMenu();
+        } else {
+            openMenu();
+        }
+    });
+
+    nav.addEventListener("click", function (event) {
+        if (event.target.closest("a")) {
+            closeMenu();
+        }
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+            closeMenu();
+        }
+    });
+
+    document.addEventListener("click", function (event) {
+        if (!nav.contains(event.target) && !toggle.contains(event.target)) {
+            closeMenu();
+        }
+    });
+
+    window.addEventListener("resize", function () {
+        if (window.innerWidth > 1100) {
+            closeMenu();
+        }
+    });
+})();
+</script>
