@@ -662,207 +662,252 @@
             </svg>
         </button>
 
-        <nav
-            class="public-nav-right"
-            id="publicNavRight"
-            aria-label="Main navigation"
-        >
+        
+<nav
+    class="public-nav-right"
+    id="publicNavRight"
+    aria-label="Main navigation"
+>
+    <% if (navbarUser) { %>
 
-           
+        <!-- AUTHENTICATED USER NAVIGATION -->
+        <span class="public-nav-divider" aria-hidden="true"></span>
 
-                <span class="public-nav-divider" aria-hidden="true"></span>
+        <div class="public-nav-links">
 
-                <!-- ROLE-BASED LINKS -->
-                <div class="public-nav-links">
+            <!-- DASHBOARD -->
+            <a
+                class="public-nav-link <%= navbarDashboardActive ? 'active' : '' %>"
+                href="/dashboard"
+                <%= navbarDashboardActive ? 'aria-current="page"' : '' %>
+            >Dashboard</a>
+
+            <!-- EMPLOYEE -->
+            <% if (navbarIsEmployee) { %>
+
+                <a
+                    class="public-nav-link <%= navbarIsProfilePage ? 'active' : '' %>"
+                    href="/employees/me"
+                    <%= navbarIsProfilePage ? 'aria-current="page"' : '' %>
+                >My Profile</a>
+
+                <a
+                    class="public-nav-link <%= navbarIsMyAttendance ? 'active' : '' %>"
+                    href="/attendance/my"
+                    <%= navbarIsMyAttendance ? 'aria-current="page"' : '' %>
+                >My Attendance</a>
+
+                <a
+                    class="public-nav-link <%= navbarIsMyLeave ? 'active' : '' %>"
+                    href="/leave/my"
+                    <%= navbarIsMyLeave ? 'aria-current="page"' : '' %>
+                >My Leave</a>
+
+                <a
+                    class="public-nav-link <%= navbarIsMyPayslips ? 'active' : '' %>"
+                    href="/payroll/payslips"
+                    <%= navbarIsMyPayslips ? 'aria-current="page"' : '' %>
+                >My Payslips</a>
+
+            <!-- MANAGER -->
+            <% } else if (navbarIsManager) { %>
+
+                <a
+                    class="public-nav-link <%= navbarIsProfilePage ? 'active' : '' %>"
+                    href="/employees/me"
+                    <%= navbarIsProfilePage ? 'aria-current="page"' : '' %>
+                >My Profile</a>
+
+                <a
+                    class="public-nav-link <%= navbarLinkActive('/employees') && !navbarIsProfilePage ? 'active' : '' %>"
+                    href="/employees"
+                    <%= navbarLinkActive('/employees') && !navbarIsProfilePage ? 'aria-current="page"' : '' %>
+                >Employees</a>
+
+                <a
+                    class="public-nav-link <%= navbarLinkActive('/onboarding') ? 'active' : '' %>"
+                    href="/onboarding"
+                    <%= navbarLinkActive('/onboarding') ? 'aria-current="page"' : '' %>
+                >Onboarding</a>
+
+                <a
+                    class="public-nav-link <%= navbarLinkActive('/attendance') ? 'active' : '' %>"
+                    href="/attendance"
+                    <%= navbarLinkActive('/attendance') ? 'aria-current="page"' : '' %>
+                >Attendance</a>
+
+                <a
+                    class="public-nav-link <%= navbarLinkActive('/leave') ? 'active' : '' %>"
+                    href="/leave"
+                    <%= navbarLinkActive('/leave') ? 'aria-current="page"' : '' %>
+                >Leave</a>
+
+                <a
+                    class="public-nav-link <%= navbarLinkActive('/performance') ? 'active' : '' %>"
+                    href="/performance"
+                    <%= navbarLinkActive('/performance') ? 'aria-current="page"' : '' %>
+                >Performance</a>
+
+            <!-- HR / ADMIN -->
+            <% } else if (navbarIsHR) { %>
+
+                <a
+                    class="public-nav-link <%= navbarLinkActive('/employees') ? 'active' : '' %>"
+                    href="/employees"
+                    <%= navbarLinkActive('/employees') ? 'aria-current="page"' : '' %>
+                >Employees</a>
+
+                <a
+                    class="public-nav-link <%= navbarLinkActive('/onboarding') ? 'active' : '' %>"
+                    href="/onboarding"
+                    <%= navbarLinkActive('/onboarding') ? 'aria-current="page"' : '' %>
+                >Onboarding</a>
+
+                <a
+                    class="public-nav-link <%= navbarLinkActive('/recruitment') ? 'active' : '' %>"
+                    href="/recruitment"
+                    <%= navbarLinkActive('/recruitment') ? 'aria-current="page"' : '' %>
+                >Recruitment</a>
+
+                <a
+                    class="public-nav-link <%= navbarLinkActive('/attendance') ? 'active' : '' %>"
+                    href="/attendance"
+                    <%= navbarLinkActive('/attendance') ? 'aria-current="page"' : '' %>
+                >Attendance</a>
+
+                <a
+                    class="public-nav-link <%= navbarLinkActive('/leave') ? 'active' : '' %>"
+                    href="/leave"
+                    <%= navbarLinkActive('/leave') ? 'aria-current="page"' : '' %>
+                >Leave</a>
+
+                <a
+                    class="public-nav-link <%= navbarLinkActive('/payroll') ? 'active' : '' %>"
+                    href="/payroll"
+                    <%= navbarLinkActive('/payroll') ? 'aria-current="page"' : '' %>
+                >Payroll</a>
+
+                <a
+                    class="public-nav-link <%= navbarLinkActive('/reports') ? 'active' : '' %>"
+                    href="/reports"
+                    <%= navbarLinkActive('/reports') ? 'aria-current="page"' : '' %>
+                >Reports</a>
+
+                <!-- ADMIN-ONLY LINKS -->
+                <% if (navbarIsAdmin) { %>
 
                     <a
-                        class="public-nav-link <%= navbarDashboardActive ? 'active' : '' %>"
-                        href="/dashboard"
-                        <%= navbarDashboardActive ? 'aria-current="page"' : '' %>
-                    >Dashboard</a>
+                        class="public-nav-link <%= navbarLinkActive('/organization') ? 'active' : '' %>"
+                        href="/organization"
+                        <%= navbarLinkActive('/organization') ? 'aria-current="page"' : '' %>
+                    >Organization</a>
 
-                    <% if (navbarIsEmployee) { %>
+                    <a
+                        class="public-nav-link <%= navbarLinkActive('/settings') ? 'active' : '' %>"
+                        href="/settings"
+                        <%= navbarLinkActive('/settings') ? 'aria-current="page"' : '' %>
+                    >Settings</a>
 
-                        <a
-                            class="public-nav-link <%= navbarIsProfilePage ? 'active' : '' %>"
-                            href="/employees/me"
-                            <%= navbarIsProfilePage ? 'aria-current="page"' : '' %>
-                        >My Profile</a>
+                <% } %>
 
-                        <a
-                            class="public-nav-link <%= navbarIsMyAttendance ? 'active' : '' %>"
-                            href="/attendance/my"
-                            <%= navbarIsMyAttendance ? 'aria-current="page"' : '' %>
-                        >My Attendance</a>
-
-                        <a
-                            class="public-nav-link <%= navbarIsMyLeave ? 'active' : '' %>"
-                            href="/leave/my"
-                            <%= navbarIsMyLeave ? 'aria-current="page"' : '' %>
-                        >My Leave</a>
-
-                        <a
-                            class="public-nav-link <%= navbarIsMyPayslips ? 'active' : '' %>"
-                            href="/payroll/payslips"
-                            <%= navbarIsMyPayslips ? 'aria-current="page"' : '' %>
-                        >My Payslips</a>
-
-                    <% } else if (navbarIsManager) { %>
-
-                        <a
-                            class="public-nav-link <%= navbarIsProfilePage ? 'active' : '' %>"
-                            href="/employees/me"
-                        >My Profile</a>
-
-                        <a
-                            class="public-nav-link <%= navbarLinkActive('/employees') && !navbarIsProfilePage ? 'active' : '' %>"
-                            href="/employees"
-                        >Employees</a>
-
-                        <a
-                            class="public-nav-link <%= navbarLinkActive('/attendance') ? 'active' : '' %>"
-                            href="/attendance"
-                        >Attendance</a>
-
-                        <a
-                            class="public-nav-link <%= navbarLinkActive('/leave') ? 'active' : '' %>"
-                            href="/leave"
-                        >Leave</a>
-
-                        <a
-                            class="public-nav-link <%= navbarLinkActive('/performance') ? 'active' : '' %>"
-                            href="/performance"
-                        >Performance</a>
-
-                    <% } else if (navbarIsHR) { %>
-
-                        <a
-                            class="public-nav-link <%= navbarLinkActive('/employees') ? 'active' : '' %>"
-                            href="/employees"
-                        >Employees</a>
-
-                        <a
-                            class="public-nav-link <%= navbarLinkActive('/recruitment') ? 'active' : '' %>"
-                            href="/recruitment"
-                        >Recruitment</a>
-
-                        <a
-                            class="public-nav-link <%= navbarLinkActive('/attendance') ? 'active' : '' %>"
-                            href="/attendance"
-                        >Attendance</a>
-
-                        <a
-                            class="public-nav-link <%= navbarLinkActive('/leave') ? 'active' : '' %>"
-                            href="/leave"
-                        >Leave</a>
-
-                        <a
-                            class="public-nav-link <%= navbarLinkActive('/payroll') ? 'active' : '' %>"
-                            href="/payroll"
-                        >Payroll</a>
-
-                        <a
-                            class="public-nav-link <%= navbarLinkActive('/reports') ? 'active' : '' %>"
-                            href="/reports"
-                        >Reports</a>
-
-                        <% if (navbarIsAdmin) { %>
-
-                            <a
-                                class="public-nav-link <%= navbarLinkActive('/organization') ? 'active' : '' %>"
-                                href="/organization"
-                            >Organization</a>
-
-                            <a
-                                class="public-nav-link <%= navbarLinkActive('/settings') ? 'active' : '' %>"
-                                href="/settings"
-                            >Settings</a>
-
-                        <% } %>
-
-                    <% } else { %>
-
-                        <a
-                            class="public-nav-link <%= navbarIsProfilePage ? 'active' : '' %>"
-                            href="/employees/me"
-                        >My Profile</a>
-
-                        <a
-                            class="public-nav-link <%= navbarIsMyAttendance ? 'active' : '' %>"
-                            href="/attendance/my"
-                        >My Attendance</a>
-
-                        <a
-                            class="public-nav-link <%= navbarIsMyLeave ? 'active' : '' %>"
-                            href="/leave/my"
-                        >My Leave</a>
-
-                    <% } %>
-                </div>
-<span class="public-nav-divider" aria-hidden="true"></span>
-                <!-- DASHBOARD SHORTCUT -->
-                <!-- <a class="public-nav-cta" href="/dashboard">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <rect x="3" y="3" width="7" height="7" rx="1"></rect>
-                        <rect x="14" y="3" width="7" height="7" rx="1"></rect>
-                        <rect x="3" y="14" width="7" height="7" rx="1"></rect>
-                        <rect x="14" y="14" width="7" height="7" rx="1"></rect>
-                    </svg>
-                    Dashboard
-                </a> -->
-
-                 <% if (!navbarUser) { %>
-
-                <!-- PUBLIC NAVIGATION -->
-                <div class="public-nav-links">
-                    <a class="public-nav-link" href="/#features">Features</a>
-                    <a class="public-nav-link" href="/#modules">Modules</a>
-                    <a class="public-nav-link" href="/#how-it-works">How It Works</a>
-                    <a class="public-nav-link" href="/#about">About Us</a>
-                </div>
-
-                <a class="public-nav-cta" href="/login">
-                    Sign in
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M5 12h14"></path>
-                        <path d="m13 6 6 6-6 6"></path>
-                    </svg>
-                </a>
-
+            <!-- OTHER AUTHENTICATED ROLES -->
             <% } else { %>
 
-                <!-- USER IDENTITY -->
-                <div class="public-nav-user">
-                    <span class="public-nav-avatar" aria-hidden="true">
-                        <%= navbarInitials %>
-                    </span>
+                <a
+                    class="public-nav-link <%= navbarIsProfilePage ? 'active' : '' %>"
+                    href="/employees/me"
+                    <%= navbarIsProfilePage ? 'aria-current="page"' : '' %>
+                >My Profile</a>
 
-                    <span class="public-nav-user-info">
-                        <span class="public-nav-user-name"><%= navbarUserName %></span>
-                        <span class="public-nav-user-role">
-                            <%= navbarUserRole.replace(/_/g, " ") %>
-                        </span>
-                    </span>
-                </div>
+                <a
+                    class="public-nav-link <%= navbarIsMyAttendance ? 'active' : '' %>"
+                    href="/attendance/my"
+                    <%= navbarIsMyAttendance ? 'aria-current="page"' : '' %>
+                >My Attendance</a>
 
-                <!-- POST LOGOUT -->
-                <form
-                    class="public-nav-logout-form"
-                    action="/logout"
-                    method="POST"
-                >
-                    <button class="public-nav-logout" type="submit">
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M10 17l5-5-5-5"></path>
-                            <path d="M15 12H3"></path>
-                            <path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6"></path>
-                        </svg>
-                        Logout
-                    </button>
-                </form>
+                <a
+                    class="public-nav-link <%= navbarIsMyLeave ? 'active' : '' %>"
+                    href="/leave/my"
+                    <%= navbarIsMyLeave ? 'aria-current="page"' : '' %>
+                >My Leave</a>
 
             <% } %>
-        </nav>
+
+        </div>
+
+        <span class="public-nav-divider" aria-hidden="true"></span>
+
+        <!-- USER IDENTITY -->
+        <div class="public-nav-user">
+            <span
+                class="public-nav-avatar"
+                aria-hidden="true"
+            ><%= navbarInitials %></span>
+
+            <span class="public-nav-user-info">
+                <span class="public-nav-user-name"><%= navbarUserName %></span>
+                <span class="public-nav-user-role">
+                    <%= navbarUserRole.replace(/_/g, " ") %>
+                </span>
+            </span>
+        </div>
+
+        <!-- LOGOUT -->
+        <form
+            class="public-nav-logout-form"
+            action="/logout"
+            method="POST"
+        >
+            <button
+                class="public-nav-logout"
+                type="submit"
+            >
+                <svg
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <path d="M10 17l5-5-5-5"></path>
+                    <path d="M15 12H3"></path>
+                    <path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6"></path>
+                </svg>
+                <span>Logout</span>
+            </button>
+        </form>
+
+    <% } else { %>
+
+        <!-- PUBLIC WEBSITE NAVIGATION -->
+        <div class="public-nav-links">
+            <a class="public-nav-link" href="/#features">Features</a>
+            <a class="public-nav-link" href="/#modules">Modules</a>
+            <a class="public-nav-link" href="/#how-it-works">How It Works</a>
+            <a class="public-nav-link" href="/#about">About Us</a>
+        </div>
+
+        <a class="public-nav-cta" href="/login">
+            Sign in
+            <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <path d="M5 12h14"></path>
+                <path d="m13 6 6 6-6 6"></path>
+            </svg>
+        </a>
+
+    <% } %>
+</nav>
+
     </div>
 </header>
 

@@ -6,6 +6,13 @@ const mongoose = require("mongoose");
 const Attendance = require("../models/Attendance");
 const Employee = require("../models/Employee");
 const User = require("../models/User");
+const OfficeLocation = require("../models/OfficeLocation");
+const AttendanceAudit = require("../models/AttendanceAudit");
+
+const {
+    calculateDistanceMeters,
+    verifyCoordinates
+} = require("../utils/geofence");
 
 // =====================================================
 // CONFIGURATION
@@ -27,39 +34,34 @@ const HR_ROLES = new Set([
 // DATE HELPERS
 // =====================================================
 
-const getTodayDate = () => {
-    const parts = new Intl.DateTimeFormat("en-CA", {
+const getZonedParts = (options) => {
+    const parts = new Intl.DateTimeFormat("en-GB", {
         timeZone: TIME_ZONE,
+        ...options
+    }).formatToParts(new Date());
+
+    return Object.fromEntries(
+        parts
+            .filter(part => part.type !== "literal")
+            .map(part => [part.type, part.value])
+    );
+};
+
+const getTodayDate = () => {
+    const values = getZonedParts({
         year: "numeric",
         month: "2-digit",
         day: "2-digit"
-    }).formatToParts(new Date());
-
-    const values = {};
-
-    for (const part of parts) {
-        if (part.type !== "literal") {
-            values[part.type] = part.value;
-        }
-    }
+    });
 
     return `${values.year}-${values.month}-${values.day}`;
 };
 
 const getCurrentYearMonth = () => {
-    const parts = new Intl.DateTimeFormat("en-CA", {
-        timeZone: TIME_ZONE,
+    const values = getZonedParts({
         year: "numeric",
         month: "2-digit"
-    }).formatToParts(new Date());
-
-    const values = {};
-
-    for (const part of parts) {
-        if (part.type !== "literal") {
-            values[part.type] = part.value;
-        }
-    }
+    });
 
     return {
         year: Number(values.year),
@@ -68,22 +70,16 @@ const getCurrentYearMonth = () => {
 };
 
 const getIndiaTimeParts = () => {
-    const parts = new Intl.DateTimeFormat("en-GB", {
-        timeZone: TIME_ZONE,
+    const values = getZonedParts({
         hour: "2-digit",
         minute: "2-digit",
         hourCycle: "h23"
-    }).formatToParts(new Date());
+    });
 
-    const values = {};
-
-    for (const part of parts) {
-        if (part.type !== "literal") {
-            values[part.type] = Number(part.value);
-        }
-    }
-
-    return values;
+    return {
+        hour: Number(values.hour),
+        minute: Number(values.minute)
+    };
 };
 
 const isLateCheckIn = () => {
@@ -96,31 +92,20 @@ const isLateCheckIn = () => {
 };
 
 // =====================================================
-// AUTHENTICATED USER
+// AUTHENTICATION / ROLE HELPERS
 // =====================================================
 
-const getSessionUserId = (req) => {
-    return (
-        req.session?.user?._id ||
-        req.session?.user?.id ||
-        req.session?.userId ||
-        null
-    );
-};
-
-// =====================================================
-// ROLE HELPERS
-// Supports role strings and populated Role objects.
-// =====================================================
+const getSessionUserId = (req) =>
+    req.session?.user?._id ||
+    req.session?.user?.id ||
+    req.session?.userId ||
+    null;
 
 const normalizeRole = (value) => {
     if (!value) return "";
 
     if (typeof value === "string") {
-        return value
-            .trim()
-            .toUpperCase()
-            .replace(/[\s-]+/g, "_");
+        return value.trim().toUpperCase().replace(/[\s-]+/g, "_");
     }
 
     if (typeof value === "object") {
@@ -155,16 +140,7 @@ const collectRoleCodes = (user) => {
             return;
         }
 
-        if (typeof value === "object") {
-            const code = normalizeRole(value);
-
-            if (code) codes.push(code);
-
-            return;
-        }
-
         const code = normalizeRole(value);
-
         if (code) codes.push(code);
     };
 
@@ -174,23 +150,22 @@ const collectRoleCodes = (user) => {
 };
 
 const isHRUser = (dbUser, sessionUser) => {
-    const roleCodes = [
+    const codes = [
         ...collectRoleCodes(dbUser),
         ...collectRoleCodes(sessionUser)
     ];
 
-    return roleCodes.some(role => HR_ROLES.has(role));
+    return codes.some(code => HR_ROLES.has(code));
 };
 
 // =====================================================
 // REQUEST CONTEXT
-// Loads the authenticated user and their organization.
 // =====================================================
 
 const getRequestContext = async (req) => {
     const userId = getSessionUserId(req);
 
-    if (!userId || !mongoose.isValidObjectId(userId)) {
+    if (!userId || !mongoose.isValidObjectId(String(userId))) {
         return {
             error: "Authentication required.",
             status: 401
@@ -201,7 +176,6 @@ const getRequestContext = async (req) => {
         "name email organization organizationId employee role roles roleCode status"
     );
 
-    // Populate roles only if this path exists in the User schema.
     if (User.schema.path("roles")) {
         userQuery = userQuery.populate({
             path: "roles",
@@ -242,9 +216,7 @@ const getRequestContext = async (req) => {
 
     if (
         !organizationId ||
-        !mongoose.isValidObjectId(
-            String(organizationId)
-        )
+        !mongoose.isValidObjectId(String(organizationId))
     ) {
         return {
             error: "Organization could not be identified.",
@@ -262,77 +234,6 @@ const getRequestContext = async (req) => {
     };
 };
 
-// =====================================================
-// FIND THE LOGGED-IN EMPLOYEE
-// =====================================================
-
-const getCurrentEmployee = async (
-    dbUser,
-    organizationId
-) => {
-    let employee = null;
-
-    const employeeId =
-        dbUser.employee?._id ||
-        dbUser.employee ||
-        null;
-
-    if (
-        employeeId &&
-        mongoose.isValidObjectId(String(employeeId))
-    ) {
-        employee = await Employee.findOne({
-            _id: employeeId,
-            organization: organizationId
-        });
-    }
-
-    // Fall back to email matching within this organization.
-    if (!employee && dbUser.email) {
-        employee = await Employee.findOne({
-            organization: organizationId,
-            email: {
-                $regex: `^${String(dbUser.email).replace(
-                    /[.*+?^${}()|[\]\\]/g,
-                    "\\$&"
-                )}$`,
-                $options: "i"
-            }
-        });
-
-        // Repair the User-to-Employee relationship when possible.
-        if (employee) {
-            const update = {
-                $set: {
-                    employee: employee._id
-                }
-            };
-
-            const userFilter = {
-                _id: dbUser._id
-            };
-
-            if (User.schema.path("organization")) {
-                userFilter.organization = organizationId;
-            } else if (User.schema.path("organizationId")) {
-                userFilter.organizationId = organizationId;
-            }
-
-            await User.updateOne(userFilter, update);
-        }
-    }
-
-    return employee;
-};
-
-// =====================================================
-// COMMON HELPERS
-// =====================================================
-
-const sendControllerError = (res, error, status = 500) => {
-    return res.status(status).send(error);
-};
-
 const getContextOrRespond = async (req, res) => {
     const context = await getRequestContext(req);
 
@@ -342,60 +243,249 @@ const getContextOrRespond = async (req, res) => {
             return null;
         }
 
-        sendControllerError(
-            res,
-            context.error,
-            context.status
-        );
-
+        res.status(context.status).send(context.error);
         return null;
     }
 
     return context;
 };
 
-const getActiveEmployees = (organizationId) => {
-    return Employee.find({
+// =====================================================
+// EMPLOYEE HELPERS
+// =====================================================
+
+const getActiveEmployees = (organizationId) =>
+    Employee.find({
         organization: organizationId,
         status: { $ne: "Exited" }
     })
         .populate("department", "name")
         .populate("designation", "name")
         .sort({ firstName: 1 });
+
+const getEmployeeForOrganization = (employeeId, organizationId) =>
+    Employee.findOne({
+        _id: employeeId,
+        organization: organizationId,
+        status: { $ne: "Exited" }
+    });
+
+const getCurrentEmployee = async (dbUser, organizationId) => {
+    let employee = null;
+
+    const linkedEmployeeId =
+        dbUser.employee?._id ||
+        dbUser.employee ||
+        null;
+
+    if (
+        linkedEmployeeId &&
+        mongoose.isValidObjectId(String(linkedEmployeeId))
+    ) {
+        employee = await Employee.findOne({
+            _id: linkedEmployeeId,
+            organization: organizationId,
+            status: { $ne: "Exited" }
+        });
+    }
+
+    if (!employee && dbUser.email) {
+        const escapedEmail = String(dbUser.email).replace(
+            /[.*+?^${}()|[\]\\]/g,
+            "\\$&"
+        );
+
+        employee = await Employee.findOne({
+            organization: organizationId,
+            email: {
+                $regex: `^${escapedEmail}$`,
+                $options: "i"
+            },
+            status: { $ne: "Exited" }
+        });
+
+        if (employee && User.schema.path("employee")) {
+            const userFilter = { _id: dbUser._id };
+
+            if (User.schema.path("organization")) {
+                userFilter.organization = organizationId;
+            } else if (User.schema.path("organizationId")) {
+                userFilter.organizationId = organizationId;
+            }
+
+            await User.updateOne(userFilter, {
+                $set: { employee: employee._id }
+            });
+        }
+    }
+
+    return employee;
+};
+
+// =====================================================
+// AUDIT HELPER
+// =====================================================
+
+const writeAttendanceAudit = async ({
+    organizationId,
+    employeeId,
+    attendanceId = null,
+    action,
+    latitude,
+    longitude,
+    distanceMeters,
+    allowedRadiusMeters,
+    allowed,
+    reason
+}) => {
+    try {
+        await AttendanceAudit.create({
+            organization: organizationId,
+            employee: employeeId,
+            attendance: attendanceId,
+            action,
+            latitude,
+            longitude,
+            distanceMeters,
+            allowedRadiusMeters,
+            allowed,
+            reason
+        });
+    } catch (error) {
+        // Audit failure must never be silently ignored.
+        // Attendance itself may already have been saved.
+        console.error("Attendance Audit Write Error:", error);
+        throw error;
+    }
+};
+
+// =====================================================
+// GPS INPUT
+// =====================================================
+
+const getCoordinatesFromRequest = (req) => {
+    const latitudeValue = req.body?.latitude;
+    const longitudeValue = req.body?.longitude;
+
+    if (
+        latitudeValue === undefined ||
+        longitudeValue === undefined ||
+        String(latitudeValue).trim() === "" ||
+        String(longitudeValue).trim() === ""
+    ) {
+        return null;
+    }
+
+    const latitude = Number(latitudeValue);
+    const longitude = Number(longitudeValue);
+
+    if (!verifyCoordinates(latitude, longitude)) {
+        return null;
+    }
+
+    return { latitude, longitude };
+};
+
+// =====================================================
+// GEOFENCE VERIFICATION
+//
+// Rejected valid-coordinate attempts are audited here.
+// Allowed attempts are audited only after the attendance
+// operation succeeds, using its exact attendance ID.
+// =====================================================
+
+const verifyOfficeLocation = async ({
+    organizationId,
+    employeeId,
+    attendanceId = null,
+    action,
+    latitude,
+    longitude
+}) => {
+    if (!verifyCoordinates(latitude, longitude)) {
+        return {
+            ok: false,
+            status: 400,
+            message: "Valid device location is required."
+        };
+    }
+
+    const office = await OfficeLocation.findOne({
+        organization: organizationId,
+        isActive: true
+    }).lean();
+
+    if (!office) {
+        return {
+            ok: false,
+            status: 409,
+            message:
+                "Office location has not been configured. Please contact HR."
+        };
+    }
+
+    const distance = calculateDistanceMeters(
+        Number(office.latitude),
+        Number(office.longitude),
+        latitude,
+        longitude
+    );
+
+    const distanceMeters = Math.round(distance * 100) / 100;
+    const allowedRadiusMeters = Number(office.radiusMeters);
+    const allowed = distance <= allowedRadiusMeters;
+
+    if (!allowed) {
+        await writeAttendanceAudit({
+            organizationId,
+            employeeId,
+            attendanceId,
+            action,
+            latitude,
+            longitude,
+            distanceMeters,
+            allowedRadiusMeters,
+            allowed: false,
+            reason: "Outside office geofence"
+        });
+
+        return {
+            ok: false,
+            status: 403,
+            message:
+                `You are ${distanceMeters} meters from the office. ` +
+                `Attendance is allowed only within ${allowedRadiusMeters} meters.`,
+            distanceMeters
+        };
+    }
+
+    return {
+        ok: true,
+        office,
+        distanceMeters,
+        allowedRadiusMeters
+    };
 };
 
 // =====================================================
 // TODAY'S ATTENDANCE
 // GET /attendance
-// HR sees all employees.
-// Employees are redirected to their personal page.
 // =====================================================
 
 exports.getTodayAttendance = async (req, res) => {
     try {
         const context = await getContextOrRespond(req, res);
-
         if (!context) return;
 
-        const {
-            organizationId,
-            isHR,
-            sessionUser
-        } = context;
+        const { organizationId, isHR, sessionUser } = context;
 
         if (!isHR) {
             return res.redirect("/attendance/my");
         }
 
         const today = getTodayDate();
-
-        const employees = await getActiveEmployees(
-            organizationId
-        );
-
-        const employeeIds = employees.map(
-            employee => employee._id
-        );
+        const employees = await getActiveEmployees(organizationId);
+        const employeeIds = employees.map(employee => employee._id);
 
         const attendance = employeeIds.length
             ? await Attendance.find({
@@ -409,14 +499,14 @@ exports.getTodayAttendance = async (req, res) => {
 
         const attendanceMap = new Map();
 
-        attendance.forEach(record => {
+        for (const record of attendance) {
             if (record.employee) {
                 attendanceMap.set(
                     String(record.employee._id),
                     record
                 );
             }
-        });
+        }
 
         const rows = employees.map(employee => ({
             employee,
@@ -424,31 +514,17 @@ exports.getTodayAttendance = async (req, res) => {
                 attendanceMap.get(String(employee._id)) || null
         }));
 
-        const present = attendance.filter(
-            record => record.status === "Present"
-        ).length;
+        const countStatus = status =>
+            attendance.filter(record => record.status === status).length;
 
-        const late = attendance.filter(
-            record => record.status === "Late"
-        ).length;
-
-        const halfDay = attendance.filter(
-            record => record.status === "Half Day"
-        ).length;
-
-        const leave = attendance.filter(
-            record => record.status === "Leave"
-        ).length;
-
-        const recordedEmployeeIds = new Set(
+        const recordedIds = new Set(
             attendance
                 .filter(record => record.employee)
                 .map(record => String(record.employee._id))
         );
 
         const absent = employees.filter(
-            employee =>
-                !recordedEmployeeIds.has(String(employee._id))
+            employee => !recordedIds.has(String(employee._id))
         ).length;
 
         return res.render("attendance/index", {
@@ -458,39 +534,30 @@ exports.getTodayAttendance = async (req, res) => {
             rows,
             stats: {
                 total: employees.length,
-                present,
-                late,
-                halfDay,
-                leave,
+                present: countStatus("Present"),
+                late: countStatus("Late"),
+                halfDay: countStatus("Half Day"),
+                leave: countStatus("Leave"),
                 absent
             }
         });
     } catch (error) {
         console.error("Today Attendance Error:", error);
-
-        return res.status(500).send(
-            "Unable to load attendance."
-        );
+        return res.status(500).send("Unable to load attendance.");
     }
 };
 
 // =====================================================
 // MY ATTENDANCE
 // GET /attendance/my
-// Employee sees only their own attendance.
 // =====================================================
 
 exports.getMyAttendance = async (req, res) => {
     try {
         const context = await getContextOrRespond(req, res);
-
         if (!context) return;
 
-        const {
-            dbUser,
-            organizationId,
-            sessionUser
-        } = context;
+        const { dbUser, organizationId, sessionUser } = context;
 
         const employee = await getCurrentEmployee(
             dbUser,
@@ -517,16 +584,19 @@ exports.getMyAttendance = async (req, res) => {
         ) || null;
 
         const totalWorkMinutes = attendanceRecords.reduce(
-            (total, record) =>
-                total + (Number(record.workMinutes) || 0),
+            (sum, record) => sum + (Number(record.workMinutes) || 0),
             0
         );
 
         const totalOvertimeMinutes = attendanceRecords.reduce(
-            (total, record) =>
-                total + (Number(record.overtimeMinutes) || 0),
+            (sum, record) => sum + (Number(record.overtimeMinutes) || 0),
             0
         );
+
+        const countStatus = status =>
+            attendanceRecords.filter(
+                record => record.status === status
+            ).length;
 
         return res.render("attendance/my", {
             title: "My Attendance",
@@ -537,34 +607,19 @@ exports.getMyAttendance = async (req, res) => {
             attendanceRecords,
             stats: {
                 totalDays: attendanceRecords.length,
-                present: attendanceRecords.filter(
-                    record => record.status === "Present"
-                ).length,
-                late: attendanceRecords.filter(
-                    record => record.status === "Late"
-                ).length,
-                halfDay: attendanceRecords.filter(
-                    record => record.status === "Half Day"
-                ).length,
-                leave: attendanceRecords.filter(
-                    record => record.status === "Leave"
-                ).length,
+                present: countStatus("Present"),
+                late: countStatus("Late"),
+                halfDay: countStatus("Half Day"),
+                leave: countStatus("Leave"),
                 totalWorkMinutes,
                 totalOvertimeMinutes,
-                totalWorkHours: (
-                    totalWorkMinutes / 60
-                ).toFixed(1),
-                totalOvertimeHours: (
-                    totalOvertimeMinutes / 60
-                ).toFixed(1)
+                totalWorkHours: (totalWorkMinutes / 60).toFixed(1),
+                totalOvertimeHours: (totalOvertimeMinutes / 60).toFixed(1)
             }
         });
     } catch (error) {
         console.error("My Attendance Error:", error);
-
-        return res.status(500).send(
-            "Unable to load your attendance."
-        );
+        return res.status(500).send("Unable to load your attendance.");
     }
 };
 
@@ -576,36 +631,25 @@ exports.getMyAttendance = async (req, res) => {
 exports.checkIn = async (req, res) => {
     try {
         const context = await getContextOrRespond(req, res);
-
         if (!context) return;
 
-        const {
-            dbUser,
-            organizationId,
-            isHR
-        } = context;
-
+        const { dbUser, organizationId, isHR } = context;
         const employeeId = req.params.employeeId;
 
         if (!mongoose.isValidObjectId(employeeId)) {
-            return res.status(400).send(
-                "Invalid employee ID."
-            );
+            return res.status(400).send("Invalid employee ID.");
         }
 
-        const employee = await Employee.findOne({
-            _id: employeeId,
-            organization: organizationId,
-            status: { $ne: "Exited" }
-        });
+        const employee = await getEmployeeForOrganization(
+            employeeId,
+            organizationId
+        );
 
         if (!employee) {
-            return res.status(404).send(
-                "Employee not found."
-            );
+            return res.status(404).send("Employee not found.");
         }
 
-        // Employees may only check in for themselves.
+        // Non-HR users can only check in for themselves.
         if (!isHR) {
             const currentEmployee = await getCurrentEmployee(
                 dbUser,
@@ -627,17 +671,39 @@ exports.checkIn = async (req, res) => {
         const existing = await Attendance.findOne({
             employee: employee._id,
             date: today
-        });
+        }).select("_id");
 
         if (existing) {
-            return res.status(400).send(
+            return res.status(409).send(
                 "Attendance has already been marked for today."
             );
         }
 
+        const coordinates = getCoordinatesFromRequest(req);
+
+        if (!coordinates) {
+            return res.status(400).send(
+                "Device location is required. Allow location access and try again."
+            );
+        }
+
+        const geoResult = await verifyOfficeLocation({
+            organizationId,
+            employeeId: employee._id,
+            action: "CHECK_IN",
+            latitude: coordinates.latitude,
+            longitude: coordinates.longitude
+        });
+
+        if (!geoResult.ok) {
+            return res.status(geoResult.status).send(geoResult.message);
+        }
+
         const now = new Date();
 
-        await Attendance.create({
+        // The unique employee/date index is the final protection
+        // against simultaneous check-in requests.
+        const attendance = await Attendance.create({
             employee: employee._id,
             date: today,
             checkIn: now,
@@ -646,21 +712,32 @@ exports.checkIn = async (req, res) => {
             overtimeMinutes: 0
         });
 
-        return res.redirect(
-            isHR ? "/attendance" : "/attendance/my"
-        );
+        // Link the successful audit directly to the created record.
+        // No timestamp-based lookup or race-prone audit update.
+        await writeAttendanceAudit({
+            organizationId,
+            employeeId: employee._id,
+            attendanceId: attendance._id,
+            action: "CHECK_IN",
+            latitude: coordinates.latitude,
+            longitude: coordinates.longitude,
+            distanceMeters: geoResult.distanceMeters,
+            allowedRadiusMeters: geoResult.allowedRadiusMeters,
+            allowed: true,
+            reason: "Within office geofence"
+        });
+
+        return res.redirect(isHR ? "/attendance" : "/attendance/my");
     } catch (error) {
         console.error("Check In Error:", error);
 
         if (error.code === 11000) {
-            return res.status(400).send(
+            return res.status(409).send(
                 "Attendance has already been marked for today."
             );
         }
 
-        return res.status(500).send(
-            "Unable to mark check-in."
-        );
+        return res.status(500).send("Unable to mark check-in.");
     }
 };
 
@@ -672,36 +749,24 @@ exports.checkIn = async (req, res) => {
 exports.checkOut = async (req, res) => {
     try {
         const context = await getContextOrRespond(req, res);
-
         if (!context) return;
 
-        const {
-            dbUser,
-            organizationId,
-            isHR
-        } = context;
-
+        const { dbUser, organizationId, isHR } = context;
         const employeeId = req.params.employeeId;
 
         if (!mongoose.isValidObjectId(employeeId)) {
-            return res.status(400).send(
-                "Invalid employee ID."
-            );
+            return res.status(400).send("Invalid employee ID.");
         }
 
-        const employee = await Employee.findOne({
-            _id: employeeId,
-            organization: organizationId,
-            status: { $ne: "Exited" }
-        });
+        const employee = await getEmployeeForOrganization(
+            employeeId,
+            organizationId
+        );
 
         if (!employee) {
-            return res.status(404).send(
-                "Employee not found."
-            );
+            return res.status(404).send("Employee not found.");
         }
 
-        // Employees may only check out for themselves.
         if (!isHR) {
             const currentEmployee = await getCurrentEmployee(
                 dbUser,
@@ -732,15 +797,34 @@ exports.checkOut = async (req, res) => {
         }
 
         if (attendance.checkOut) {
-            return res.status(400).send(
+            return res.status(409).send(
                 "Employee has already checked out."
             );
         }
 
         if (!attendance.checkIn) {
+            return res.status(400).send("Check-in time is missing.");
+        }
+
+        const coordinates = getCoordinatesFromRequest(req);
+
+        if (!coordinates) {
             return res.status(400).send(
-                "Check-in time is missing."
+                "Device location is required. Allow location access and try again."
             );
+        }
+
+        const geoResult = await verifyOfficeLocation({
+            organizationId,
+            employeeId: employee._id,
+            attendanceId: attendance._id,
+            action: "CHECK_OUT",
+            latitude: coordinates.latitude,
+            longitude: coordinates.longitude
+        });
+
+        if (!geoResult.ok) {
+            return res.status(geoResult.status).send(geoResult.message);
         }
 
         const now = new Date();
@@ -748,46 +832,69 @@ exports.checkOut = async (req, res) => {
         const workMinutes = Math.max(
             0,
             Math.floor(
-                (
-                    now.getTime() -
-                    new Date(attendance.checkIn).getTime()
-                ) / 60000
+                (now.getTime() - new Date(attendance.checkIn).getTime()) /
+                60000
             )
         );
 
-        attendance.checkOut = now;
-        attendance.workMinutes = workMinutes;
-        attendance.overtimeMinutes = Math.max(
+        const overtimeMinutes = Math.max(
             0,
             workMinutes - STANDARD_WORK_MINUTES
         );
 
-        await attendance.save();
-
-        return res.redirect(
-            isHR ? "/attendance" : "/attendance/my"
+        // Atomic conditional update prevents two concurrent requests
+        // from successfully checking out the same attendance record.
+        const updateResult = await Attendance.updateOne(
+            {
+                _id: attendance._id,
+                employee: employee._id,
+                date: today,
+                checkOut: null,
+                checkIn: { $ne: null }
+            },
+            {
+                $set: {
+                    checkOut: now,
+                    workMinutes,
+                    overtimeMinutes
+                }
+            }
         );
+
+        if (updateResult.modifiedCount !== 1) {
+            return res.status(409).send(
+                "Attendance was already checked out. Refresh the page."
+            );
+        }
+
+        await writeAttendanceAudit({
+            organizationId,
+            employeeId: employee._id,
+            attendanceId: attendance._id,
+            action: "CHECK_OUT",
+            latitude: coordinates.latitude,
+            longitude: coordinates.longitude,
+            distanceMeters: geoResult.distanceMeters,
+            allowedRadiusMeters: geoResult.allowedRadiusMeters,
+            allowed: true,
+            reason: "Within office geofence"
+        });
+
+        return res.redirect(isHR ? "/attendance" : "/attendance/my");
     } catch (error) {
         console.error("Check Out Error:", error);
-
-        return res.status(500).send(
-            "Unable to mark check-out."
-        );
+        return res.status(500).send("Unable to mark check-out.");
     }
 };
 
 // =====================================================
 // ATTENDANCE HISTORY
 // GET /attendance/history
-//
-// HR: organization-wide history.
-// Employee: their own history only.
 // =====================================================
 
 exports.getAttendanceHistory = async (req, res) => {
     try {
         const context = await getContextOrRespond(req, res);
-
         if (!context) return;
 
         const {
@@ -797,13 +904,12 @@ exports.getAttendanceHistory = async (req, res) => {
             sessionUser
         } = context;
 
-        const { year: currentYear, month: currentMonth } =
-            getCurrentYearMonth();
+        const {
+            year: currentYear,
+            month: currentMonth
+        } = getCurrentYearMonth();
 
-        const year = Number(
-            req.query.year || currentYear
-        );
-
+        const year = Number(req.query.year || currentYear);
         const month = String(
             req.query.month || currentMonth
         ).padStart(2, "0");
@@ -823,7 +929,6 @@ exports.getAttendanceHistory = async (req, res) => {
             req.query.employee || ""
         );
 
-        // Build the requested month's date range.
         const startDate = `${year}-${month}-01`;
 
         const lastDay = new Date(
@@ -837,28 +942,17 @@ exports.getAttendanceHistory = async (req, res) => {
         let attendanceQuery;
 
         if (isHR) {
-            employees = await getActiveEmployees(
-                organizationId
-            );
+            employees = await getActiveEmployees(organizationId);
 
-            const employeeIds = employees.map(
-                employee => employee._id
-            );
+            const employeeIds = employees.map(employee => employee._id);
 
             attendanceQuery = {
                 employee: { $in: employeeIds },
-                date: {
-                    $gte: startDate,
-                    $lte: endDate
-                }
+                date: { $gte: startDate, $lte: endDate }
             };
 
             if (selectedEmployeeId) {
-                if (
-                    !mongoose.isValidObjectId(
-                        selectedEmployeeId
-                    )
-                ) {
+                if (!mongoose.isValidObjectId(selectedEmployeeId)) {
                     return res.status(400).send(
                         "Invalid employee filter."
                     );
@@ -875,12 +969,10 @@ exports.getAttendanceHistory = async (req, res) => {
                     );
                 }
 
-                attendanceQuery.employee = new mongoose.Types.ObjectId(
-                    selectedEmployeeId
-                );
+                attendanceQuery.employee =
+                    new mongoose.Types.ObjectId(selectedEmployeeId);
             }
         } else {
-            // Ignore any employee ID supplied by a non-HR user.
             const employee = await getCurrentEmployee(
                 dbUser,
                 organizationId
@@ -896,16 +988,11 @@ exports.getAttendanceHistory = async (req, res) => {
 
             attendanceQuery = {
                 employee: employee._id,
-                date: {
-                    $gte: startDate,
-                    $lte: endDate
-                }
+                date: { $gte: startDate, $lte: endDate }
             };
         }
 
-        const attendance = await Attendance.find(
-            attendanceQuery
-        )
+        const attendance = await Attendance.find(attendanceQuery)
             .populate(
                 "employee",
                 "firstName lastName employeeId department"
@@ -913,33 +1000,16 @@ exports.getAttendanceHistory = async (req, res) => {
             .sort({ date: -1 })
             .lean();
 
-        const total = attendance.length;
-
-        const present = attendance.filter(
-            record => record.status === "Present"
-        ).length;
-
-        const late = attendance.filter(
-            record => record.status === "Late"
-        ).length;
-
-        const halfDay = attendance.filter(
-            record => record.status === "Half Day"
-        ).length;
-
-        const leave = attendance.filter(
-            record => record.status === "Leave"
-        ).length;
+        const countStatus = status =>
+            attendance.filter(record => record.status === status).length;
 
         const totalWorkMinutes = attendance.reduce(
-            (sum, record) =>
-                sum + (Number(record.workMinutes) || 0),
+            (sum, record) => sum + (Number(record.workMinutes) || 0),
             0
         );
 
         const totalOvertimeMinutes = attendance.reduce(
-            (sum, record) =>
-                sum + (Number(record.overtimeMinutes) || 0),
+            (sum, record) => sum + (Number(record.overtimeMinutes) || 0),
             0
         );
 
@@ -949,19 +1019,15 @@ exports.getAttendanceHistory = async (req, res) => {
             employees,
             attendance,
             stats: {
-                total,
-                present,
-                late,
-                halfDay,
-                leave,
+                total: attendance.length,
+                present: countStatus("Present"),
+                late: countStatus("Late"),
+                halfDay: countStatus("Half Day"),
+                leave: countStatus("Leave"),
                 totalWorkMinutes,
                 totalOvertimeMinutes,
-                totalWorkHours: (
-                    totalWorkMinutes / 60
-                ).toFixed(1),
-                totalOvertimeHours: (
-                    totalOvertimeMinutes / 60
-                ).toFixed(1)
+                totalWorkHours: (totalWorkMinutes / 60).toFixed(1),
+                totalOvertimeHours: (totalOvertimeMinutes / 60).toFixed(1)
             },
             filters: {
                 year,
@@ -971,7 +1037,6 @@ exports.getAttendanceHistory = async (req, res) => {
         });
     } catch (error) {
         console.error("Attendance History Error:", error);
-
         return res.status(500).send(
             "Unable to load attendance history."
         );

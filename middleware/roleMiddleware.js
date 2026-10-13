@@ -1,7 +1,46 @@
+"use strict";
+
 // =====================================================
 // GYANSIFY HRMS
-// ROLE BASED DASHBOARD MIDDLEWARE
+// ROLE-BASED AUTHENTICATION & DASHBOARD MIDDLEWARE
+// File: middleware/roleMiddleware.js
 // =====================================================
+
+
+// =====================================================
+// ROLE DASHBOARD CONFIGURATION
+// =====================================================
+
+const ROLE_DASHBOARDS = Object.freeze({
+    SUPER_ADMIN: "/dashboard/admin",
+    HR_ADMIN: "/dashboard/hr",
+    HR_EXECUTIVE: "/dashboard/hr",
+    MANAGER: "/dashboard/manager",
+    EMPLOYEE: "/dashboard/employee"
+});
+
+
+// =====================================================
+// NORMALIZE ROLE
+// Supports strings and role objects.
+// =====================================================
+
+const normalizeRole = (role) => {
+    if (typeof role === "string") {
+        return role.trim().toUpperCase();
+    }
+
+    if (role && typeof role === "object") {
+        return normalizeRole(
+            role.code ||
+            role.roleCode ||
+            role.name ||
+            role.role
+        );
+    }
+
+    return "";
+};
 
 
 // =====================================================
@@ -9,362 +48,261 @@
 // =====================================================
 
 const getCurrentUser = (req) => {
-
     return req.session?.user || null;
-
 };
 
 
 // =====================================================
 // GET USER ROLES
+//
 // Supports:
-//
-// user.role
-//
-// OR
-//
-// user.roles = [
-//     "HR_ADMIN"
-// ]
-//
-// OR
-//
-// user.roles = [
-//     { code: "HR_ADMIN" }
-// ]
+// user.role = "HR_ADMIN"
+// user.roleCode = "HR_ADMIN"
+// user.roles = ["HR_ADMIN", "MANAGER"]
+// user.roles = [{ code: "HR_ADMIN" }]
 // =====================================================
 
 const getUserRoles = (user) => {
-
     if (!user) {
         return [];
     }
 
-
-    // =================================================
-    // SINGLE ROLE
-    // =================================================
+    const roles = [];
 
     if (user.role) {
-
-        return [
-            String(user.role)
-                .trim()
-                .toUpperCase()
-        ];
-
+        roles.push(normalizeRole(user.role));
     }
 
-
-    // =================================================
-    // MULTIPLE ROLES
-    // =================================================
+    if (user.roleCode) {
+        roles.push(normalizeRole(user.roleCode));
+    }
 
     if (Array.isArray(user.roles)) {
+        user.roles.forEach((role) => {
+            const normalized = normalizeRole(role);
 
-        return user.roles
-            .map((role) => {
-
-                if (
-                    typeof role === "object" &&
-                    role !== null
-                ) {
-
-                    return String(
-                        role.code ||
-                        role.name ||
-                        ""
-                    )
-                        .trim()
-                        .toUpperCase();
-
-                }
-
-
-                return String(role)
-                    .trim()
-                    .toUpperCase();
-
-            })
-            .filter(Boolean);
-
+            if (normalized) {
+                roles.push(normalized);
+            }
+        });
     }
 
+    return [...new Set(roles.filter(Boolean))];
+};
 
-    return [];
 
+// =====================================================
+// REQUEST HELPERS
+// =====================================================
+
+const isHtmlRequest = (req) => {
+    return Boolean(req.accepts("html"));
+};
+
+
+const sendUnauthorized = (req, res) => {
+    if (isHtmlRequest(req)) {
+        return res.redirect("/login");
+    }
+
+    return res.status(401).json({
+        success: false,
+        message: "Authentication required. Please log in."
+    });
+};
+
+
+// =====================================================
+// ACCESS DENIED
+// =====================================================
+
+const denyAccess = (req, res, message) => {
+    console.warn("[GYANSIFY HRMS] Access denied:", {
+        email: getCurrentUser(req)?.email || "Unknown",
+        roles: getUserRoles(getCurrentUser(req)),
+        path: req.originalUrl,
+        method: req.method,
+        reason: message
+    });
+
+    if (isHtmlRequest(req)) {
+        return res.status(403).render("errors/403", {
+            title: "Access Denied",
+            user: getCurrentUser(req),
+            message
+        });
+    }
+
+    return res.status(403).json({
+        success: false,
+        message
+    });
 };
 
 
 // =====================================================
 // REQUIRE LOGIN
+//
+// Usage:
+// router.get("/protected", requireLogin, controller);
 // =====================================================
 
-exports.requireLogin = (
-    req,
-    res,
-    next
-) => {
-
-    const user =
-        getCurrentUser(req);
-
-
-    if (!user) {
-
-        return res.redirect(
-            "/login"
-        );
-
-    }
-
-
-    req.currentUser =
-        user;
-
-
-    next();
-
-};
-
-
-// =====================================================
-// REDIRECT USER TO ROLE DASHBOARD
-// =====================================================
-
-exports.redirectToRoleDashboard = (
-    req,
-    res
-) => {
-
-    const user =
-        getCurrentUser(req);
-
-
-    // =================================================
-    // LOGIN CHECK
-    // =================================================
-
-    if (!user) {
-
-        return res.redirect(
-            "/login"
-        );
-
-    }
-
-
-    // =================================================
-    // GET USER ROLES
-    // =================================================
-
-    const roles =
-        getUserRoles(user);
-
-
-    // =================================================
-    // SUPER ADMIN
-    // =================================================
-
-    if (
-        roles.includes(
-            "SUPER_ADMIN"
-        )
-    ) {
-
-        return res.redirect(
-            "/dashboard/admin"
-        );
-
-    }
-
-
-    // =================================================
-    // HR ADMIN
-    // =================================================
-
-    if (
-        roles.includes(
-            "HR_ADMIN"
-        )
-    ) {
-
-        return res.redirect(
-            "/dashboard/hr"
-        );
-
-    }
-
-
-    // =================================================
-    // HR EXECUTIVE
-    // =================================================
-
-    if (
-        roles.includes(
-            "HR_EXECUTIVE"
-        )
-    ) {
-
-        return res.redirect(
-            "/dashboard/hr"
-        );
-
-    }
-
-
-    // =================================================
-    // MANAGER
-    // =================================================
-
-    if (
-        roles.includes(
-            "MANAGER"
-        )
-    ) {
-
-        return res.redirect(
-            "/dashboard/manager"
-        );
-
-    }
-
-
-    // =================================================
-    // EMPLOYEE
-    // =================================================
-
-    if (
-        roles.includes(
-            "EMPLOYEE"
-        )
-    ) {
-
-        return res.redirect(
-            "/dashboard/employee"
-        );
-
-    }
-
-
-    // =================================================
-    // UNKNOWN ROLE
-    // =================================================
-
-    console.error(
-        "Unknown user role:",
-        roles
-    );
-
-
-    return res.status(403).send(
-        "Your account does not have a valid HRMS role."
-    );
-
-};
-
-
-// =====================================================
-// REQUIRE SPECIFIC ROLE
-// =====================================================
-
-exports.requireRole = (
-    ...allowedRoles
-) => {
-
-    return (
-        req,
-        res,
-        next
-    ) => {
-
-        const user =
-            getCurrentUser(req);
-
-
-        // =================================================
-        // LOGIN CHECK
-        // =================================================
+const requireLogin = (req, res, next) => {
+    try {
+        const user = getCurrentUser(req);
 
         if (!user) {
-
-            return res.redirect(
-                "/login"
-            );
-
+            return sendUnauthorized(req, res);
         }
 
+        // Preserve existing controller compatibility.
+        req.currentUser = user;
+        req.user = user;
 
-        // =================================================
-        // GET USER ROLES
-        // =================================================
-
-        const userRoles =
-            getUserRoles(user);
-
-
-        // =================================================
-        // NORMALIZE ALLOWED ROLES
-        // =================================================
-
-        const roles =
-            allowedRoles
-                .map((role) => {
-
-                    return String(role)
-                        .trim()
-                        .toUpperCase();
-
-                })
-                .filter(Boolean);
-
-
-        // =================================================
-        // CHECK ACCESS
-        // =================================================
-
-        const hasAccess =
-            roles.some(
-                (role) =>
-                    userRoles.includes(role)
-            );
-
-
-        // =================================================
-        // ACCESS DENIED
-        // =================================================
-
-        if (!hasAccess) {
-
-            return res.status(403).send(
-                "Access denied. You do not have permission to access this page."
-            );
-
-        }
-
-
-        // =================================================
-        // ATTACH USER
-        // =================================================
-
-        req.currentUser =
-            user;
-
-
-        next();
-
-    };
-
+        return next();
+    } catch (error) {
+        return next(error);
+    }
 };
 
 
 // =====================================================
-// EXPORT HELPERS
+// REDIRECT TO ROLE-BASED DASHBOARD
+//
+// Usage:
+// router.get("/dashboard", redirectToRoleDashboard);
 // =====================================================
 
-exports.getCurrentUser =
-    getCurrentUser;
+const redirectToRoleDashboard = (req, res) => {
+    try {
+        const user = getCurrentUser(req);
+
+        if (!user) {
+            return sendUnauthorized(req, res);
+        }
+
+        const roles = getUserRoles(user);
+
+        req.currentUser = user;
+        req.user = user;
+
+        // Explicit priority for users with multiple roles.
+        const rolePriority = [
+            "SUPER_ADMIN",
+            "HR_ADMIN",
+            "HR_EXECUTIVE",
+            "MANAGER",
+            "EMPLOYEE"
+        ];
+
+        const matchedRole = rolePriority.find((role) =>
+            roles.includes(role)
+        );
+
+        if (matchedRole) {
+            return res.redirect(ROLE_DASHBOARDS[matchedRole]);
+        }
+
+        console.error("[GYANSIFY HRMS] Unknown user role:", {
+            email: user.email || "Unknown",
+            roles
+        });
+
+        return denyAccess(
+            req,
+            res,
+            "Your account does not have a valid HRMS role. Please contact your administrator."
+        );
+    } catch (error) {
+        return nextDashboardError(error, res);
+    }
+};
 
 
-exports.getUserRoles =
-    getUserRoles;
+// =====================================================
+// HANDLE DASHBOARD ERRORS
+// =====================================================
+
+const nextDashboardError = (error, res) => {
+    console.error("[GYANSIFY HRMS] Dashboard middleware error:", error);
+
+    if (res.headersSent) {
+        return;
+    }
+
+    return res.status(500).send(
+        "An unexpected dashboard error occurred."
+    );
+};
+
+
+// =====================================================
+// REQUIRE SPECIFIC ROLE(S)
+//
+// Usage:
+// requireRole("SUPER_ADMIN", "HR_ADMIN")
+//
+// Access is granted if the user has ANY allowed role.
+// =====================================================
+
+const requireRole = (...allowedRoles) => {
+    const allowed = new Set(
+        allowedRoles
+            .flat()
+            .map(normalizeRole)
+            .filter(Boolean)
+    );
+
+    return (req, res, next) => {
+        try {
+            const user = getCurrentUser(req);
+
+            if (!user) {
+                return sendUnauthorized(req, res);
+            }
+
+            req.currentUser = user;
+            req.user = user;
+
+            if (allowed.size === 0) {
+                return next(
+                    new Error(
+                        "Role middleware configuration error: no allowed roles supplied."
+                    )
+                );
+            }
+
+            const userRoles = getUserRoles(user);
+
+            const hasAccess = userRoles.some((role) =>
+                allowed.has(role)
+            );
+
+            if (!hasAccess) {
+                return denyAccess(
+                    req,
+                    res,
+                    "Access denied. You do not have permission to access this page."
+                );
+            }
+
+            return next();
+        } catch (error) {
+            return next(error);
+        }
+    };
+};
+
+
+// =====================================================
+// EXPORTS
+// Preserve existing import names.
+// =====================================================
+
+module.exports = {
+    requireLogin,
+    redirectToRoleDashboard,
+    requireRole,
+    getCurrentUser,
+    getUserRoles
+};

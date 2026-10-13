@@ -1,0 +1,557 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>
+        <%= typeof title !== "undefined" ? title : "Assets Report" %>
+        - Gyansify HRMS
+    </title>
+
+    <link rel="stylesheet" href="/css/dashboard.css">
+
+    <style>
+        .assets-report {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px;
+            color: #1e293b;
+        }
+
+        .assets-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+
+        .assets-header h1 {
+            margin: 0 0 8px;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .assets-header p {
+            margin: 0;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .assets-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .assets-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 11px 16px;
+            border-radius: 8px;
+            border: 1px solid #dbe3ef;
+            background: #ffffff;
+            color: #334155;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .assets-btn-primary {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: #ffffff;
+        }
+
+        .assets-stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+
+        .assets-stat-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 22px;
+            box-shadow: 0 3px 12px rgba(15, 23, 42, 0.03);
+        }
+
+        .assets-stat-label {
+            margin: 0 0 12px;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .assets-stat-value {
+            margin: 0;
+            font-size: 30px;
+            font-weight: 750;
+            color: #0f172a;
+        }
+
+        .assets-stat-note {
+            display: block;
+            margin-top: 8px;
+            color: #94a3b8;
+            font-size: 12px;
+        }
+
+        .assets-panel {
+            margin-bottom: 26px;
+            overflow: hidden;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+        }
+
+        .assets-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding: 20px 22px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .assets-panel-header h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .assets-search {
+            width: 260px;
+            max-width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .assets-search:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .assets-table-wrap {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .assets-table {
+            width: 100%;
+            border-collapse: collapse;
+            white-space: nowrap;
+        }
+
+        .assets-table th {
+            padding: 15px 18px;
+            background: #f8fafc;
+            color: #64748b;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .assets-table td {
+            padding: 16px 18px;
+            border-top: 1px solid #f1f5f9;
+            color: #334155;
+            font-size: 14px;
+        }
+
+        .assets-table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .assets-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .assets-badge-active,
+        .assets-badge-assigned {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .assets-badge-available {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .assets-badge-maintenance {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .assets-badge-retired,
+        .assets-badge-inactive {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .assets-empty {
+            padding: 42px 20px !important;
+            text-align: center;
+            color: #64748b !important;
+            white-space: normal;
+        }
+
+        .assets-empty strong {
+            display: block;
+            margin-bottom: 8px;
+            color: #334155;
+            font-size: 16px;
+        }
+
+        .assets-footer {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            color: #64748b;
+            font-size: 13px;
+            margin-top: 18px;
+        }
+
+        @media (max-width: 1000px) {
+            .assets-stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 600px) {
+            .assets-report {
+                padding: 18px 12px;
+            }
+
+            .assets-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .assets-header h1 {
+                font-size: 23px;
+            }
+
+            .assets-panel-header {
+                align-items: stretch;
+            }
+
+            .assets-search {
+                width: 100%;
+            }
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+
+            .assets-report {
+                max-width: none;
+                padding: 0;
+            }
+
+            .assets-panel,
+            .assets-stat-card {
+                break-inside: avoid;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<%
+    const reportStats =
+        typeof stats !== "undefined" && stats ? stats : {};
+
+    const assetRecords =
+        typeof assets !== "undefined" && Array.isArray(assets)
+            ? assets
+            : [];
+
+    const totalAssets = Number(
+        reportStats.totalAssets ?? assetRecords.length
+    );
+
+    const assignedAssets = Number(
+        reportStats.assignedAssets ??
+        assetRecords.filter(a =>
+            /assigned|in use/i.test(String(a.status || a.assignmentStatus || ""))
+        ).length
+    );
+
+    const availableAssets = Number(
+        reportStats.availableAssets ??
+        assetRecords.filter(a =>
+            /available|in stock/i.test(String(a.status || ""))
+        ).length
+    );
+
+    const maintenanceAssets = Number(
+        reportStats.maintenanceAssets ??
+        assetRecords.filter(a =>
+            /maintenance|repair/i.test(String(a.status || ""))
+        ).length
+    );
+
+    const formatCurrency = function(value) {
+        const amount = Number(value);
+        if (!Number.isFinite(amount)) return "—";
+
+        return new Intl.NumberFormat("en-IN", {
+            style: "currency",
+            currency: "INR",
+            maximumFractionDigits: 2
+        }).format(amount);
+    };
+
+    const getAssetStatusClass = function(status) {
+        const value = String(status || "").toLowerCase();
+
+        if (value.includes("assign") || value.includes("active") || value.includes("in use")) {
+            return "assets-badge-assigned";
+        }
+
+        if (value.includes("available") || value.includes("stock")) {
+            return "assets-badge-available";
+        }
+
+        if (value.includes("maintenance") || value.includes("repair")) {
+            return "assets-badge-maintenance";
+        }
+
+        if (value.includes("retired") || value.includes("inactive") || value.includes("disposed")) {
+            return "assets-badge-retired";
+        }
+
+        return "";
+    };
+%>
+<%- include('../partials/navbar') %>
+<main class="assets-report">
+
+    <header class="assets-header">
+        <div>
+            <h1>Assets Report</h1>
+            <p>Track company assets, assignments and availability.</p>
+        </div>
+
+        <div class="assets-actions no-print">
+            <a href="/reports" class="assets-btn">
+                &larr; Back to Reports
+            </a>
+
+            <button
+                type="button"
+                class="assets-btn assets-btn-primary"
+                onclick="window.print()"
+            >
+                Print / Save PDF
+            </button>
+        </div>
+    </header>
+
+    <section class="assets-stats">
+
+        <article class="assets-stat-card">
+            <p class="assets-stat-label">Total Assets</p>
+            <h2 class="assets-stat-value"><%= totalAssets %></h2>
+            <span class="assets-stat-note">Assets in inventory</span>
+        </article>
+
+        <article class="assets-stat-card">
+            <p class="assets-stat-label">Assigned Assets</p>
+            <h2 class="assets-stat-value"><%= assignedAssets %></h2>
+            <span class="assets-stat-note">Assets assigned or in use</span>
+        </article>
+
+        <article class="assets-stat-card">
+            <p class="assets-stat-label">Available Assets</p>
+            <h2 class="assets-stat-value"><%= availableAssets %></h2>
+            <span class="assets-stat-note">Ready for assignment</span>
+        </article>
+
+        <article class="assets-stat-card">
+            <p class="assets-stat-label">Under Maintenance</p>
+            <h2 class="assets-stat-value"><%= maintenanceAssets %></h2>
+            <span class="assets-stat-note">Assets needing attention</span>
+        </article>
+
+    </section>
+
+    <section class="assets-panel">
+
+        <div class="assets-panel-header">
+            <h2>Asset Inventory</h2>
+
+            <input
+                type="search"
+                id="assetSearch"
+                class="assets-search no-print"
+                placeholder="Search assets..."
+                aria-label="Search asset inventory"
+            >
+        </div>
+
+        <div class="assets-table-wrap">
+            <table class="assets-table" id="assetsTable">
+
+                <thead>
+                    <tr>
+                        <th>Asset</th>
+                        <th>Asset Code</th>
+                        <th>Category</th>
+                        <th>Assigned To</th>
+                        <th>Purchase Value</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <% if (assetRecords.length > 0) { %>
+
+                        <% assetRecords.forEach(function(asset) {
+                            const employee =
+                                asset.employee ||
+                                asset.assignedTo ||
+                                asset.assignedEmployee ||
+                                null;
+
+                            const employeeName =
+                                typeof employee === "string"
+                                    ? employee
+                                    : employee
+                                        ? (
+                                            employee.fullName ||
+                                            [employee.firstName, employee.lastName]
+                                                .filter(Boolean).join(" ") ||
+                                            employee.name ||
+                                            employee.employeeCode ||
+                                            "Assigned"
+                                        )
+                                        : "Unassigned";
+
+                            const assetName =
+                                asset.name ||
+                                asset.assetName ||
+                                asset.title ||
+                                "Unnamed Asset";
+
+                            const assetCode =
+                                asset.assetCode ||
+                                asset.code ||
+                                asset.serialNumber ||
+                                "—";
+
+                            const category =
+                                asset.category?.name ||
+                                asset.categoryName ||
+                                (typeof asset.category === "string"
+                                    ? asset.category
+                                    : "—");
+
+                            const purchaseValue =
+                                asset.purchasePrice ??
+                                asset.purchaseCost ??
+                                asset.cost ??
+                                asset.value;
+
+                            const status =
+                                asset.status ||
+                                asset.assetStatus ||
+                                asset.assignmentStatus ||
+                                "Unknown";
+                        %>
+
+                            <tr class="asset-row">
+                                <td><strong><%= assetName %></strong></td>
+                                <td><%= assetCode %></td>
+                                <td><%= category %></td>
+                                <td><%= employeeName %></td>
+                                <td><%= purchaseValue == null ? "—" : formatCurrency(purchaseValue) %></td>
+                                <td>
+                                    <span class="assets-badge <%= getAssetStatusClass(status) %>">
+                                        <%= status %>
+                                    </span>
+                                </td>
+                            </tr>
+
+                        <% }); %>
+
+                    <% } else { %>
+
+                        <tr id="emptyAssetsRow">
+                            <td colspan="6" class="assets-empty">
+                                <strong>No asset records found</strong>
+                                Asset records will appear here once the report route
+                                supplies the assets array from your database.
+                            </td>
+                        </tr>
+
+                    <% } %>
+                </tbody>
+
+            </table>
+        </div>
+
+    </section>
+
+    <footer class="assets-footer">
+        <span>
+            Showing <strong id="visibleAssetCount"><%= assetRecords.length %></strong>
+            asset record(s)
+        </span>
+
+        <span>Gyansify HRMS &copy; <%= new Date().getFullYear() %></span>
+    </footer>
+
+</main>
+
+<script>
+    (function () {
+        const searchInput = document.getElementById("assetSearch");
+        const rows = Array.from(
+            document.querySelectorAll("#assetsTable tbody .asset-row")
+        );
+        const count = document.getElementById("visibleAssetCount");
+
+        if (!searchInput) return;
+
+        searchInput.addEventListener("input", function () {
+            const query = this.value.trim().toLowerCase();
+            let visible = 0;
+
+            rows.forEach(function (row) {
+                const matches = row.textContent.toLowerCase().includes(query);
+                row.style.display = matches ? "" : "none";
+
+                if (matches) visible++;
+            });
+
+            if (count) count.textContent = visible;
+        });
+    })();
+</script>
+
+</body>
+</html>

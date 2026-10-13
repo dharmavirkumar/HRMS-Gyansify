@@ -1,0 +1,507 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>
+        <%= typeof title !== "undefined" ? title : "Document Details" %>
+        - Gyansify HRMS
+    </title>
+
+    <link rel="stylesheet" href="/css/dashboard.css">
+
+    <style>
+        .document-page {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 28px;
+        }
+
+        .document-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .document-header h1 {
+            margin: 0 0 8px;
+        }
+
+        .document-header p {
+            margin: 0;
+            opacity: 0.75;
+        }
+
+        .document-card {
+            background: var(--card-bg, #fff);
+            border: 1px solid var(--border-color, #e5e7eb);
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 22px;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+        }
+
+        .document-card h2 {
+            margin: 0 0 20px;
+            font-size: 19px;
+        }
+
+        .document-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .document-field {
+            min-width: 0;
+        }
+
+        .document-field-label {
+            display: block;
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .document-field-value {
+            font-size: 14px;
+            font-weight: 500;
+            overflow-wrap: anywhere;
+        }
+
+        .document-status {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .status-pending {
+            background: #fff7ed;
+            color: #9a3412;
+        }
+
+        .status-approved {
+            background: #ecfdf5;
+            color: #047857;
+        }
+
+        .status-rejected {
+            background: #fef2f2;
+            color: #b91c1c;
+        }
+
+        .document-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .document-btn {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            padding: 11px 17px;
+            min-height: 42px;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            font: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .document-btn-primary {
+            background: #2563eb;
+            color: #fff;
+        }
+
+        .document-btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .document-btn-secondary {
+            background: #fff;
+            border-color: #d1d5db;
+            color: #374151;
+        }
+
+        .document-btn-danger {
+            background: #dc2626;
+            color: #fff;
+        }
+
+        .document-btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .document-form {
+            margin-top: 18px;
+        }
+
+        .document-form label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .document-form textarea {
+            width: 100%;
+            min-height: 110px;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font: inherit;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+
+        .document-form textarea:focus {
+            outline: 2px solid #93c5fd;
+            border-color: #2563eb;
+        }
+
+        .document-note {
+            padding: 14px 16px;
+            background: #f8fafc;
+            border-radius: 8px;
+            color: #475569;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .document-rejection {
+            padding: 14px;
+            border-radius: 8px;
+            background: #fef2f2;
+            color: #991b1b;
+            overflow-wrap: anywhere;
+        }
+
+        .document-divider {
+            height: 1px;
+            background: #e5e7eb;
+            margin: 22px 0;
+            border: 0;
+        }
+
+        @media (max-width: 640px) {
+            .document-page {
+                padding: 18px 14px;
+            }
+
+            .document-card {
+                padding: 18px;
+            }
+
+            .document-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .document-actions {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .document-btn {
+                width: 100%;
+                box-sizing: border-box;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="app">
+        <section class="main">
+            <div class="document-page">
+
+                <!-- PAGE HEADER -->
+                <header class="document-header">
+                    <div>
+                        <h1>Document Details</h1>
+                        <p>
+                            View document information and verification status.
+                        </p>
+                    </div>
+
+                    <a
+                        href="/documents"
+                        class="document-btn document-btn-secondary"
+                    >
+                        &larr; Back to Documents
+                    </a>
+                </header>
+
+                <!-- DOCUMENT INFORMATION -->
+                <section class="document-card">
+                    <h2>
+                        <%= document.documentType %>
+                    </h2>
+
+                    <div class="document-grid">
+                        <div class="document-field">
+                            <span class="document-field-label">
+                                Original filename
+                            </span>
+                            <div class="document-field-value">
+                                <%= document.originalName %>
+                            </div>
+                        </div>
+
+                        <div class="document-field">
+                            <span class="document-field-label">
+                                Document type
+                            </span>
+                            <div class="document-field-value">
+                                <%= document.mimeType %>
+                            </div>
+                        </div>
+
+                        <div class="document-field">
+                            <span class="document-field-label">
+                                File size
+                            </span>
+                            <div class="document-field-value">
+                                <%= (document.size / 1024 / 1024).toFixed(2) %>
+                                MB
+                            </div>
+                        </div>
+
+                        <div class="document-field">
+                            <span class="document-field-label">
+                                Verification status
+                            </span>
+                            <div class="document-field-value">
+                                <span class="document-status status-<%= String(document.status).toLowerCase() %>">
+                                    <%= document.status %>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="document-field">
+                            <span class="document-field-label">
+                                Uploaded at
+                            </span>
+                            <div class="document-field-value">
+                                <%= document.uploadedAt
+                                    ? new Date(document.uploadedAt).toLocaleString("en-IN", {
+                                        dateStyle: "medium",
+                                        timeStyle: "short",
+                                        timeZone: "Asia/Kolkata"
+                                    })
+                                    : "Not available" %>
+                            </div>
+                        </div>
+
+                        <div class="document-field">
+                            <span class="document-field-label">
+                                Uploaded by
+                            </span>
+                            <div class="document-field-value">
+                                <%= document.uploadedBy?.name
+                                    || document.uploadedBy?.email
+                                    || "User" %>
+                            </div>
+                        </div>
+
+                        <% if (document.employee) { %>
+                            <div class="document-field">
+                                <span class="document-field-label">
+                                    Employee
+                                </span>
+                                <div class="document-field-value">
+                                    <%= [
+                                        document.employee.firstName,
+                                        document.employee.lastName
+                                    ].filter(Boolean).join(" ") || "Employee" %>
+
+                                    <% if (document.employee.employeeId) { %>
+                                        <div>
+                                            Employee ID:
+                                            <%= document.employee.employeeId %>
+                                        </div>
+                                    <% } %>
+
+                                    <% if (document.employee.email) { %>
+                                        <div>
+                                            <%= document.employee.email %>
+                                        </div>
+                                    <% } %>
+                                </div>
+                            </div>
+                        <% } %>
+
+                        <% if (document.onboarding) { %>
+                            <div class="document-field">
+                                <span class="document-field-label">
+                                    Onboarding record
+                                </span>
+                                <div class="document-field-value">
+                                    <%= [
+                                        document.onboarding.firstName,
+                                        document.onboarding.lastName
+                                    ].filter(Boolean).join(" ") || "Onboarding" %>
+
+                                    <% if (document.onboarding.email) { %>
+                                        <div>
+                                            <%= document.onboarding.email %>
+                                        </div>
+                                    <% } %>
+
+                                    <div>
+                                        <a href="/onboarding/<%= document.onboarding._id %>">
+                                            View onboarding
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <hr class="document-divider">
+
+                    <div class="document-actions">
+                        <a
+                            href="/documents/<%= document._id %>/download"
+                            class="document-btn document-btn-primary"
+                        >
+                            Download Document
+                        </a>
+                    </div>
+                </section>
+
+                <!-- HR REVIEW -->
+                <% if (document.status === "PENDING") { %>
+                    <section class="document-card">
+                        <h2>HR Review</h2>
+
+                        <p class="document-note">
+                            Review the uploaded document carefully before
+                            approving or rejecting it. Approval verifies this
+                            document only; it does not automatically approve
+                            the entire onboarding record.
+                        </p>
+
+                        <!-- APPROVE -->
+                        <form
+                            action="/documents/<%= document._id %>/review"
+                            method="POST"
+                            class="document-form"
+                        >
+                            <button
+                                type="submit"
+                                name="action"
+                                value="approve"
+                                class="document-btn document-btn-primary"
+                            >
+                                Approve Document
+                            </button>
+                        </form>
+
+                        <hr class="document-divider">
+
+                        <!-- REJECT -->
+                        <form
+                            action="/documents/<%= document._id %>/review"
+                            method="POST"
+                            class="document-form"
+                        >
+                            <div class="document-form">
+                                <label for="rejectionReason">
+                                    Reason for rejection *
+                                </label>
+
+                                <textarea
+                                    id="rejectionReason"
+                                    name="rejectionReason"
+                                    minlength="3"
+                                    maxlength="1000"
+                                    placeholder="Explain why this document cannot be approved..."
+                                    required
+                                ></textarea>
+                            </div>
+
+                            <div class="document-actions">
+                                <button
+                                    type="submit"
+                                    name="action"
+                                    value="reject"
+                                    class="document-btn document-btn-danger"
+                                >
+                                    Reject Document
+                                </button>
+                            </div>
+                        </form>
+                    </section>
+                <% } %>
+
+                <!-- REVIEW HISTORY -->
+                <% if (document.reviewedAt) { %>
+                    <section class="document-card">
+                        <h2>Review Information</h2>
+
+                        <div class="document-grid">
+                            <div class="document-field">
+                                <span class="document-field-label">
+                                    Reviewed by
+                                </span>
+                                <div class="document-field-value">
+                                    <%= document.reviewedBy?.name
+                                        || document.reviewedBy?.email
+                                        || "HR user" %>
+                                </div>
+                            </div>
+
+                            <div class="document-field">
+                                <span class="document-field-label">
+                                    Reviewed at
+                                </span>
+                                <div class="document-field-value">
+                                    <%= new Date(document.reviewedAt).toLocaleString(
+                                        "en-IN",
+                                        {
+                                            dateStyle: "medium",
+                                            timeStyle: "short",
+                                            timeZone: "Asia/Kolkata"
+                                        }
+                                    ) %>
+                                </div>
+                            </div>
+                        </div>
+
+                        <% if (
+                            document.status === "REJECTED" &&
+                            document.rejectionReason
+                        ) { %>
+                            <hr class="document-divider">
+
+                            <h3>Rejection Reason</h3>
+
+                            <div class="document-rejection">
+                                <%= document.rejectionReason %>
+                            </div>
+                        <% } %>
+                    </section>
+                <% } %>
+
+            </div>
+        </section>
+    </main>
+</body>
+</html>

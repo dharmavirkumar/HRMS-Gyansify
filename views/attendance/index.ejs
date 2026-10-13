@@ -1,126 +1,177 @@
 
 <style>
     .attendance-page {
-        padding: 30px;
+        padding: 28px;
         color: #111827;
+        background: #f8fafc;
+        min-height: 100%;
     }
 
     .page-heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
         margin-bottom: 24px;
     }
 
     .page-heading h1 {
         margin: 0;
-        font-size: 24px;
-        font-weight: 700;
+        font-size: 26px;
+        font-weight: 750;
+        letter-spacing: -.5px;
     }
 
     .page-heading p {
         margin: 7px 0 0;
-        font-size: 12px;
         color: #6b7280;
+        font-size: 13px;
+    }
+
+    .heading-date {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 11px 14px;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        background: #fff;
+        color: #374151;
+        font-size: 12px;
+        font-weight: 600;
     }
 
     .stats {
         display: grid;
         grid-template-columns: repeat(5, minmax(0, 1fr));
         gap: 15px;
-        margin-bottom: 22px;
+        margin-bottom: 24px;
     }
 
     .stat-card {
+        position: relative;
+        overflow: hidden;
+        padding: 19px;
         background: #fff;
         border: 1px solid #e5e7eb;
-        border-radius: 12px;
-        padding: 20px;
-        transition: box-shadow .2s, transform .2s;
+        border-radius: 14px;
+        transition: transform .2s, box-shadow .2s;
     }
 
     .stat-card:hover {
-        box-shadow: 0 8px 24px rgba(15, 23, 42, .06);
         transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(15, 23, 42, .06);
+    }
+
+    .stat-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 17px;
     }
 
     .stat-label {
         color: #6b7280;
         font-size: 10px;
-        font-weight: 700;
-        letter-spacing: .05em;
-        margin-bottom: 10px;
+        font-weight: 750;
+        letter-spacing: .06em;
     }
+
+    .stat-icon {
+        display: grid;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        flex-shrink: 0;
+        border-radius: 10px;
+        font-size: 17px;
+    }
+
+    .icon-blue { background: #eff6ff; color: #2563eb; }
+    .icon-green { background: #dcfce7; color: #15803d; }
+    .icon-amber { background: #fef3c7; color: #b45309; }
+    .icon-purple { background: #f3e8ff; color: #7e22ce; }
+    .icon-red { background: #fee2e2; color: #b91c1c; }
 
     .stat-value {
         color: #111827;
-        font-size: 27px;
-        font-weight: 700;
+        font-size: 29px;
+        font-weight: 750;
+        line-height: 1.2;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .stat-description {
+        margin-top: 7px;
+        color: #9ca3af;
+        font-size: 11px;
     }
 
     .attendance-card {
+        overflow: hidden;
         background: #fff;
         border: 1px solid #e5e7eb;
-        border-radius: 14px;
-        overflow: hidden;
+        border-radius: 15px;
+        box-shadow: 0 2px 6px rgba(15, 23, 42, .02);
     }
 
     .table-header {
-        padding: 20px 22px;
-        border-bottom: 1px solid #e5e7eb;
         display: flex;
         justify-content: space-between;
         align-items: center;
         gap: 15px;
         flex-wrap: wrap;
+        padding: 21px 22px;
+        border-bottom: 1px solid #e5e7eb;
     }
 
-    .table-header h3 {
+    .table-header h2 {
         margin: 0;
-        font-size: 15px;
-        font-weight: 700;
+        color: #111827;
+        font-size: 16px;
+        font-weight: 750;
     }
 
     .table-subtitle {
         margin-top: 5px;
         color: #6b7280;
-        font-size: 11px;
-    }
-
-    .date {
-        background: #f9fafb;
-        border: 1px solid #e5e7eb;
-        padding: 9px 12px;
-        border-radius: 8px;
-        color: #374151;
         font-size: 12px;
     }
 
+    .record-count {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 10px;
+        border-radius: 20px;
+        background: #eff6ff;
+        color: #1d4ed8;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
     .filters {
-        display: flex;
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: minmax(220px, 1fr) minmax(160px, 210px) minmax(150px, 180px);
         gap: 10px;
-        padding: 16px 22px;
+        padding: 17px 22px;
         border-bottom: 1px solid #f0f1f3;
     }
 
     .filter-input,
     .filter-select {
-        height: 38px;
+        box-sizing: border-box;
+        width: 100%;
+        height: 40px;
         border: 1px solid #d1d5db;
-        border-radius: 8px;
+        border-radius: 9px;
         padding: 0 12px;
         background: #fff;
         color: #374151;
+        font-family: inherit;
         font-size: 12px;
         outline: none;
-    }
-
-    .filter-input {
-        min-width: 240px;
-        flex: 1;
-    }
-
-    .filter-select {
-        min-width: 150px;
-        cursor: pointer;
     }
 
     .filter-input:focus,
@@ -129,6 +180,8 @@
         box-shadow: 0 0 0 3px rgba(37, 99, 235, .1);
     }
 
+    .filter-input::placeholder { color: #9ca3af; }
+
     .table-wrapper {
         width: 100%;
         overflow-x: auto;
@@ -136,7 +189,7 @@
 
     .attendance-table {
         width: 100%;
-        min-width: 850px;
+        min-width: 900px;
         border-collapse: collapse;
     }
 
@@ -146,17 +199,21 @@
         color: #6b7280;
         text-align: left;
         font-size: 10px;
-        font-weight: 700;
-        letter-spacing: .04em;
+        font-weight: 750;
+        letter-spacing: .055em;
         white-space: nowrap;
     }
 
     .attendance-table td {
         padding: 15px 18px;
         border-top: 1px solid #f0f1f3;
-        font-size: 12px;
         color: #374151;
+        font-size: 12px;
         vertical-align: middle;
+    }
+
+    .attendance-table tbody tr {
+        transition: background .15s;
     }
 
     .attendance-table tbody tr:hover {
@@ -167,32 +224,39 @@
         display: flex;
         align-items: center;
         gap: 11px;
+        min-width: 175px;
     }
 
     .avatar {
-        width: 36px;
-        height: 36px;
-        min-width: 36px;
-        border-radius: 50%;
-        background: #eff6ff;
-        color: #1d4ed8;
         display: flex;
         align-items: center;
         justify-content: center;
+        width: 39px;
+        height: 39px;
+        min-width: 39px;
+        border-radius: 12px;
+        background: #eff6ff;
+        color: #1d4ed8;
         font-size: 12px;
-        font-weight: 700;
+        font-weight: 750;
     }
 
     .employee-name {
         color: #111827;
-        font-weight: 600;
+        font-size: 12px;
+        font-weight: 700;
         white-space: nowrap;
     }
 
     .employee-id {
         margin-top: 4px;
-        color: #6b7280;
+        color: #9ca3af;
         font-size: 10px;
+    }
+
+    .department-name {
+        color: #4b5563;
+        font-weight: 500;
     }
 
     .badge {
@@ -202,7 +266,7 @@
         padding: 6px 10px;
         border-radius: 20px;
         font-size: 10px;
-        font-weight: 700;
+        font-weight: 750;
         white-space: nowrap;
     }
 
@@ -214,66 +278,73 @@
         background: currentColor;
     }
 
-    .badge-present {
-        color: #166534;
-        background: #dcfce7;
-    }
-
-    .badge-late {
-        color: #92400e;
-        background: #fef3c7;
-    }
-
-    .badge-half {
-        color: #1d4ed8;
-        background: #dbeafe;
-    }
-
-    .badge-absent {
-        color: #b91c1c;
-        background: #fee2e2;
-    }
-
-    .badge-default {
-        color: #6b7280;
-        background: #f3f4f6;
-    }
+    .badge-present { color: #166534; background: #dcfce7; }
+    .badge-late { color: #92400e; background: #fef3c7; }
+    .badge-half { color: #1d4ed8; background: #dbeafe; }
+    .badge-absent { color: #b91c1c; background: #fee2e2; }
+    .badge-leave { color: #6d28d9; background: #ede9fe; }
+    .badge-default { color: #6b7280; background: #f3f4f6; }
 
     .time-value {
-        white-space: nowrap;
+        color: #374151;
         font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
     }
 
     .time-empty {
         color: #9ca3af;
+        font-size: 12px;
     }
 
-    .action-form {
-        display: inline;
-    }
+    .action-form { display: inline; }
 
     .action-button {
-        border: 1px solid #d1d5db;
-        background: #fff;
-        color: #374151;
-        padding: 8px 12px;
-        border-radius: 7px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        min-width: 92px;
+        border: 1px solid #bfdbfe;
+        background: #eff6ff;
+        color: #1d4ed8;
+        padding: 9px 12px;
+        border-radius: 8px;
         cursor: pointer;
+        font-family: inherit;
         font-size: 11px;
-        font-weight: 600;
+        font-weight: 700;
         white-space: nowrap;
+        transition: background .15s, border-color .15s;
     }
 
     .action-button:hover {
-        background: #eff6ff;
+        background: #dbeafe;
         border-color: #93c5fd;
-        color: #1d4ed8;
+    }
+
+    .action-button.checkout {
+        border-color: #bbf7d0;
+        background: #f0fdf4;
+        color: #166534;
+    }
+
+    .action-button.checkout:hover {
+        background: #dcfce7;
+    }
+
+    .action-button:disabled {
+        opacity: .6;
+        cursor: wait;
     }
 
     .completed {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
         color: #15803d;
         font-size: 11px;
-        font-weight: 600;
+        font-weight: 700;
     }
 
     .empty-state {
@@ -283,80 +354,89 @@
     }
 
     .empty-icon {
-        font-size: 32px;
-        margin-bottom: 12px;
+        display: grid;
+        place-items: center;
+        width: 56px;
+        height: 56px;
+        margin: 0 auto 14px;
+        border-radius: 16px;
+        background: #f3f4f6;
+        font-size: 25px;
     }
 
     .empty-title {
+        margin-bottom: 7px;
         color: #111827;
-        font-size: 14px;
-        font-weight: 700;
-        margin-bottom: 6px;
+        font-size: 15px;
+        font-weight: 750;
     }
 
     .empty-text {
         font-size: 12px;
-        line-height: 1.6;
+        line-height: 1.7;
     }
 
     .filter-empty {
         display: none;
-        padding: 24px;
+        padding: 26px;
         text-align: center;
         color: #6b7280;
         font-size: 12px;
     }
 
-    @media (max-width: 1100px) {
-        .stats {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-        }
+    .attendance-notice {
+        display: none;
+        margin: 0 22px 16px;
+        padding: 11px 13px;
+        border: 1px solid #fde68a;
+        border-radius: 9px;
+        background: #fffbeb;
+        color: #92400e;
+        font-size: 12px;
+        line-height: 1.6;
     }
 
-    @media (max-width: 750px) {
-        .attendance-page {
-            padding: 20px;
-        }
-
-        .stats {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
-        .filter-input {
-            min-width: 100%;
-        }
-
-        .filter-select {
-            flex: 1;
-        }
+    .attendance-notice.error {
+        display: block;
+        border-color: #fecaca;
+        background: #fef2f2;
+        color: #b91c1c;
     }
 
-    @media (max-width: 480px) {
-        .attendance-page {
-            padding: 14px;
-        }
+    @media (max-width: 1150px) {
+        .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
 
-        .stats {
-            grid-template-columns: 1fr;
-        }
+    @media (max-width: 800px) {
+        .attendance-page { padding: 20px; }
+        .filters { grid-template-columns: 1fr 1fr; }
+        .filter-input { grid-column: 1 / -1; }
+    }
 
-        .stat-card {
-            padding: 16px;
-        }
+    @media (max-width: 540px) {
+        .attendance-page { padding: 14px; }
+        .page-heading h1 { font-size: 22px; }
+        .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+        .stat-card { padding: 14px; }
+        .stat-value { font-size: 25px; }
+        .stat-top { align-items: flex-start; }
+        .stat-icon { width: 31px; height: 31px; }
+        .filters { grid-template-columns: 1fr; padding: 14px; }
+        .filter-input { grid-column: auto; }
+        .table-header { padding: 17px 15px; }
+    }
+
+    @media (max-width: 360px) {
+        .stats { grid-template-columns: 1fr; }
     }
 </style>
 
 <%
-    // Safely initialize all controller-provided data.
     const attendanceStats =
-        typeof stats !== "undefined" && stats
-            ? stats
-            : {};
+        typeof stats !== "undefined" && stats ? stats : {};
 
     const attendanceRows =
-        typeof rows !== "undefined" && Array.isArray(rows)
-            ? rows
-            : [];
+        typeof rows !== "undefined" && Array.isArray(rows) ? rows : [];
 
     const attendanceDate =
         typeof date !== "undefined" && date
@@ -376,34 +456,23 @@
             employee.lastName
         ].filter(Boolean).join(" ").trim();
 
-        return name ||
-            employee.name ||
-            employee.email ||
-            "Unknown Employee";
+        return name || employee.name || employee.email || "Unknown Employee";
     };
 
     const safeDepartmentName = employee => {
         const department = employee?.department;
 
         if (!department) return "—";
+        if (typeof department === "string") return department;
 
-        if (typeof department === "string") {
-            return department;
-        }
-
-        return department.name ||
-            department.departmentName ||
-            "—";
+        return department.name || department.departmentName || "—";
     };
 
     const safeTime = value => {
         if (!value) return "—";
 
         const parsed = new Date(value);
-
-        if (Number.isNaN(parsed.getTime())) {
-            return "—";
-        }
+        if (Number.isNaN(parsed.getTime())) return "—";
 
         return parsed.toLocaleTimeString("en-IN", {
             hour: "2-digit",
@@ -416,9 +485,7 @@
     const safeStatus = record => {
         if (!record) return "Not Marked";
 
-        const raw = String(record.status || "Present")
-            .trim()
-            .toLowerCase();
+        const raw = String(record.status || "Present").trim().toLowerCase();
 
         if (raw === "late") return "Late";
         if (raw === "half day" || raw === "halfday") return "Half Day";
@@ -426,8 +493,7 @@
         if (raw === "leave" || raw === "on leave") return "On Leave";
         if (raw === "present") return "Present";
 
-        return raw
-            .split(/[\s_-]+/)
+        return raw.split(/[\s_-]+/)
             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
             .join(" ");
     };
@@ -438,11 +504,9 @@
         if (normalized === "present") return "badge-present";
         if (normalized === "late") return "badge-late";
         if (normalized.includes("half")) return "badge-half";
+        if (normalized.includes("leave")) return "badge-leave";
 
-        if (
-            normalized === "absent" ||
-            normalized === "not marked"
-        ) {
+        if (normalized === "absent" || normalized === "not marked") {
             return "badge-absent";
         }
 
@@ -452,45 +516,74 @@
 
 <section class="attendance-page">
     <div class="page-heading">
-        <h1>Today's Attendance</h1>
-        <p>Monitor employee attendance, check-ins and check-outs.</p>
+        <div>
+            <h1>Today's Attendance</h1>
+            <p>Track employee attendance, working hours and daily check-ins.</p>
+        </div>
+
+        <div class="heading-date">
+            <span aria-hidden="true">▦</span>
+            <span><%= attendanceDate %></span>
+        </div>
     </div>
 
     <div class="stats">
         <div class="stat-card">
-            <div class="stat-label">TOTAL EMPLOYEES</div>
+            <div class="stat-top">
+                <div class="stat-label">TOTAL EMPLOYEES</div>
+                <div class="stat-icon icon-blue" aria-hidden="true">♙</div>
+            </div>
             <div class="stat-value"><%= attendanceStats.total ?? attendanceRows.length %></div>
+            <div class="stat-description">Employees in today's list</div>
         </div>
 
         <div class="stat-card">
-            <div class="stat-label">PRESENT</div>
+            <div class="stat-top">
+                <div class="stat-label">PRESENT</div>
+                <div class="stat-icon icon-green" aria-hidden="true">✓</div>
+            </div>
             <div class="stat-value"><%= attendanceStats.present ?? 0 %></div>
+            <div class="stat-description">Marked present</div>
         </div>
 
         <div class="stat-card">
-            <div class="stat-label">LATE</div>
+            <div class="stat-top">
+                <div class="stat-label">LATE ARRIVALS</div>
+                <div class="stat-icon icon-amber" aria-hidden="true">◷</div>
+            </div>
             <div class="stat-value"><%= attendanceStats.late ?? 0 %></div>
+            <div class="stat-description">Arrived after the cutoff</div>
         </div>
 
         <div class="stat-card">
-            <div class="stat-label">HALF DAY</div>
+            <div class="stat-top">
+                <div class="stat-label">HALF DAY</div>
+                <div class="stat-icon icon-purple" aria-hidden="true">◐</div>
+            </div>
             <div class="stat-value"><%= attendanceStats.halfDay ?? 0 %></div>
+            <div class="stat-description">Half-day records</div>
         </div>
 
         <div class="stat-card">
-            <div class="stat-label">NOT MARKED</div>
+            <div class="stat-top">
+                <div class="stat-label">NOT MARKED / ABSENT</div>
+                <div class="stat-icon icon-red" aria-hidden="true">!</div>
+            </div>
             <div class="stat-value"><%= attendanceStats.absent ?? 0 %></div>
+            <div class="stat-description">Records needing attention</div>
         </div>
     </div>
 
     <div class="attendance-card">
         <div class="table-header">
             <div>
-                <h3>Employee Attendance</h3>
-                <div class="table-subtitle">Daily attendance records</div>
+                <h2>Employee Attendance</h2>
+                <div class="table-subtitle">Daily attendance overview and actions</div>
             </div>
 
-            <div class="date"><%= attendanceDate %></div>
+            <span class="record-count">
+                <%= attendanceRows.length %> employees
+            </span>
         </div>
 
         <div class="filters">
@@ -498,17 +591,25 @@
                 type="search"
                 id="employeeSearch"
                 class="filter-input"
-                placeholder="Search employee or employee ID..."
+                placeholder="Search by employee name or ID..."
                 autocomplete="off"
-                aria-label="Search employees"
+                aria-label="Search employees by name or ID"
             >
 
-            <select id="departmentFilter" class="filter-select" aria-label="Filter by department">
+            <select
+                id="departmentFilter"
+                class="filter-select"
+                aria-label="Filter by department"
+            >
                 <option value="">All Departments</option>
             </select>
 
-            <select id="statusFilter" class="filter-select" aria-label="Filter by attendance status">
-                <option value="">All Status</option>
+            <select
+                id="statusFilter"
+                class="filter-select"
+                aria-label="Filter by attendance status"
+            >
+                <option value="">All Statuses</option>
                 <option value="present">Present</option>
                 <option value="late">Late</option>
                 <option value="half day">Half Day</option>
@@ -516,6 +617,8 @@
                 <option value="on leave">On Leave</option>
             </select>
         </div>
+
+        <div id="attendanceNotice" class="attendance-notice" role="status" aria-live="polite"></div>
 
         <div class="table-wrapper">
             <% if (attendanceRows.length > 0) { %>
@@ -536,11 +639,11 @@
                             const employee = row?.employee || {};
                             const record = row?.attendance || null;
                             const fullName = safeEmployeeName(employee);
+
                             const employeeCode =
                                 employee.employeeId ||
                                 employee.employeeCode ||
-                                employee._id ||
-                                "—";
+                                (employee._id ? String(employee._id) : "—");
 
                             const department = safeDepartmentName(employee);
                             const status = safeStatus(record);
@@ -574,7 +677,9 @@
                                     </div>
                                 </td>
 
-                                <td><%= department %></td>
+                                <td>
+                                    <span class="department-name"><%= department %></span>
+                                </td>
 
                                 <td>
                                     <span class="<%= record?.checkIn ? 'time-value' : 'time-empty' %>">
@@ -598,27 +703,38 @@
                                     <% if (!record && employeeMongoId) { %>
                                         <form
                                             class="action-form"
-                                            action="/attendance/check-in/<%= employeeMongoId %>"
+                                            data-geolocation-form
+                                            action="/attendance/check-in/<%= encodeURIComponent(employeeMongoId) %>"
                                             method="POST"
-                                            onsubmit="return confirm('Check in this employee?');"
                                         >
+                                            <input type="hidden" name="latitude" value="">
+                                            <input type="hidden" name="longitude" value="">
+
                                             <button type="submit" class="action-button">
+                                                <span aria-hidden="true">↗</span>
                                                 Check In
                                             </button>
                                         </form>
+
                                     <% } else if (record && !record.checkOut && employeeMongoId) { %>
                                         <form
                                             class="action-form"
-                                            action="/attendance/check-out/<%= employeeMongoId %>"
+                                            data-geolocation-form
+                                            action="/attendance/check-out/<%= encodeURIComponent(employeeMongoId) %>"
                                             method="POST"
-                                            onsubmit="return confirm('Check out this employee?');"
                                         >
-                                            <button type="submit" class="action-button">
+                                            <input type="hidden" name="latitude" value="">
+                                            <input type="hidden" name="longitude" value="">
+
+                                            <button type="submit" class="action-button checkout">
+                                                <span aria-hidden="true">↙</span>
                                                 Check Out
                                             </button>
                                         </form>
+
                                     <% } else if (record && record.checkOut) { %>
-                                        <span class="completed">Completed</span>
+                                        <span class="completed">✓ Completed</span>
+
                                     <% } else { %>
                                         <span class="time-empty">Unavailable</span>
                                     <% } %>
@@ -633,11 +749,11 @@
                 </div>
             <% } else { %>
                 <div class="empty-state">
-                    <div class="empty-icon">◷</div>
+                    <div class="empty-icon" aria-hidden="true">◷</div>
                     <div class="empty-title">No employees found</div>
                     <div class="empty-text">
-                        No attendance rows were provided for today.
-                        Check that active employees are being loaded by the controller.
+                        No attendance rows were returned for today.<br>
+                        Check that the controller is loading active employees for this organization.
                     </div>
                 </div>
             <% } %>
@@ -652,77 +768,165 @@ document.addEventListener("DOMContentLoaded", function () {
     const statusFilter = document.getElementById("statusFilter");
     const table = document.getElementById("attendanceTable");
     const filterEmpty = document.getElementById("filterEmpty");
+    const notice = document.getElementById("attendanceNotice");
 
-    if (!searchInput || !departmentFilter || !statusFilter || !table) {
-        return;
-    }
-
-    const rows = Array.from(
-        table.querySelectorAll("tbody .attendance-row")
-    );
-
-    const departments = [
-        ...new Set(
-            rows
-                .map(row => row.dataset.department || "")
-                .filter(value => value && value !== "—")
-        )
-    ].sort();
-
-    departments.forEach(department => {
-        const option = document.createElement("option");
-        option.value = department;
-        option.textContent = department.replace(/\b\w/g, letter =>
-            letter.toUpperCase()
+    // Employee search and filters
+    if (searchInput && departmentFilter && statusFilter && table) {
+        const rows = Array.from(
+            table.querySelectorAll("tbody .attendance-row")
         );
-        departmentFilter.appendChild(option);
-    });
 
-    function filterRows() {
-        const search = searchInput.value.toLowerCase().trim();
-        const department = departmentFilter.value.toLowerCase();
-        const status = statusFilter.value.toLowerCase();
+        const departments = [
+            ...new Set(
+                rows
+                    .map(row => row.dataset.department || "")
+                    .filter(value => value && value !== "—")
+            )
+        ].sort();
 
-        let visibleCount = 0;
-
-        rows.forEach(row => {
-            const name = row.dataset.name || "";
-            const id = row.dataset.id || "";
-            const rowDepartment = row.dataset.department || "";
-            const rowStatus = row.dataset.status || "";
-
-            const matchesSearch =
-                !search || name.includes(search) || id.includes(search);
-
-            const matchesDepartment =
-                !department || rowDepartment === department;
-
-            let matchesStatus = !status;
-
-            if (status === "absent") {
-                matchesStatus =
-                    rowStatus === "not marked" ||
-                    rowStatus === "absent";
-            } else if (status) {
-                matchesStatus = rowStatus === status;
-            }
-
-            const visible =
-                matchesSearch && matchesDepartment && matchesStatus;
-
-            row.style.display = visible ? "" : "none";
-
-            if (visible) visibleCount++;
+        departments.forEach(department => {
+            const option = document.createElement("option");
+            option.value = department;
+            option.textContent = department.replace(/\b\w/g, letter =>
+                letter.toUpperCase()
+            );
+            departmentFilter.appendChild(option);
         });
 
-        if (filterEmpty) {
-            filterEmpty.style.display =
-                rows.length > 0 && visibleCount === 0 ? "block" : "none";
+        function filterRows() {
+            const search = searchInput.value.toLowerCase().trim();
+            const department = departmentFilter.value.toLowerCase();
+            const status = statusFilter.value.toLowerCase();
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const name = row.dataset.name || "";
+                const id = row.dataset.id || "";
+                const rowDepartment = row.dataset.department || "";
+                const rowStatus = row.dataset.status || "";
+
+                const matchesSearch =
+                    !search || name.includes(search) || id.includes(search);
+
+                const matchesDepartment =
+                    !department || rowDepartment === department;
+
+                let matchesStatus = !status;
+
+                if (status === "absent") {
+                    matchesStatus =
+                        rowStatus === "not marked" ||
+                        rowStatus === "absent";
+                } else if (status) {
+                    matchesStatus = rowStatus === status;
+                }
+
+                const visible =
+                    matchesSearch && matchesDepartment && matchesStatus;
+
+                row.style.display = visible ? "" : "none";
+                if (visible) visibleCount++;
+            });
+
+            if (filterEmpty) {
+                filterEmpty.style.display =
+                    rows.length > 0 && visibleCount === 0 ? "block" : "none";
+            }
         }
+
+        searchInput.addEventListener("input", filterRows);
+        departmentFilter.addEventListener("change", filterRows);
+        statusFilter.addEventListener("change", filterRows);
     }
 
-    searchInput.addEventListener("input", filterRows);
-    departmentFilter.addEventListener("change", filterRows);
-    statusFilter.addEventListener("change", filterRows);
+    // GPS coordinates are sent to the server for geofence validation.
+    // The server must independently validate coordinates and office radius.
+    document.querySelectorAll("[data-geolocation-form]").forEach(form => {
+        form.addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            if (form.dataset.submitting === "true") return;
+
+            const button = form.querySelector('button[type="submit"]');
+            const latitudeInput = form.querySelector('[name="latitude"]');
+            const longitudeInput = form.querySelector('[name="longitude"]');
+
+            if (!button || !latitudeInput || !longitudeInput) {
+                showNotice("Attendance form is missing required location fields.", true);
+                return;
+            }
+
+            if (!navigator.geolocation) {
+                showNotice("This browser does not support GPS location. Please use a supported browser.", true);
+                return;
+            }
+
+            const originalText = button.innerHTML;
+            button.disabled = true;
+            button.textContent = "Getting location...";
+            showNotice("Please allow location access. Your attendance will be verified against the configured office radius.", false);
+
+            navigator.geolocation.getCurrentPosition(
+                function (position) {
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+
+                    if (
+                        !Number.isFinite(latitude) ||
+                        !Number.isFinite(longitude) ||
+                        latitude < -90 || latitude > 90 ||
+                        longitude < -180 || longitude > 180
+                    ) {
+                        resetButton();
+                        showNotice("The device returned invalid location coordinates. Please try again.", true);
+                        return;
+                    }
+
+                    latitudeInput.value = String(latitude);
+                    longitudeInput.value = String(longitude);
+
+                    form.dataset.submitting = "true";
+                    button.textContent = "Submitting...";
+
+                    // Native submit avoids triggering this listener again.
+                    HTMLFormElement.prototype.submit.call(form);
+                },
+                function (error) {
+                    resetButton();
+
+                    let message = "Unable to get your location. Please try again.";
+
+                    if (error.code === error.PERMISSION_DENIED) {
+                        message = "Location permission was denied. Allow location access in your browser settings and try again.";
+                    } else if (error.code === error.POSITION_UNAVAILABLE) {
+                        message = "Your current location is unavailable. Check device location services and try again.";
+                    } else if (error.code === error.TIMEOUT) {
+                        message = "Location request timed out. Move to an area with a clearer GPS signal and try again.";
+                    }
+
+                    showNotice(message, true);
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 20000,
+                    maximumAge: 0
+                }
+            );
+
+            function resetButton() {
+                form.dataset.submitting = "false";
+                button.disabled = false;
+                button.innerHTML = originalText;
+            }
+        });
+    });
+
+    function showNotice(message, isError) {
+        if (!notice) return;
+
+        notice.textContent = message;
+        notice.className = "attendance-notice" + (isError ? " error" : "");
+        notice.style.display = "block";
+    }
 });
 </script>

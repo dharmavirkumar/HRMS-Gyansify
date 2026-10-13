@@ -10,8 +10,12 @@
 
     const todayRecord = todayAttendance || null;
 
+    const hasCheckedIn = Boolean(todayRecord && todayRecord.checkIn);
+    const hasCheckedOut = Boolean(todayRecord && todayRecord.checkOut);
+
     const formatTime = (value) => {
         if (!value) return "--";
+
         const date = new Date(value);
 
         return date.toLocaleTimeString("en-IN", {
@@ -184,6 +188,7 @@
         font-size: 22px;
         font-weight: 750;
         color: #172033;
+        overflow-wrap: anywhere;
     }
 
     .attendance-status {
@@ -220,6 +225,130 @@
         color: #475569;
         background: #f1f5f9;
     }
+
+    /* GPS ATTENDANCE ACTIONS */
+
+    .attendance-actions {
+        padding: 0 24px 24px;
+    }
+
+    .attendance-actions-inner {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 20px;
+    }
+
+    .attendance-actions h3 {
+        margin: 0 0 7px;
+        font-size: 16px;
+        font-weight: 750;
+        color: #172033;
+    }
+
+    .attendance-actions-description {
+        margin: 0 0 17px;
+        color: #64748b;
+        font-size: 13px;
+        line-height: 1.6;
+    }
+
+    .attendance-action-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .attendance-action-btn {
+        appearance: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        min-height: 45px;
+        padding: 12px 20px;
+        border: 0;
+        border-radius: 10px;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: opacity .2s, transform .2s;
+    }
+
+    .attendance-action-btn:hover:not(:disabled) {
+        transform: translateY(-1px);
+    }
+
+    .attendance-action-btn:disabled {
+        opacity: .6;
+        cursor: not-allowed;
+    }
+
+    .attendance-check-in {
+        color: #fff;
+        background: #2563eb;
+    }
+
+    .attendance-check-out {
+        color: #fff;
+        background: #dc2626;
+    }
+
+    .attendance-location-note {
+        display: flex;
+        align-items: flex-start;
+        gap: 9px;
+        margin-top: 15px;
+        color: #64748b;
+        font-size: 12px;
+        line-height: 1.6;
+    }
+
+    .attendance-location-message {
+        display: none;
+        margin-top: 14px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        font-size: 13px;
+        line-height: 1.6;
+        overflow-wrap: anywhere;
+    }
+
+    .attendance-location-message.is-visible {
+        display: block;
+    }
+
+    .attendance-location-message.is-info {
+        color: #1d4ed8;
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+    }
+
+    .attendance-location-message.is-success {
+        color: #047857;
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
+    }
+
+    .attendance-location-message.is-error {
+        color: #b91c1c;
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+    }
+
+    .attendance-complete-message {
+        padding: 16px;
+        border: 1px solid #a7f3d0;
+        background: #ecfdf5;
+        color: #047857;
+        border-radius: 12px;
+        font-size: 13px;
+        line-height: 1.6;
+    }
+
+    /* HISTORY TABLE */
 
     .attendance-table-wrap {
         overflow-x: auto;
@@ -281,7 +410,7 @@
 
     @media (max-width: 650px) {
         .attendance-stats-grid {
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 10px;
         }
 
@@ -302,6 +431,23 @@
         .attendance-panel-header {
             padding: 18px;
         }
+
+        .attendance-actions {
+            padding: 0 16px 16px;
+        }
+
+        .attendance-actions-inner {
+            padding: 16px;
+        }
+
+        .attendance-action-buttons {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .attendance-action-btn {
+            width: 100%;
+        }
     }
 
     @media (max-width: 380px) {
@@ -312,6 +458,8 @@
 </style>
 
 <div class="my-attendance">
+
+    <!-- PAGE HEADER -->
 
     <div class="attendance-page-heading">
         <div>
@@ -335,33 +483,25 @@
 
         <div class="attendance-stat-card">
             <div class="attendance-stat-label">Recorded Days</div>
-            <div class="attendance-stat-value">
-                <%= stats.totalDays %>
-            </div>
+            <div class="attendance-stat-value"><%= stats.totalDays %></div>
             <div class="attendance-stat-note">Latest 30 records</div>
         </div>
 
         <div class="attendance-stat-card">
             <div class="attendance-stat-label">Present</div>
-            <div class="attendance-stat-value">
-                <%= stats.present %>
-            </div>
+            <div class="attendance-stat-value"><%= stats.present %></div>
             <div class="attendance-stat-note">Marked present</div>
         </div>
 
         <div class="attendance-stat-card">
             <div class="attendance-stat-label">Late Arrivals</div>
-            <div class="attendance-stat-value">
-                <%= stats.late %>
-            </div>
+            <div class="attendance-stat-value"><%= stats.late %></div>
             <div class="attendance-stat-note">Late attendance records</div>
         </div>
 
         <div class="attendance-stat-card">
             <div class="attendance-stat-label">Total Work Hours</div>
-            <div class="attendance-stat-value">
-                <%= stats.totalWorkHours %>
-            </div>
+            <div class="attendance-stat-value"><%= stats.totalWorkHours %></div>
             <div class="attendance-stat-note">
                 Overtime: <%= stats.totalOvertimeHours %> hours
             </div>
@@ -384,9 +524,7 @@
                     <%= todayRecord.status || "Recorded" %>
                 </span>
             <% } else { %>
-                <span class="attendance-status status-default">
-                    Not Marked
-                </span>
+                <span class="attendance-status status-default">Not Marked</span>
             <% } %>
         </div>
 
@@ -416,6 +554,93 @@
             </div>
 
         </div>
+
+        <!-- GEOLOCATION CHECK-IN / CHECK-OUT -->
+
+        <div class="attendance-actions">
+            <div class="attendance-actions-inner">
+
+                <h3>Office Location Attendance</h3>
+
+                <p class="attendance-actions-description">
+                    Allow location access when prompted. Your location will be checked
+                    against the office geofence before attendance is recorded.
+                </p>
+
+                <% if (!hasCheckedIn) { %>
+
+                    <form
+                        method="POST"
+                        action="/attendance/check-in/<%= encodeURIComponent(String(employee._id)) %>"
+                        data-geolocation-form
+                        data-action-label="Check In"
+                    >
+                        <input type="hidden" name="latitude" value="">
+                        <input type="hidden" name="longitude" value="">
+
+                        <div class="attendance-action-buttons">
+                            <button
+                                type="submit"
+                                class="attendance-action-btn attendance-check-in"
+                                data-submit-button
+                            >
+                                <span aria-hidden="true">↗</span>
+                                <span data-button-label>Check In</span>
+                            </button>
+                        </div>
+                    </form>
+
+                <% } else if (!hasCheckedOut) { %>
+
+                    <form
+                        method="POST"
+                        action="/attendance/check-out/<%= encodeURIComponent(String(employee._id)) %>"
+                        data-geolocation-form
+                        data-action-label="Check Out"
+                    >
+                        <input type="hidden" name="latitude" value="">
+                        <input type="hidden" name="longitude" value="">
+
+                        <div class="attendance-action-buttons">
+                            <button
+                                type="submit"
+                                class="attendance-action-btn attendance-check-out"
+                                data-submit-button
+                            >
+                                <span aria-hidden="true">↙</span>
+                                <span data-button-label>Check Out</span>
+                            </button>
+                        </div>
+                    </form>
+
+                <% } else { %>
+
+                    <div class="attendance-complete-message">
+                        <strong>Attendance completed for today.</strong>
+                        <br>
+                        Your check-in and check-out have both been recorded.
+                    </div>
+
+                <% } %>
+
+                <div
+                    class="attendance-location-message"
+                    data-location-message
+                    role="status"
+                    aria-live="polite"
+                ></div>
+
+                <div class="attendance-location-note">
+                    <span aria-hidden="true">📍</span>
+                    <span>
+                        GPS verification is required for both check-in and check-out.
+                        Attendance is accepted only inside the radius configured by HR.
+                    </span>
+                </div>
+
+            </div>
+        </div>
+
     </section>
 
     <!-- ATTENDANCE HISTORY -->
@@ -436,7 +661,6 @@
         <% if (records.length > 0) { %>
 
             <div class="attendance-table-wrap">
-
                 <table class="attendance-history-table">
 
                     <thead>
@@ -451,35 +675,25 @@
                     </thead>
 
                     <tbody>
-
                         <% records.forEach(record => { %>
-
                             <tr>
                                 <td>
                                     <strong><%= formatDate(record.date) %></strong>
                                 </td>
-
                                 <td><%= formatTime(record.checkIn) %></td>
-
                                 <td><%= formatTime(record.checkOut) %></td>
-
                                 <td><%= formatDuration(record.workMinutes) %></td>
-
                                 <td><%= formatDuration(record.overtimeMinutes) %></td>
-
                                 <td>
                                     <span class="attendance-status <%= statusClass(record.status) %>">
                                         <%= record.status || "Unspecified" %>
                                     </span>
                                 </td>
                             </tr>
-
                         <% }) %>
-
                     </tbody>
 
                 </table>
-
             </div>
 
         <% } else { %>
@@ -494,3 +708,142 @@
     </section>
 
 </div>
+
+<script>
+(() => {
+    "use strict";
+
+    const forms = document.querySelectorAll("[data-geolocation-form]");
+
+    forms.forEach((form) => {
+        form.addEventListener("submit", (event) => {
+            event.preventDefault();
+
+            if (form.dataset.submitting === "true") {
+                return;
+            }
+
+            const message = document.querySelector("[data-location-message]");
+            const button = form.querySelector("[data-submit-button]");
+            const buttonLabel = form.querySelector("[data-button-label]");
+            const latitudeInput = form.querySelector('[name="latitude"]');
+            const longitudeInput = form.querySelector('[name="longitude"]');
+            const actionLabel = form.dataset.actionLabel || "Attendance";
+
+            const showMessage = (text, type) => {
+                if (!message) return;
+
+                message.textContent = text;
+                message.className =
+                    "attendance-location-message is-visible is-" + type;
+            };
+
+            if (!navigator.geolocation) {
+                showMessage(
+                    "Your browser does not support GPS location. Please use a supported browser.",
+                    "error"
+                );
+                return;
+            }
+
+            form.dataset.submitting = "true";
+
+            if (button) {
+                button.disabled = true;
+            }
+
+            if (buttonLabel) {
+                buttonLabel.textContent = "Getting location...";
+            }
+
+            showMessage(
+                "Please allow location access. Retrieving your current position...",
+                "info"
+            );
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+                    const accuracy = position.coords.accuracy;
+
+                    if (
+                        !Number.isFinite(latitude) ||
+                        !Number.isFinite(longitude) ||
+                        !Number.isFinite(accuracy)
+                    ) {
+                        resetButton();
+                        showMessage(
+                            "Your browser returned an invalid location. Please try again.",
+                            "error"
+                        );
+                        return;
+                    }
+
+                    // Avoid proceeding with an obviously imprecise fix.
+                    // The server still performs the authoritative radius check.
+                    if (accuracy > 100) {
+                        resetButton();
+                        showMessage(
+                            "GPS accuracy is approximately " +
+                            Math.round(accuracy) +
+                            " metres. Move to an area with a clearer GPS signal and try again.",
+                            "error"
+                        );
+                        return;
+                    }
+
+                    latitudeInput.value = String(latitude);
+                    longitudeInput.value = String(longitude);
+
+                    showMessage(
+                        "Location obtained. Submitting " +
+                        actionLabel.toLowerCase() +
+                        " request for server-side verification...",
+                        "info"
+                    );
+
+                    // Native submission bypasses this submit listener.
+                    HTMLFormElement.prototype.submit.call(form);
+                },
+                (error) => {
+                    resetButton();
+
+                    let errorMessage =
+                        "Unable to retrieve your location. Please try again.";
+
+                    if (error.code === error.PERMISSION_DENIED) {
+                        errorMessage =
+                            "Location permission was denied. Enable location access for this site and try again.";
+                    } else if (error.code === error.POSITION_UNAVAILABLE) {
+                        errorMessage =
+                            "Your current location is unavailable. Check device location settings and try again.";
+                    } else if (error.code === error.TIMEOUT) {
+                        errorMessage =
+                            "Location request timed out. Please try again in an area with a better GPS signal.";
+                    }
+
+                    showMessage(errorMessage, "error");
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 20000,
+                    maximumAge: 0
+                }
+            );
+
+            function resetButton() {
+                form.dataset.submitting = "false";
+
+                if (button) {
+                    button.disabled = false;
+                }
+
+                if (buttonLabel) {
+                    buttonLabel.textContent = actionLabel;
+                }
+            }
+        });
+    });
+})();
+</script>

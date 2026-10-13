@@ -1,0 +1,984 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title><%= title || "Document Management" %> - Gyansify HRMS</title>
+
+    <link rel="stylesheet" href="/css/dashboard.css">
+
+    <style>
+        :root {
+            --doc-primary: #2563eb;
+            --doc-primary-light: #eff6ff;
+            --doc-text: #172033;
+            --doc-muted: #64748b;
+            --doc-border: #e5eaf1;
+            --doc-surface: #ffffff;
+            --doc-background: #f6f8fc;
+            --doc-radius: 16px;
+        }
+
+        .doc-page {
+            width: 100%;
+            min-width: 0;
+            padding: 30px;
+            color: var(--doc-text);
+        }
+
+        .doc-page *,
+        .doc-page *::before,
+        .doc-page *::after {
+            box-sizing: border-box;
+        }
+
+        .doc-breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            margin-bottom: 22px;
+            color: var(--doc-muted);
+            font-size: 13px;
+        }
+
+        .doc-breadcrumb a {
+            color: var(--doc-primary);
+            text-decoration: none;
+        }
+
+        .doc-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+
+        .doc-heading {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .doc-heading-icon {
+            display: grid;
+            place-items: center;
+            width: 52px;
+            height: 52px;
+            flex-shrink: 0;
+            border-radius: 15px;
+            background: var(--doc-primary-light);
+            color: var(--doc-primary);
+            font-size: 24px;
+        }
+
+        .doc-heading h1 {
+            margin: 0 0 7px;
+            font-size: clamp(23px, 3vw, 30px);
+            font-weight: 750;
+            letter-spacing: -0.8px;
+        }
+
+        .doc-heading p {
+            margin: 0;
+            color: var(--doc-muted);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .doc-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            min-height: 44px;
+            padding: 11px 17px;
+            border: 1px solid transparent;
+            border-radius: 10px;
+            font: inherit;
+            font-size: 13px;
+            font-weight: 650;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background .2s ease, transform .2s ease;
+        }
+
+        .doc-btn-primary {
+            background: var(--doc-primary);
+            color: #fff;
+            box-shadow: 0 5px 12px rgb(37 99 235 / 15%);
+        }
+
+        .doc-btn-primary:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .doc-stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 17px;
+            margin-bottom: 26px;
+        }
+
+        .doc-stat {
+            position: relative;
+            overflow: hidden;
+            padding: 21px;
+            background: var(--doc-surface);
+            border: 1px solid var(--doc-border);
+            border-radius: var(--doc-radius);
+            box-shadow: 0 3px 12px rgb(15 23 42 / 3%);
+        }
+
+        .doc-stat-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 17px;
+        }
+
+        .doc-stat-label {
+            color: var(--doc-muted);
+            font-size: 13px;
+            font-weight: 550;
+        }
+
+        .doc-stat-icon {
+            display: grid;
+            place-items: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 11px;
+            font-size: 18px;
+        }
+
+        .doc-stat-total .doc-stat-icon {
+            color: #2563eb;
+            background: #eff6ff;
+        }
+
+        .doc-stat-pending .doc-stat-icon {
+            color: #b45309;
+            background: #fffbeb;
+        }
+
+        .doc-stat-approved .doc-stat-icon {
+            color: #15803d;
+            background: #f0fdf4;
+        }
+
+        .doc-stat-rejected .doc-stat-icon {
+            color: #b91c1c;
+            background: #fef2f2;
+        }
+
+        .doc-stat-value {
+            margin: 0;
+            color: var(--doc-text);
+            font-size: 31px;
+            font-weight: 750;
+            letter-spacing: -1px;
+            line-height: 1.2;
+        }
+
+        .doc-stat-caption {
+            margin-top: 8px;
+            color: var(--doc-muted);
+            font-size: 12px;
+        }
+
+        .doc-panel {
+            overflow: hidden;
+            background: var(--doc-surface);
+            border: 1px solid var(--doc-border);
+            border-radius: var(--doc-radius);
+            box-shadow: 0 3px 12px rgb(15 23 42 / 3%);
+        }
+
+        .doc-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 18px;
+            padding: 23px 24px;
+            border-bottom: 1px solid var(--doc-border);
+        }
+
+        .doc-panel-title h2 {
+            margin: 0 0 6px;
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        .doc-panel-title p {
+            margin: 0;
+            color: var(--doc-muted);
+            font-size: 12px;
+        }
+
+        .doc-filter-form {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .doc-search,
+        .doc-filter-select {
+            height: 41px;
+            padding: 0 12px;
+            border: 1px solid #dce3ed;
+            border-radius: 9px;
+            background: #fff;
+            color: var(--doc-text);
+            font: inherit;
+            font-size: 12px;
+            outline: none;
+        }
+
+        .doc-search {
+            width: 220px;
+        }
+
+        .doc-filter-select {
+            min-width: 145px;
+        }
+
+        .doc-search:focus,
+        .doc-filter-select:focus {
+            border-color: var(--doc-primary);
+            box-shadow: 0 0 0 3px rgb(37 99 235 / 10%);
+        }
+
+        .doc-btn-secondary {
+            min-height: 41px;
+            padding: 9px 14px;
+            background: #fff;
+            border-color: var(--doc-border);
+            color: #334155;
+        }
+
+        .doc-btn-secondary:hover {
+            background: #f8fafc;
+        }
+
+        .doc-table-wrap {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .doc-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .doc-table thead {
+            background: #f8fafc;
+        }
+
+        .doc-table th {
+            padding: 14px 20px;
+            color: #64748b;
+            font-size: 10px;
+            font-weight: 750;
+            letter-spacing: .65px;
+            text-transform: uppercase;
+        }
+
+        .doc-table td {
+            padding: 17px 20px;
+            border-top: 1px solid #edf0f5;
+            vertical-align: middle;
+            font-size: 12px;
+        }
+
+        .doc-table tbody tr {
+            transition: background .15s ease;
+        }
+
+        .doc-table tbody tr:hover {
+            background: #fafcff;
+        }
+
+        .doc-file {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 200px;
+        }
+
+        .doc-file-icon {
+            display: grid;
+            place-items: center;
+            width: 40px;
+            height: 44px;
+            flex-shrink: 0;
+            border: 1px solid #dbeafe;
+            border-radius: 9px;
+            background: #eff6ff;
+            color: #2563eb;
+            font-size: 19px;
+        }
+
+        .doc-file-name {
+            display: block;
+            max-width: 230px;
+            overflow: hidden;
+            color: #1e293b;
+            font-weight: 650;
+            text-overflow: ellipsis;
+        }
+
+        .doc-file-meta {
+            display: block;
+            margin-top: 5px;
+            color: #94a3b8;
+            font-size: 11px;
+        }
+
+        .doc-person {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 165px;
+        }
+
+        .doc-avatar {
+            display: grid;
+            place-items: center;
+            width: 34px;
+            height: 34px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            background: #eef2ff;
+            color: #4338ca;
+            font-size: 11px;
+            font-weight: 750;
+        }
+
+        .doc-person-name {
+            display: block;
+            color: #334155;
+            font-weight: 650;
+        }
+
+        .doc-person-meta {
+            display: block;
+            margin-top: 4px;
+            color: #94a3b8;
+            font-size: 11px;
+        }
+
+        .doc-type {
+            display: inline-flex;
+            padding: 6px 9px;
+            border: 1px solid #e2e8f0;
+            border-radius: 7px;
+            background: #f8fafc;
+            color: #475569;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .doc-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 10px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 750;
+        }
+
+        .doc-status::before {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            content: "";
+        }
+
+        .doc-status-pending {
+            background: #fffbeb;
+            color: #b45309;
+        }
+
+        .doc-status-approved {
+            background: #f0fdf4;
+            color: #15803d;
+        }
+
+        .doc-status-rejected {
+            background: #fef2f2;
+            color: #b91c1c;
+        }
+
+        .doc-date {
+            color: #475569;
+            font-size: 12px;
+        }
+
+        .doc-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .doc-action-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 33px;
+            padding: 7px 10px;
+            border: 1px solid #dbeafe;
+            border-radius: 8px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-size: 11px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .doc-action-link:hover {
+            background: #dbeafe;
+        }
+
+        .doc-empty {
+            padding: 55px 20px !important;
+            text-align: center;
+            white-space: normal;
+        }
+
+        .doc-empty-icon {
+            display: grid;
+            place-items: center;
+            width: 55px;
+            height: 55px;
+            margin: 0 auto 14px;
+            border-radius: 16px;
+            background: #f1f5f9;
+            color: #64748b;
+            font-size: 24px;
+        }
+
+        .doc-empty strong {
+            display: block;
+            margin-bottom: 7px;
+            color: #334155;
+            font-size: 14px;
+        }
+
+        .doc-empty p {
+            margin: 0;
+            color: var(--doc-muted);
+            font-size: 12px;
+        }
+
+        .doc-panel-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 16px 24px;
+            border-top: 1px solid var(--doc-border);
+            color: var(--doc-muted);
+            font-size: 11px;
+        }
+
+        .doc-clear-link {
+            color: var(--doc-primary);
+            text-decoration: none;
+            font-weight: 650;
+        }
+
+        .doc-clear-link:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 1100px) {
+            .doc-page {
+                padding: 24px;
+            }
+
+            .doc-stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .doc-panel-header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .doc-filter-form {
+                width: 100%;
+            }
+
+            .doc-search {
+                flex: 1;
+                min-width: 150px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .doc-page {
+                padding: 17px 12px;
+            }
+
+            .doc-header {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .doc-header > .doc-btn {
+                width: 100%;
+            }
+
+            .doc-heading-icon {
+                width: 43px;
+                height: 43px;
+                font-size: 20px;
+            }
+
+            .doc-stats {
+                gap: 10px;
+            }
+
+            .doc-stat {
+                padding: 15px;
+            }
+
+            .doc-stat-value {
+                font-size: 25px;
+            }
+
+            .doc-stat-icon {
+                width: 31px;
+                height: 31px;
+                font-size: 15px;
+            }
+
+            .doc-filter-form {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .doc-search,
+            .doc-filter-select,
+            .doc-filter-form .doc-btn {
+                width: 100%;
+            }
+
+            .doc-panel-header {
+                padding: 18px;
+            }
+
+            .doc-table th,
+            .doc-table td {
+                padding: 13px 15px;
+            }
+
+            .doc-panel-footer {
+                padding: 15px 18px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .doc-page *,
+            .doc-page *::before,
+            .doc-page *::after {
+                scroll-behavior: auto !important;
+                transition: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<%
+    const safeStats = stats || {};
+    const safeDocuments = Array.isArray(documents) ? documents : [];
+    const selectedStatus = currentStatus || "";
+
+    const formatDate = (value) => {
+        if (!value) return "—";
+
+        const date = new Date(value);
+
+        if (Number.isNaN(date.getTime())) return "—";
+
+        return date.toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric"
+        });
+    };
+
+    const formatSize = (bytes) => {
+        const size = Number(bytes);
+
+        if (!Number.isFinite(size) || size < 0) return "";
+
+        if (size < 1024) return `${size} B`;
+        if (size < 1024 * 1024) {
+            return `${(size / 1024).toFixed(1)} KB`;
+        }
+
+        return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+    };
+
+    const getInitials = (name) => {
+        return String(name || "U")
+            .trim()
+            .split(/\s+/)
+            .slice(0, 2)
+            .map(part => part.charAt(0))
+            .join("")
+            .toUpperCase();
+    };
+%>
+
+<main class="app">
+    <section class="main">
+        <div class="doc-page">
+
+            <nav class="doc-breadcrumb" aria-label="Breadcrumb">
+                <a href="/dashboard">Dashboard</a>
+                <span aria-hidden="true">/</span>
+                <span>Document Management</span>
+            </nav>
+
+            <header class="doc-header">
+                <div class="doc-heading">
+                    <div class="doc-heading-icon" aria-hidden="true">▤</div>
+
+                    <div>
+                        <h1>Document Management</h1>
+                        <p>
+                            Securely manage, track and verify employee
+                            and onboarding documents.
+                        </p>
+                    </div>
+                </div>
+
+                <a href="/documents/upload" class="doc-btn doc-btn-primary">
+                    <span aria-hidden="true">＋</span>
+                    Upload Document
+                </a>
+            </header>
+
+            <section class="doc-stats" aria-label="Document statistics">
+                <article class="doc-stat doc-stat-total">
+                    <div class="doc-stat-top">
+                        <span class="doc-stat-label">Total Documents</span>
+                        <span class="doc-stat-icon" aria-hidden="true">▤</span>
+                    </div>
+
+                    <p class="doc-stat-value"><%= safeStats.total ?? 0 %></p>
+                    <div class="doc-stat-caption">All stored documents</div>
+                </article>
+
+                <article class="doc-stat doc-stat-pending">
+                    <div class="doc-stat-top">
+                        <span class="doc-stat-label">Pending Review</span>
+                        <span class="doc-stat-icon" aria-hidden="true">◷</span>
+                    </div>
+
+                    <p class="doc-stat-value"><%= safeStats.pending ?? 0 %></p>
+                    <div class="doc-stat-caption">Awaiting HR verification</div>
+                </article>
+
+                <article class="doc-stat doc-stat-approved">
+                    <div class="doc-stat-top">
+                        <span class="doc-stat-label">Approved</span>
+                        <span class="doc-stat-icon" aria-hidden="true">✓</span>
+                    </div>
+
+                    <p class="doc-stat-value"><%= safeStats.approved ?? 0 %></p>
+                    <div class="doc-stat-caption">Successfully verified</div>
+                </article>
+
+                <article class="doc-stat doc-stat-rejected">
+                    <div class="doc-stat-top">
+                        <span class="doc-stat-label">Rejected</span>
+                        <span class="doc-stat-icon" aria-hidden="true">!</span>
+                    </div>
+
+                    <p class="doc-stat-value"><%= safeStats.rejected ?? 0 %></p>
+                    <div class="doc-stat-caption">Requires correction</div>
+                </article>
+            </section>
+
+            <section class="doc-panel">
+                <header class="doc-panel-header">
+                    <div class="doc-panel-title">
+                        <h2>Employee Documents</h2>
+                        <p>Review document information and verification status.</p>
+                    </div>
+
+                    <form
+                        class="doc-filter-form"
+                        action="/documents"
+                        method="GET"
+                        id="documentFilterForm"
+                    >
+                        <input
+                            class="doc-search"
+                            type="search"
+                            id="documentSearch"
+                            placeholder="Search visible documents..."
+                            aria-label="Search visible documents"
+                            autocomplete="off"
+                        >
+
+                        <select
+                            class="doc-filter-select"
+                            id="status"
+                            name="status"
+                            aria-label="Filter by document status"
+                        >
+                            <option value="" <%= selectedStatus === "" ? "selected" : "" %>>
+                                All statuses
+                            </option>
+                            <option value="PENDING" <%= selectedStatus === "PENDING" ? "selected" : "" %>>
+                                Pending
+                            </option>
+                            <option value="APPROVED" <%= selectedStatus === "APPROVED" ? "selected" : "" %>>
+                                Approved
+                            </option>
+                            <option value="REJECTED" <%= selectedStatus === "REJECTED" ? "selected" : "" %>>
+                                Rejected
+                            </option>
+                        </select>
+
+                        <button type="submit" class="doc-btn doc-btn-secondary">
+                            Filter
+                        </button>
+
+                        <% if (selectedStatus) { %>
+                            <a href="/documents" class="doc-clear-link">
+                                Clear
+                            </a>
+                        <% } %>
+                    </form>
+                </header>
+
+                <div class="doc-table-wrap">
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Document</th>
+                                <th scope="col">Employee / Candidate</th>
+                                <th scope="col">Document Type</th>
+                                <th scope="col">Uploaded</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="documentTableBody">
+                            <% if (!safeDocuments.length) { %>
+                                <tr>
+                                    <td colspan="6" class="doc-empty">
+                                        <div class="doc-empty-icon" aria-hidden="true">▤</div>
+                                        <strong>No documents found</strong>
+                                        <p>
+                                            <% if (selectedStatus) { %>
+                                                There are no documents with this status.
+                                            <% } else { %>
+                                                Upload an employee document to get started.
+                                            <% } %>
+                                        </p>
+                                    </td>
+                                </tr>
+                            <% } %>
+
+                            <% safeDocuments.forEach(function(doc) {
+                                const employeeName = doc.employee
+                                    ? [doc.employee.firstName, doc.employee.lastName]
+                                        .filter(Boolean).join(" ")
+                                    : "";
+
+                                const onboardingName = doc.onboarding
+                                    ? [doc.onboarding.firstName, doc.onboarding.lastName]
+                                        .filter(Boolean).join(" ")
+                                    : "";
+
+                                const personName = employeeName ||
+                                    onboardingName ||
+                                    "Unlinked record";
+
+                                const personMeta = employeeName
+                                    ? (doc.employee.employeeId || doc.employee.email || "Employee")
+                                    : onboardingName
+                                        ? (doc.onboarding.email || "Onboarding candidate")
+                                        : "No linked record";
+
+                                const status = String(doc.status || "PENDING").toUpperCase();
+
+                                const safeStatusClass = [
+                                    "PENDING",
+                                    "APPROVED",
+                                    "REJECTED"
+                                ].includes(status) ? status.toLowerCase() : "pending";
+
+                                const searchText = [
+                                    doc.originalName,
+                                    doc.documentType,
+                                    status,
+                                    personName,
+                                    personMeta
+                                ].filter(Boolean).join(" ").toLowerCase();
+                            %>
+                                <tr
+                                    class="doc-data-row"
+                                    data-search="<%= searchText %>"
+                                >
+                                    <td>
+                                        <div class="doc-file">
+                                            <div class="doc-file-icon" aria-hidden="true">
+                                                <%= String(doc.mimeType || "").includes("pdf") ? "▤" : "▧" %>
+                                            </div>
+
+                                            <div>
+                                                <span
+                                                    class="doc-file-name"
+                                                    title="<%= doc.originalName || "Document" %>"
+                                                >
+                                                    <%= doc.originalName || "Untitled document" %>
+                                                </span>
+
+                                                <span class="doc-file-meta">
+                                                    <%= formatSize(doc.size) || "File" %>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <div class="doc-person">
+                                            <span class="doc-avatar" aria-hidden="true">
+                                                <%= getInitials(personName) %>
+                                            </span>
+
+                                            <span>
+                                                <span class="doc-person-name">
+                                                    <%= personName %>
+                                                </span>
+
+                                                <span class="doc-person-meta">
+                                                    <%= personMeta %>
+                                                </span>
+                                            </span>
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <span class="doc-type">
+                                            <%= doc.documentType || "OTHER" %>
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <span class="doc-date">
+                                            <%= formatDate(doc.uploadedAt || doc.createdAt) %>
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <span class="doc-status doc-status-<%= safeStatusClass %>">
+                                            <%= status %>
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <div class="doc-actions">
+                                            <a
+                                                class="doc-action-link"
+                                                href="/documents/<%= doc._id %>"
+                                                aria-label="View document details"
+                                            >
+                                                View details →
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }); %>
+
+                            <tr id="documentSearchEmpty" hidden>
+                                <td colspan="6" class="doc-empty">
+                                    <div class="doc-empty-icon" aria-hidden="true">⌕</div>
+                                    <strong>No matching documents</strong>
+                                    <p>Try a different name, file name or document type.</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <footer class="doc-panel-footer">
+                    <span id="documentCount">
+                        Showing <%= safeDocuments.length %> document(s)
+                    </span>
+
+                    <span>
+                        Document access is restricted to authorized users.
+                    </span>
+                </footer>
+            </section>
+
+        </div>
+    </section>
+</main>
+
+<script>
+    (function () {
+        "use strict";
+
+        const searchInput = document.getElementById("documentSearch");
+        const rows = Array.from(
+            document.querySelectorAll(".doc-data-row")
+        );
+        const emptyMessage = document.getElementById("documentSearchEmpty");
+        const countLabel = document.getElementById("documentCount");
+
+        if (!searchInput || !countLabel) return;
+
+        function filterDocuments() {
+            const query = searchInput.value
+                .trim()
+                .toLowerCase();
+
+            let visibleCount = 0;
+
+            rows.forEach(function (row) {
+                const searchableText = row.dataset.search || "";
+                const matches = searchableText.includes(query);
+
+                row.hidden = !matches;
+
+                if (matches) visibleCount++;
+            });
+
+            if (emptyMessage) {
+                emptyMessage.hidden = visibleCount !== 0;
+            }
+
+            countLabel.textContent =
+                "Showing " + visibleCount + " of " +
+                rows.length + " document(s)";
+        }
+
+        searchInput.addEventListener("input", filterDocuments);
+    })();
+</script>
+</body>
+</html>

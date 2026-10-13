@@ -4,7 +4,10 @@ const express = require("express");
 const router = express.Router();
 
 const mongoose = require("mongoose");
-
+const Organization = require("../models/Organization");
+const Employee = require("../models/Employee");
+const Department = require("../models/Department");
+const Designation = require("../models/Designation");
 const {
     requireAuth
 } = require("../middleware/authMiddleware");
@@ -479,6 +482,111 @@ router.get("/leave/export", requireAuth, async (req, res) => {
         return sendServerError(res, "Unable to export leave report.");
     }
 });
+
+
+
+router.get("/organization", requireAuth, async (req, res, next) => {
+    try {
+        const user = req.session?.user || {};
+
+        const organizationId =
+            user.organizationId ||
+            user.organization ||
+            user.organizationID;
+
+        if (
+            !organizationId ||
+            !mongoose.Types.ObjectId.isValid(String(organizationId))
+        ) {
+            return res.status(403).send(
+                "Your session does not contain a valid organization. Please sign in again."
+            );
+        }
+
+        const orgId = new mongoose.Types.ObjectId(
+            String(organizationId)
+        );
+
+        const [
+            organization,
+            employees,
+            activeEmployees,
+            departments,
+            designations
+        ] = await Promise.all([
+            Organization.findById(orgId).lean(),
+
+            Employee.countDocuments({
+                organization: orgId,
+                status: { $ne: "Exited" }
+            }),
+
+            Employee.countDocuments({
+                organization: orgId,
+                status: "Active"
+            }),
+
+            Department.find({
+                organization: orgId,
+                status: "Active"
+            })
+                .select("name code status")
+                .sort({ name: 1 })
+                .lean(),
+
+            Designation.find({
+                organization: orgId,
+                status: "Active"
+            })
+                .select("name code level status")
+                .sort({ name: 1 })
+                .lean()
+        ]);
+
+        if (!organization) {
+            return res.status(404).send(
+                "Organization not found."
+            );
+        }
+
+        return res.render("reports/organization", {
+            title: "Organization Report",
+            user,
+            organization,
+            totalEmployees: employees,
+            activeEmployees,
+            departments,
+            designations
+        });
+    } catch (error) {
+        console.error("Organization Report Error:", error);
+        next(error);
+    }
+});
+
+
+
+
+/* Performance Report */
+router.get("/performance", requireAuth, async (req, res, next) => {
+    try {
+        return res.render("reports/performance", {
+            title: "Performance Report",
+            user: req.session?.user || null,
+            stats: {
+                totalReviews: 0,
+                completedReviews: 0,
+                pendingReviews: 0,
+                averageRating: 0
+            },
+            performanceReviews: []
+        });
+    } catch (error) {
+        console.error("Performance Report Error:", error);
+        next(error);
+    }
+});
+
 
 // =====================================================
 // OTHER EXPORT ROUTES

@@ -1,0 +1,1386 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title><%= title || "Onboarding Details" %> - Gyansify HRMS</title>
+
+    <link rel="stylesheet" href="/css/dashboard.css">
+
+    <style>
+        .onboarding-page {
+            max-width: 1250px;
+            margin: 0 auto;
+            padding: 28px;
+            color: #172033;
+        }
+
+        .onboarding-page * {
+            box-sizing: border-box;
+        }
+
+        .onboarding-header,
+        .ob-card-heading,
+        .ob-list-top,
+        .ob-progress-meta,
+        .ob-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .onboarding-header {
+            align-items: flex-start;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        .onboarding-header h1 {
+            margin: 0 0 8px;
+            font-size: 28px;
+            font-weight: 800;
+        }
+
+        .onboarding-subtitle,
+        .ob-muted {
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .onboarding-subtitle {
+            margin: 0;
+        }
+
+        .ob-actions {
+            justify-content: flex-start;
+            flex-wrap: wrap;
+        }
+
+        .ob-btn {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            gap: 7px;
+            padding: 10px 15px;
+            border: 1px solid #dbe2ea;
+            border-radius: 9px;
+            background: #fff;
+            color: #334155;
+            font: inherit;
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            transition: .2s ease;
+        }
+
+        .ob-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(15, 23, 42, .08);
+        }
+
+        .ob-btn-primary {
+            background: #2563eb;
+            color: #fff;
+            border-color: #2563eb;
+        }
+
+        .ob-btn-success {
+            background: #15803d;
+            color: #fff;
+            border-color: #15803d;
+        }
+
+        .ob-btn-danger {
+            background: #fff;
+            color: #b91c1c;
+            border-color: #fecaca;
+        }
+
+        .ob-btn:focus-visible,
+        .ob-textarea:focus-visible {
+            outline: 3px solid #93c5fd;
+            outline-offset: 2px;
+        }
+
+        .ob-card {
+            min-width: 0;
+            padding: 22px;
+            margin-bottom: 22px;
+            border: 1px solid #e5eaf1;
+            border-radius: 15px;
+            background: #fff;
+            box-shadow: 0 3px 12px rgba(15, 23, 42, .035);
+        }
+
+        .ob-card-heading {
+            margin-bottom: 18px;
+        }
+
+        .ob-card-heading h2 {
+            margin: 0;
+            font-size: 17px;
+            font-weight: 800;
+        }
+
+        .ob-alert {
+            padding: 13px 15px;
+            margin-bottom: 18px;
+            border: 1px solid transparent;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.65;
+            overflow-wrap: anywhere;
+        }
+
+        .ob-alert-success {
+            background: #f0fdf4;
+            color: #166534;
+            border-color: #bbf7d0;
+        }
+
+        .ob-alert-error {
+            background: #fef2f2;
+            color: #991b1b;
+            border-color: #fecaca;
+        }
+
+        .ob-alert-info {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border-color: #bfdbfe;
+        }
+
+        .ob-alert-warning {
+            background: #fffbeb;
+            color: #92400e;
+            border-color: #fde68a;
+        }
+
+        .ob-hero {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 20px;
+            padding: 24px;
+            margin-bottom: 22px;
+            border: 1px solid #dbeafe;
+            border-radius: 16px;
+            background: linear-gradient(120deg, #eff6ff, #fff 75%);
+        }
+
+        .ob-identity {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            min-width: 0;
+        }
+
+        .ob-avatar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            width: 58px;
+            height: 58px;
+            border-radius: 15px;
+            background: #dbeafe;
+            color: #1d4ed8;
+            font-size: 21px;
+            font-weight: 800;
+        }
+
+        .ob-identity h2 {
+            margin: 0 0 6px;
+            font-size: 22px;
+            overflow-wrap: anywhere;
+        }
+
+        .ob-identity p {
+            margin: 3px 0;
+            color: #64748b;
+            font-size: 13px;
+            overflow-wrap: anywhere;
+        }
+
+        .ob-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 10px;
+            border-radius: 30px;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .3px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .status-DRAFT,
+        .status-PENDING {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .status-IN_PROGRESS,
+        .status-IN-PROGRESS {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .status-PENDING_APPROVAL {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-APPROVED,
+        .status-COMPLETED {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-REJECTED,
+        .status-BLOCKED {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-CANCELLED {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .status-IN_PROGRESS {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .ob-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 22px;
+        }
+
+        .ob-info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .ob-info-item {
+            min-width: 0;
+        }
+
+        .ob-info-label {
+            display: block;
+            margin-bottom: 6px;
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        .ob-info-value {
+            display: block;
+            color: #1e293b;
+            font-size: 13px;
+            font-weight: 650;
+            overflow-wrap: anywhere;
+        }
+
+        .ob-stat-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 22px;
+        }
+
+        .ob-stat {
+            padding: 15px;
+            border: 1px solid #e5eaf1;
+            border-radius: 12px;
+            background: #fafcff;
+        }
+
+        .ob-stat-number {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 25px;
+            font-weight: 800;
+        }
+
+        .ob-stat-label {
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        .ob-progress-track {
+            width: 100%;
+            height: 9px;
+            overflow: hidden;
+            border-radius: 20px;
+            background: #e2e8f0;
+        }
+
+        .ob-progress-bar {
+            height: 100%;
+            border-radius: 20px;
+            background: #2563eb;
+            transition: width .3s ease;
+        }
+
+        .ob-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .ob-list-item {
+            min-width: 0;
+            padding: 15px;
+            border: 1px solid #e5eaf1;
+            border-radius: 11px;
+            background: #fff;
+        }
+
+        .ob-list-item h3 {
+            margin: 0 0 6px;
+            font-size: 14px;
+            font-weight: 750;
+            overflow-wrap: anywhere;
+        }
+
+        .ob-list-item p {
+            margin: 0;
+            color: #64748b;
+            font-size: 12px;
+            line-height: 1.65;
+            overflow-wrap: anywhere;
+        }
+
+        .ob-item-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 16px;
+            margin-top: 12px;
+            color: #64748b;
+            font-size: 12px;
+            overflow-wrap: anywhere;
+        }
+
+        .ob-empty {
+            padding: 26px 16px;
+            border: 1px dashed #cbd5e1;
+            border-radius: 10px;
+            background: #f8fafc;
+            color: #64748b;
+            text-align: center;
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .ob-review-panel {
+            padding: 18px;
+            margin-top: 12px;
+            border: 1px solid #bfdbfe;
+            border-radius: 13px;
+            background: #eff6ff;
+        }
+
+        .ob-review-panel h3 {
+            margin: 0 0 8px;
+            font-size: 15px;
+        }
+
+        .ob-review-panel p {
+            margin: 0;
+            color: #475569;
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .ob-form {
+            margin-top: 16px;
+        }
+
+        .ob-field-label {
+            display: block;
+            margin-bottom: 7px;
+            color: #334155;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .ob-textarea {
+            display: block;
+            width: 100%;
+            min-height: 100px;
+            padding: 11px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 9px;
+            background: #fff;
+            color: #172033;
+            font: inherit;
+            font-size: 13px;
+            resize: vertical;
+        }
+
+        .ob-form-hint {
+            margin: 6px 0 12px !important;
+            color: #64748b;
+            font-size: 11px !important;
+        }
+
+        .ob-note {
+            color: #475569;
+            font-size: 13px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        .ob-divider {
+            height: 1px;
+            margin: 18px 0;
+            border: 0;
+            background: #e5eaf1;
+        }
+
+        @media (max-width: 760px) {
+            .onboarding-page {
+                padding: 16px;
+            }
+
+            .ob-grid,
+            .ob-hero {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .ob-info-grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .ob-stat-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .onboarding-header h1 {
+                font-size: 23px;
+            }
+
+            .ob-card {
+                padding: 16px;
+            }
+
+            .ob-list-top {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .ob-hero > div:last-child {
+                justify-self: start;
+            }
+        }
+
+        @media print {
+            .onboarding-page {
+                max-width: none;
+                padding: 0;
+            }
+
+            .no-print,
+            .onboarding-header .onboarding-actions {
+                display: none !important;
+            }
+
+            .ob-card,
+            .ob-hero {
+                break-inside: avoid;
+                box-shadow: none;
+            }
+
+            body {
+                background: #fff !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <%- include('../partials/navbar') %>
+<%
+    const currentStatus = String(onboarding.status || "DRAFT").toUpperCase();
+
+    const fullName = [
+        onboarding.firstName,
+        onboarding.lastName
+    ].filter(Boolean).join(" ") || "Unnamed Employee";
+
+    const tasks = Array.isArray(onboarding.tasks)
+        ? onboarding.tasks
+        : [];
+
+    const embeddedDocuments = Array.isArray(onboarding.documents)
+        ? onboarding.documents
+        : [];
+
+    const uploadedDocuments =
+        typeof employeeDocuments !== "undefined" &&
+        Array.isArray(employeeDocuments)
+            ? employeeDocuments
+            : [];
+
+    // Prefer the standalone EmployeeDocument collection.
+    // Use embedded documents only as a fallback.
+    const documents = uploadedDocuments.length
+        ? uploadedDocuments
+        : embeddedDocuments;
+
+    const completedTasks = tasks.filter(task =>
+        String(task.status || "PENDING").toUpperCase() === "COMPLETED"
+    ).length;
+
+    const approvedDocuments = documents.filter(doc =>
+        String(doc.status || "PENDING").toUpperCase() === "APPROVED"
+    ).length;
+
+    const pendingDocuments = documents.filter(doc =>
+        String(doc.status || "PENDING").toUpperCase() === "PENDING"
+    ).length;
+
+    const rejectedDocuments = documents.filter(doc =>
+        String(doc.status || "PENDING").toUpperCase() === "REJECTED"
+    ).length;
+
+    const progress = tasks.length
+        ? Math.round((completedTasks / tasks.length) * 100)
+        : 0;
+
+    const allTasksCompleted =
+        tasks.length > 0 && completedTasks === tasks.length;
+
+    const allDocumentsApproved =
+        documents.length > 0 &&
+        approvedDocuments === documents.length;
+
+    const canSubmitForApproval =
+        currentStatus === "IN_PROGRESS" &&
+        allTasksCompleted &&
+        allDocumentsApproved;
+
+    const canReview = currentStatus === "PENDING_APPROVAL";
+
+    const employeeRecord = onboarding.employee &&
+        typeof onboarding.employee === "object"
+            ? onboarding.employee
+            : null;
+
+    const employeeRecordLabel = employeeRecord
+        ? [
+            employeeRecord.employeeId,
+            [employeeRecord.firstName, employeeRecord.lastName]
+                .filter(Boolean).join(" ")
+        ].filter(Boolean).join(" — ")
+        : "Not linked yet";
+
+    const departmentName = onboarding.department &&
+        typeof onboarding.department === "object"
+            ? onboarding.department.name
+            : "";
+
+    const designationName = onboarding.designation &&
+        typeof onboarding.designation === "object"
+            ? onboarding.designation.name
+            : "";
+
+    const formatDate = value => {
+        if (!value) return "—";
+        const date = new Date(value);
+        return Number.isNaN(date.getTime())
+            ? "—"
+            : date.toLocaleDateString("en-IN", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric"
+            });
+    };
+
+    const formatDateTime = value => {
+        if (!value) return "—";
+        const date = new Date(value);
+        return Number.isNaN(date.getTime())
+            ? "—"
+            : date.toLocaleString("en-IN", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit"
+            });
+    };
+
+    const getPersonLabel = person => {
+        if (!person) return "Not recorded";
+
+        if (typeof person === "object") {
+            return person.name ||
+                person.email ||
+                person.employeeId ||
+                "Recorded";
+        }
+
+        return "Recorded";
+    };
+%>
+
+<main class="onboarding-page">
+
+    <header class="onboarding-header">
+        <div>
+            <h1>Onboarding Details</h1>
+            <p class="onboarding-subtitle">
+                Manage employee onboarding, tasks, documents and approval.
+            </p>
+        </div>
+
+        <div class="onboarding-actions ob-actions">
+            <a href="/onboarding" class="ob-btn">
+                ← Back to Onboarding
+            </a>
+
+            <button
+                type="button"
+                class="ob-btn"
+                onclick="window.print()"
+            >
+                Print Details
+            </button>
+        </div>
+    </header>
+
+    <% if (typeof success !== "undefined" && success) { %>
+        <div class="ob-alert ob-alert-success" role="status">
+            <%= success %>
+        </div>
+    <% } %>
+
+    <% if (typeof error !== "undefined" && error) { %>
+        <div class="ob-alert ob-alert-error" role="alert">
+            <%= error %>
+        </div>
+    <% } %>
+
+    <!-- EMPLOYEE SUMMARY -->
+
+    <section class="ob-hero">
+        <div class="ob-identity">
+            <div class="ob-avatar" aria-hidden="true">
+                <%= (onboarding.firstName || "E").charAt(0).toUpperCase() %><%= (onboarding.lastName || "").charAt(0).toUpperCase() %>
+            </div>
+
+            <div>
+                <h2><%= fullName %></h2>
+                <p><%= onboarding.email || "No email provided" %></p>
+                <p>
+                    Onboarding ID:
+                    <strong><%= String(onboarding._id || "").slice(-8).toUpperCase() %></strong>
+                </p>
+            </div>
+        </div>
+
+        <div>
+            <span class="ob-badge status-<%= currentStatus %>">
+                <%= currentStatus.replace(/_/g, " ") %>
+            </span>
+        </div>
+    </section>
+
+    <!-- OVERVIEW -->
+
+    <section class="ob-card">
+        <div class="ob-card-heading">
+            <h2>Onboarding Overview</h2>
+            <span class="ob-muted">Current progress</span>
+        </div>
+
+        <div class="ob-stat-grid">
+            <div class="ob-stat">
+                <span class="ob-stat-number"><%= tasks.length %></span>
+                <span class="ob-stat-label">Total Tasks</span>
+            </div>
+
+            <div class="ob-stat">
+                <span class="ob-stat-number"><%= completedTasks %></span>
+                <span class="ob-stat-label">Completed Tasks</span>
+            </div>
+
+            <div class="ob-stat">
+                <span class="ob-stat-number"><%= documents.length %></span>
+                <span class="ob-stat-label">Submitted Documents</span>
+            </div>
+
+            <div class="ob-stat">
+                <span class="ob-stat-number"><%= approvedDocuments %></span>
+                <span class="ob-stat-label">Approved Documents</span>
+            </div>
+
+            <div class="ob-stat">
+                <span class="ob-stat-number"><%= tasks.length - completedTasks %></span>
+                <span class="ob-stat-label">Incomplete Tasks</span>
+            </div>
+
+            <div class="ob-stat">
+                <span class="ob-stat-number"><%= progress %>%</span>
+                <span class="ob-stat-label">Task Completion</span>
+            </div>
+        </div>
+
+        <div class="ob-progress-meta">
+            <span>Task completion progress</span>
+            <strong><%= progress %>%</strong>
+        </div>
+
+        <div
+            class="ob-progress-track"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="<%= progress %>"
+            aria-label="Onboarding task completion"
+        >
+            <div
+                class="ob-progress-bar"
+                style="width: <%= progress %>%"
+            ></div>
+        </div>
+
+        <% if (pendingDocuments > 0 || rejectedDocuments > 0) { %>
+            <div class="ob-alert ob-alert-warning" style="margin-top:18px;margin-bottom:0">
+                Document review:
+                <strong><%= pendingDocuments %></strong> pending,
+                <strong><%= rejectedDocuments %></strong> rejected.
+                Resolve outstanding document reviews before approval.
+            </div>
+        <% } %>
+    </section>
+
+    <!-- EMPLOYEE AND APPROVAL DETAILS -->
+
+    <div class="ob-grid">
+
+        <section class="ob-card">
+            <div class="ob-card-heading">
+                <h2>Employee Information</h2>
+            </div>
+
+            <div class="ob-info-grid">
+                <div class="ob-info-item">
+                    <span class="ob-info-label">Full Name</span>
+                    <span class="ob-info-value"><%= fullName %></span>
+                </div>
+
+                <div class="ob-info-item">
+                    <span class="ob-info-label">Email Address</span>
+                    <span class="ob-info-value"><%= onboarding.email || "—" %></span>
+                </div>
+
+                <div class="ob-info-item">
+                    <span class="ob-info-label">Phone Number</span>
+                    <span class="ob-info-value"><%= onboarding.phone || "—" %></span>
+                </div>
+
+                <div class="ob-info-item">
+                    <span class="ob-info-label">Joining Date</span>
+                    <span class="ob-info-value"><%= formatDate(onboarding.joiningDate) %></span>
+                </div>
+
+                <div class="ob-info-item">
+                    <span class="ob-info-label">Employment Type</span>
+                    <span class="ob-info-value"><%= onboarding.employmentType || "—" %></span>
+                </div>
+
+                <div class="ob-info-item">
+                    <span class="ob-info-label">Department</span>
+                    <span class="ob-info-value"><%= departmentName || "Not assigned" %></span>
+                </div>
+
+                <div class="ob-info-item">
+                    <span class="ob-info-label">Designation</span>
+                    <span class="ob-info-value"><%= designationName || "Not assigned" %></span>
+                </div>
+
+                <div class="ob-info-item">
+                    <span class="ob-info-label">Reporting Manager</span>
+                    <span class="ob-info-value"><%= onboarding.reportingManager || "—" %></span>
+                </div>
+
+                <div class="ob-info-item">
+                    <span class="ob-info-label">Employee Record</span>
+                    <span class="ob-info-value"><%= employeeRecordLabel %></span>
+                </div>
+
+                <div class="ob-info-item">
+                    <span class="ob-info-label">Created On</span>
+                    <span class="ob-info-value"><%= formatDateTime(onboarding.createdAt) %></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- REAL BACKEND WORKFLOW -->
+
+        <section class="ob-card">
+            <div class="ob-card-heading">
+                <h2>Review & Approval</h2>
+            </div>
+
+            <% if (currentStatus === "DRAFT") { %>
+
+                <div class="ob-alert ob-alert-info">
+                    This onboarding record is in Draft. Start onboarding
+                    to begin tracking employee tasks and documents.
+                </div>
+
+                <form
+                    method="POST"
+                    action="/onboarding/<%= onboarding._id %>/start"
+                    class="no-print"
+                    onsubmit="return confirm('Start onboarding for this employee?')"
+                >
+                    <button type="submit" class="ob-btn ob-btn-primary">
+                        Start Onboarding →
+                    </button>
+                </form>
+
+            <% } else if (currentStatus === "IN_PROGRESS") { %>
+
+                <div class="ob-review-panel">
+                    <h3>Onboarding in progress</h3>
+                    <p>
+                        Complete every task and make sure at least one
+                        employee document has been submitted and all
+                        submitted documents are approved before submitting
+                        this record for final approval.
+                    </p>
+                </div>
+
+                <div style="margin-top:16px">
+                    <% if (!allTasksCompleted) { %>
+                        <div class="ob-alert ob-alert-warning">
+                            <strong>Tasks incomplete.</strong>
+                            Complete all tasks first.
+                        </div>
+                    <% } %>
+
+                    <% if (!documents.length) { %>
+                        <div class="ob-alert ob-alert-warning">
+                            <strong>No documents found.</strong>
+                            Submit the required employee documents first.
+                        </div>
+                    <% } else if (!allDocumentsApproved) { %>
+                        <div class="ob-alert ob-alert-warning">
+                            <strong>Document approval pending.</strong>
+                            All submitted documents must have Approved status.
+                        </div>
+                    <% } %>
+                </div>
+
+                <form
+                    method="POST"
+                    action="/onboarding/<%= onboarding._id %>/submit-for-approval"
+                    class="no-print"
+                    onsubmit="return confirm('Submit this onboarding record for approval?')"
+                >
+                    <button
+                        type="submit"
+                        class="ob-btn ob-btn-primary"
+                        <%= canSubmitForApproval ? "" : "disabled" %>
+                    >
+                        Submit for Approval →
+                    </button>
+                </form>
+
+            <% } else if (canReview) { %>
+
+                <div class="ob-alert ob-alert-info">
+                    This onboarding is awaiting review. Verify all
+                    employee details, tasks and documents before deciding.
+                </div>
+
+                <div class="ob-review-panel">
+                    <h3>Approve Onboarding</h3>
+                    <p>
+                        Approving confirms that the onboarding checklist
+                        and required documents have been reviewed.
+                    </p>
+
+                    <form
+                        method="POST"
+                        action="/onboarding/<%= onboarding._id %>/approve"
+                        class="no-print"
+                        onsubmit="return confirm('Are you sure you want to approve this onboarding record?')"
+                        style="margin-top:15px"
+                    >
+                        <button type="submit" class="ob-btn ob-btn-success">
+                            ✓ Approve Onboarding
+                        </button>
+                    </form>
+                </div>
+
+                <hr class="ob-divider">
+
+                <div>
+                    <h3 style="margin:0 0 8px;font-size:15px">
+                        Reject Onboarding
+                    </h3>
+
+                    <p class="ob-muted">
+                        A rejection reason is required and will be saved
+                        in the onboarding record.
+                    </p>
+
+                    <form
+                        method="POST"
+                        action="/onboarding/<%= onboarding._id %>/reject"
+                        class="ob-form no-print"
+                        onsubmit="return confirm('Reject this onboarding record?')"
+                    >
+                        <label
+                            class="ob-field-label"
+                            for="rejectionReason"
+                        >
+                            Rejection Reason *
+                        </label>
+
+                        <textarea
+                            class="ob-textarea"
+                            id="rejectionReason"
+                            name="rejectionReason"
+                            maxlength="1000"
+                            minlength="1"
+                            required
+                            placeholder="Explain why this onboarding is being rejected..."
+                        ></textarea>
+
+                        <p class="ob-form-hint">
+                            Maximum 1000 characters.
+                        </p>
+
+                        <button type="submit" class="ob-btn ob-btn-danger">
+                            ✕ Reject Onboarding
+                        </button>
+                    </form>
+                </div>
+
+            <% } else if (currentStatus === "APPROVED") { %>
+
+                <div class="ob-alert ob-alert-success">
+                    This onboarding record has been approved.
+                </div>
+
+                <div class="ob-info-grid">
+                    <div class="ob-info-item">
+                        <span class="ob-info-label">Approved At</span>
+                        <span class="ob-info-value"><%= formatDateTime(onboarding.approvedAt) %></span>
+                    </div>
+
+                    <div class="ob-info-item">
+                        <span class="ob-info-label">Approved By</span>
+                        <span class="ob-info-value"><%= getPersonLabel(onboarding.approvedBy) %></span>
+                    </div>
+                </div>
+
+            <% } else if (currentStatus === "REJECTED") { %>
+
+                <div class="ob-alert ob-alert-error">
+                    This onboarding record has been rejected.
+                </div>
+
+                <div class="ob-info-grid">
+                    <div class="ob-info-item">
+                        <span class="ob-info-label">Rejected At</span>
+                        <span class="ob-info-value"><%= formatDateTime(onboarding.rejectedAt) %></span>
+                    </div>
+
+                    <div class="ob-info-item">
+                        <span class="ob-info-label">Rejected By</span>
+                        <span class="ob-info-value"><%= getPersonLabel(onboarding.rejectedBy) %></span>
+                    </div>
+                </div>
+
+                <% if (onboarding.rejectionReason) { %>
+                    <div class="ob-alert ob-alert-error" style="margin-top:16px;margin-bottom:0">
+                        <strong>Rejection Reason</strong>
+                        <div style="margin-top:6px;white-space:pre-wrap"><%= onboarding.rejectionReason %></div>
+                    </div>
+                <% } %>
+
+            <% } else { %>
+
+                <div class="ob-alert ob-alert-info">
+                    Current onboarding status:
+                    <strong><%= currentStatus.replace(/_/g, " ") %></strong>.
+                    No action is available for this status.
+                </div>
+
+            <% } %>
+        </section>
+    </div>
+
+    <!-- ONBOARDING TASKS -->
+
+
+<section class="ob-card">
+
+    <%
+        const taskTotal = tasks.length;
+        const taskCompleted = tasks.filter(
+            task => String(task.status || "PENDING").toUpperCase() === "COMPLETED"
+        ).length;
+
+        const taskProgress = taskTotal
+            ? Math.round((taskCompleted / taskTotal) * 100)
+            : 0;
+
+        const canManageTasks = currentStatus === "IN_PROGRESS";
+    %>
+
+    <div class="ob-card-heading">
+        <div>
+            <h2>Onboarding Tasks</h2>
+            <span class="ob-muted">
+                <%= taskCompleted %> of <%= taskTotal %> completed
+            </span>
+        </div>
+
+        <span class="ob-badge status-<%= taskProgress === 100 ? "COMPLETED" : "IN_PROGRESS" %>">
+            <%= taskProgress %>% Complete
+        </span>
+    </div>
+
+    <div style="height:8px;background:#e5e7eb;border-radius:20px;overflow:hidden;margin:14px 0 22px">
+        <div
+            style="height:100%;width:<%= taskProgress %>%;background:#2563eb;border-radius:20px;transition:width .3s"
+        ></div>
+    </div>
+
+    <% if (tasks.length) { %>
+
+        <div class="ob-list">
+
+            <% tasks.forEach((task, index) => { %>
+
+                <%
+                    const taskStatus = String(
+                        task.status || "PENDING"
+                    ).toUpperCase();
+
+                    const assignedPerson = getPersonLabel(task.assignedTo);
+
+                    const isAssigned =
+                        task.assignedTo &&
+                        String(
+                            task.assignedTo._id ||
+                            task.assignedTo.id ||
+                            task.assignedTo
+                        ) === String(
+                            user?._id ||
+                            user?.id ||
+                            user?.userId ||
+                            ""
+                        );
+
+                    const canStartTask =
+                        canManageTasks &&
+                        taskStatus === "PENDING";
+
+                    const canCompleteTask =
+                        canManageTasks &&
+                        taskStatus === "IN_PROGRESS";
+                %>
+
+                <article class="ob-list-item">
+
+                    <div class="ob-list-top">
+
+                        <div>
+                            <h3>
+                                <%= index + 1 %>.
+                                <%= task.title || task.name || "Onboarding Task" %>
+                            </h3>
+
+                            <p>
+                                <%= task.description || "No description provided." %>
+                            </p>
+                        </div>
+
+                        <span class="ob-badge status-<%= taskStatus %>">
+                            <%= taskStatus.replace(/_/g, " ") %>
+                        </span>
+
+                    </div>
+
+                    <div class="ob-item-meta">
+
+                        <span>
+                            Category:
+                            <%= task.category || "General" %>
+                        </span>
+
+                        <span>
+                            Assigned to:
+                            <%= assignedPerson === "Not recorded"
+                                ? "Unassigned"
+                                : assignedPerson %>
+                        </span>
+
+                        <span>
+                            Due: <%= formatDate(task.dueDate) %>
+                        </span>
+
+                    </div>
+
+                    <% if (task.startedAt) { %>
+                        <p style="margin-top:10px;color:#64748b;font-size:13px">
+                            <strong>Started:</strong>
+                            <%= formatDate(task.startedAt) %>
+                        </p>
+                    <% } %>
+
+                    <% if (task.completedAt) { %>
+                        <p style="margin-top:6px;color:#15803d;font-size:13px">
+                            <strong>Completed:</strong>
+                            <%= formatDate(task.completedAt) %>
+                        </p>
+                    <% } %>
+
+                    <% if (task.remarks) { %>
+                        <p style="margin-top:10px">
+                            <strong>Remarks:</strong>
+                            <%= task.remarks %>
+                        </p>
+                    <% } %>
+
+                    <% if (canStartTask) { %>
+
+                        <div style="margin-top:16px">
+
+                            <form
+                                action="/onboarding/<%= onboarding._id %>/tasks/<%= task._id %>/start"
+                                method="POST"
+                            >
+                                <button
+                                    type="submit"
+                                    class="ob-btn ob-btn-primary"
+                                >
+                                    Start Task
+                                </button>
+                            </form>
+
+                        </div>
+
+                    <% } else if (canCompleteTask) { %>
+
+                        <form
+                            action="/onboarding/<%= onboarding._id %>/tasks/<%= task._id %>/complete"
+                            method="POST"
+                            style="margin-top:16px"
+                        >
+
+                            <div style="margin-bottom:12px">
+
+                                <label
+                                    for="task-remarks-<%= task._id %>"
+                                    style="display:block;margin-bottom:6px;font-weight:600"
+                                >
+                                    Completion remarks (optional)
+                                </label>
+
+                                <textarea
+                                    id="task-remarks-<%= task._id %>"
+                                    name="remarks"
+                                    rows="2"
+                                    maxlength="1000"
+                                    placeholder="Describe the work completed..."
+                                    style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font:inherit"
+                                ></textarea>
+
+                            </div>
+
+                            <button
+                                type="submit"
+                                class="ob-btn ob-btn-primary"
+                            >
+                                Mark Complete
+                            </button>
+
+                        </form>
+
+                    <% } else if (taskStatus === "COMPLETED") { %>
+
+                        <div style="margin-top:14px;color:#15803d;font-weight:600">
+                            &#10003; This task has been completed.
+                        </div>
+
+                    <% } else if (!canManageTasks) { %>
+
+                        <p style="margin-top:14px;color:#64748b;font-size:13px">
+                            Start the onboarding before managing tasks.
+                        </p>
+
+                    <% } else if (taskStatus === "BLOCKED") { %>
+
+                        <p style="margin-top:14px;color:#b45309;font-size:13px">
+                            This task is blocked. Resolve the blocker before proceeding.
+                        </p>
+
+                    <% } %>
+
+                </article>
+
+            <% }) %>
+
+        </div>
+
+    <% } else { %>
+
+        <div class="ob-empty">
+            No onboarding tasks have been added yet.
+        </div>
+
+    <% } %>
+
+</section>
+
+
+    <!-- ACTUAL EMPLOYEE DOCUMENTS -->
+
+    <section class="ob-card">
+        
+<div class="ob-card-heading">
+    <div>
+        <h2>Employee Documents</h2>
+        <span class="ob-muted">
+            <%= approvedDocuments %> of <%= documents.length %> approved
+        </span>
+    </div>
+
+    <% if (["DRAFT", "IN_PROGRESS", "REJECTED"].includes(currentStatus)) { %>
+        <a
+            href="/documents/upload?targetType=onboarding&onboardingId=<%= encodeURIComponent(String(onboarding._id)) %>"
+            class="ob-btn ob-btn-primary no-print"
+        >
+            + Upload Document
+        </a>
+    <% } %>
+</div>
+
+
+        <% if (documents.length) { %>
+            <div class="ob-list">
+                <% documents.forEach((doc, index) => { %>
+                    <%
+                        const docStatus = String(
+                            doc.status || "PENDING"
+                        ).toUpperCase();
+
+                        const docName =
+                            doc.originalName ||
+                            doc.fileName ||
+                            ("Document " + (index + 1));
+                    %>
+
+                    <article class="ob-list-item">
+                        <div class="ob-list-top">
+                            <div>
+                                <h3>
+                                    <%= doc.documentType || "Employee Document" %>
+                                </h3>
+
+                                <p><%= docName %></p>
+                            </div>
+
+                            <span class="ob-badge status-<%= docStatus %>">
+                                <%= docStatus.replace(/_/g, " ") %>
+                            </span>
+                        </div>
+
+                        <div class="ob-item-meta">
+                            <span>
+                                Uploaded:
+                                <%= formatDateTime(doc.createdAt || doc.uploadedAt) %>
+                            </span>
+
+                            <span>
+                                Uploaded by:
+                                <%= getPersonLabel(doc.uploadedBy) %>
+                            </span>
+
+                            <% if (doc.reviewedAt) { %>
+                                <span>
+                                    Reviewed:
+                                    <%= formatDateTime(doc.reviewedAt) %>
+                                </span>
+                            <% } %>
+
+                            <% if (doc.reviewedBy) { %>
+                                <span>
+                                    Reviewed by:
+                                    <%= getPersonLabel(doc.reviewedBy) %>
+                                </span>
+                            <% } %>
+                        </div>
+                        <!-- DOCUMENT ACTIONS -->
+
+<!-- DOCUMENT ACTIONS -->
+<div
+    class="ob-item-actions no-print"
+    style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;"
+>
+   
+
+    <a
+        href="/documents/<%= encodeURIComponent(String(doc._id)) %>"
+        class="ob-btn"
+        title="View document details"
+    >
+        View Details
+    </a>
+</div>
+
+                        <% if (doc.rejectionReason) { %>
+                            <div class="ob-alert ob-alert-error" style="margin-top:12px;margin-bottom:0">
+                                <strong>Rejection Reason</strong>
+                                <div style="margin-top:5px;white-space:pre-wrap"><%= doc.rejectionReason %></div>
+                            </div>
+                        <% } %>
+                    </article>
+                <% }) %>
+            </div>
+        <% } else { %>
+            <div class="ob-empty">
+                No documents submitted yet.
+                <br>
+                Upload the required employee documents before requesting approval.
+            </div>
+        <% } %>
+    </section>
+    
+
+
+
+    <!-- NOTES -->
+
+    <% if (onboarding.notes) { %>
+        <section class="ob-card">
+            <div class="ob-card-heading">
+                <h2>Onboarding Notes</h2>
+            </div>
+
+            <div class="ob-note"><%= onboarding.notes %></div>
+        </section>
+    <% } %>
+
+</main>
+</body>
+</html>

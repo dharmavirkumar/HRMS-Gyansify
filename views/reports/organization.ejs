@@ -1,0 +1,759 @@
+
+<%
+    const reportTitle = typeof title !== "undefined"
+        ? title
+        : "Organization Report";
+
+    const org = typeof organization !== "undefined" && organization
+        ? organization
+        : {};
+
+    const departmentList = typeof departments !== "undefined" && Array.isArray(departments)
+        ? departments
+        : [];
+
+    const designationList = typeof designations !== "undefined" && Array.isArray(designations)
+        ? designations
+        : [];
+
+    const employeeCount = typeof totalEmployees !== "undefined"
+        ? totalEmployees
+        : 0;
+
+    const activeEmployeeCount = typeof activeEmployees !== "undefined"
+        ? activeEmployees
+        : 0;
+
+    const departmentCount = departmentList.length;
+    const designationCount = designationList.length;
+
+    const organizationName =
+        org.name ||
+        org.organizationName ||
+        org.legalName ||
+        "Gyansify";
+
+    const organizationStatus =
+        org.status || "Not specified";
+
+    const formatDate = (value) => {
+        if (!value) return "—";
+
+        const date = new Date(value);
+
+        if (Number.isNaN(date.getTime())) return "—";
+
+        return date.toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric"
+        });
+    };
+%>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title><%= reportTitle %> - Gyansify HRMS</title>
+
+    <link
+        rel="stylesheet"
+        href="/css/dashboard.css"
+    >
+
+    <style>
+        .org-report {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 28px;
+            color: #172033;
+        }
+
+        .org-report * {
+            box-sizing: border-box;
+        }
+
+        .org-report-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+
+        .org-report-header h1 {
+            margin: 0 0 8px;
+            font-size: 28px;
+            font-weight: 750;
+            letter-spacing: -0.7px;
+        }
+
+        .org-report-header p {
+            margin: 0;
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .org-report-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .org-report-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 40px;
+            padding: 10px 16px;
+            border: 1px solid #dbe3ef;
+            border-radius: 9px;
+            background: #fff;
+            color: #334155;
+            font-size: 13px;
+            font-weight: 650;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .org-report-btn-primary {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: #fff;
+        }
+
+        .org-report-btn:hover {
+            filter: brightness(.97);
+        }
+
+        .org-report-banner {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid #e1e9f5;
+            border-radius: 16px;
+            background: linear-gradient(115deg, #f0f6ff, #fff);
+        }
+
+        .org-report-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            width: 64px;
+            height: 64px;
+            border-radius: 14px;
+            background: #2563eb;
+            color: #fff;
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+        .org-report-banner h2 {
+            margin: 0 0 6px;
+            font-size: 21px;
+            font-weight: 750;
+        }
+
+        .org-report-banner p {
+            margin: 0;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .org-report-status {
+            margin-left: auto;
+            align-self: flex-start;
+            padding: 7px 11px;
+            border-radius: 999px;
+            background: #e2e8f0;
+            color: #475569;
+            font-size: 11px;
+            font-weight: 750;
+            text-transform: uppercase;
+        }
+
+        .org-report-status.active {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .org-report-stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+
+        .org-report-stat {
+            padding: 22px;
+            border: 1px solid #e5eaf2;
+            border-radius: 14px;
+            background: #fff;
+            box-shadow: 0 3px 12px rgba(15, 23, 42, .025);
+        }
+
+        .org-report-stat-label {
+            margin-bottom: 14px;
+            color: #64748b;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .org-report-stat-value {
+            margin-bottom: 8px;
+            color: #172033;
+            font-size: 30px;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        .org-report-stat-note {
+            color: #94a3b8;
+            font-size: 12px;
+        }
+
+        .org-report-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 22px;
+        }
+
+        .org-report-card {
+            min-width: 0;
+            overflow: hidden;
+            border: 1px solid #e5eaf2;
+            border-radius: 14px;
+            background: #fff;
+        }
+
+        .org-report-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 20px 22px;
+            border-bottom: 1px solid #edf1f7;
+        }
+
+        .org-report-card-header h3 {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 750;
+        }
+
+        .org-report-card-header span {
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        .org-report-details {
+            padding: 8px 22px;
+        }
+
+        .org-report-detail {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 15px 0;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 13px;
+        }
+
+        .org-report-detail:last-child {
+            border-bottom: none;
+        }
+
+        .org-report-detail-label {
+            color: #64748b;
+        }
+
+        .org-report-detail-value {
+            color: #1e293b;
+            font-weight: 650;
+            text-align: right;
+            overflow-wrap: anywhere;
+        }
+
+        .org-report-table-wrap {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .org-report-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .org-report-table th {
+            padding: 13px 18px;
+            background: #f8fafc;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 750;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            white-space: nowrap;
+        }
+
+        .org-report-table td {
+            padding: 15px 18px;
+            border-top: 1px solid #f1f5f9;
+            color: #334155;
+            font-size: 13px;
+        }
+
+        .org-report-empty {
+            padding: 28px 18px !important;
+            color: #94a3b8 !important;
+            text-align: center;
+        }
+
+        .org-report-footer {
+            margin-top: 24px;
+            color: #94a3b8;
+            font-size: 12px;
+            text-align: right;
+        }
+
+        @media (max-width: 1000px) {
+            .org-report-stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .org-report-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .org-report {
+                padding: 18px 12px;
+            }
+
+            .org-report-header {
+                flex-direction: column;
+            }
+
+            .org-report-header h1 {
+                font-size: 23px;
+            }
+
+            .org-report-banner {
+                flex-wrap: wrap;
+                padding: 18px;
+            }
+
+            .org-report-status {
+                margin-left: 0;
+            }
+
+            .org-report-stats {
+                gap: 10px;
+            }
+
+            .org-report-stat {
+                padding: 15px;
+            }
+
+            .org-report-stat-value {
+                font-size: 25px;
+            }
+
+            .org-report-card-header,
+            .org-report-details {
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+        }
+
+        @media print {
+            .org-report-actions {
+                display: none !important;
+            }
+
+            .org-report {
+                max-width: none;
+                padding: 0;
+            }
+
+            .org-report-card,
+            .org-report-stat,
+            .org-report-banner {
+                break-inside: avoid;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<%- include('../partials/navbar') %>
+<main class="org-report">
+
+    <header class="org-report-header">
+        <div>
+            <h1>Organization Report</h1>
+
+            <p>
+                Overview of your organization, workforce structure,
+                departments and designations.
+            </p>
+        </div>
+
+        <div class="org-report-actions">
+            <a
+                href="/reports"
+                class="org-report-btn"
+            >
+                ← Back to Reports
+            </a>
+
+            <button
+                type="button"
+                class="org-report-btn org-report-btn-primary"
+                onclick="window.print()"
+            >
+                Print / Save PDF
+            </button>
+        </div>
+    </header>
+
+    <section class="org-report-banner">
+        <div class="org-report-logo">G</div>
+
+        <div>
+            <h2><%= organizationName %></h2>
+
+            <p>
+                <%= org.legalName || "Organization overview" %>
+            </p>
+        </div>
+
+        <span class="org-report-status <%= String(organizationStatus).toUpperCase() === 'ACTIVE' ? 'active' : '' %>">
+            <%= organizationStatus %>
+        </span>
+    </section>
+
+    <section class="org-report-stats">
+
+        <article class="org-report-stat">
+            <div class="org-report-stat-label">
+                Total Employees
+            </div>
+
+            <div class="org-report-stat-value">
+                <%= employeeCount %>
+            </div>
+
+            <div class="org-report-stat-note">
+                Workforce size
+            </div>
+        </article>
+
+        <article class="org-report-stat">
+            <div class="org-report-stat-label">
+                Active Employees
+            </div>
+
+            <div class="org-report-stat-value">
+                <%= activeEmployeeCount %>
+            </div>
+
+            <div class="org-report-stat-note">
+                Currently active
+            </div>
+        </article>
+
+        <article class="org-report-stat">
+            <div class="org-report-stat-label">
+                Departments
+            </div>
+
+            <div class="org-report-stat-value">
+                <%= departmentCount %>
+            </div>
+
+            <div class="org-report-stat-note">
+                Organizational units
+            </div>
+        </article>
+
+        <article class="org-report-stat">
+            <div class="org-report-stat-label">
+                Designations
+            </div>
+
+            <div class="org-report-stat-value">
+                <%= designationCount %>
+            </div>
+
+            <div class="org-report-stat-note">
+                Job titles defined
+            </div>
+        </article>
+
+    </section>
+
+    <section class="org-report-grid">
+
+        <!-- ORGANIZATION INFORMATION -->
+
+        <article class="org-report-card">
+            <div class="org-report-card-header">
+                <h3>Organization Information</h3>
+                <span>Company profile</span>
+            </div>
+
+            <div class="org-report-details">
+
+                <div class="org-report-detail">
+                    <span class="org-report-detail-label">
+                        Organization Name
+                    </span>
+
+                    <span class="org-report-detail-value">
+                        <%= organizationName %>
+                    </span>
+                </div>
+
+                <div class="org-report-detail">
+                    <span class="org-report-detail-label">
+                        Legal Name
+                    </span>
+
+                    <span class="org-report-detail-value">
+                        <%= org.legalName || "—" %>
+                    </span>
+                </div>
+
+                <div class="org-report-detail">
+                    <span class="org-report-detail-label">
+                        Email
+                    </span>
+
+                    <span class="org-report-detail-value">
+                        <%= org.email || org.contactEmail || "—" %>
+                    </span>
+                </div>
+
+                <div class="org-report-detail">
+                    <span class="org-report-detail-label">
+                        Phone
+                    </span>
+
+                    <span class="org-report-detail-value">
+                        <%= org.phone || org.contactPhone || "—" %>
+                    </span>
+                </div>
+
+                <div class="org-report-detail">
+                    <span class="org-report-detail-label">
+                        Time Zone
+                    </span>
+
+                    <span class="org-report-detail-value">
+                        <%= org.timezone || "Asia/Kolkata" %>
+                    </span>
+                </div>
+
+                <div class="org-report-detail">
+                    <span class="org-report-detail-label">
+                        Currency
+                    </span>
+
+                    <span class="org-report-detail-value">
+                        <%= org.currency || "INR" %>
+                    </span>
+                </div>
+
+                <div class="org-report-detail">
+                    <span class="org-report-detail-label">
+                        Created On
+                    </span>
+
+                    <span class="org-report-detail-value">
+                        <%= formatDate(org.createdAt) %>
+                    </span>
+                </div>
+
+            </div>
+        </article>
+
+        <!-- DEPARTMENT SUMMARY -->
+
+        <article class="org-report-card">
+            <div class="org-report-card-header">
+                <h3>Department Summary</h3>
+                <span><%= departmentCount %> departments</span>
+            </div>
+
+            <div class="org-report-table-wrap">
+                <table class="org-report-table">
+                    <thead>
+                        <tr>
+                            <th>Department</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <% if (departmentList.length > 0) { %>
+
+                            <% departmentList.forEach((department) => { %>
+                                <tr>
+                                    <td>
+                                        <strong>
+                                            <%= department.name || department.departmentName || "Unnamed Department" %>
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        <%= department.status || "—" %>
+                                    </td>
+                                </tr>
+                            <% }) %>
+
+                        <% } else { %>
+
+                            <tr>
+                                <td colspan="2" class="org-report-empty">
+                                    No department data available.
+                                </td>
+                            </tr>
+
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </article>
+
+        <!-- DESIGNATION SUMMARY -->
+
+        <article class="org-report-card">
+            <div class="org-report-card-header">
+                <h3>Designation Summary</h3>
+                <span><%= designationCount %> designations</span>
+            </div>
+
+            <div class="org-report-table-wrap">
+                <table class="org-report-table">
+                    <thead>
+                        <tr>
+                            <th>Designation</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <% if (designationList.length > 0) { %>
+
+                            <% designationList.forEach((designation) => { %>
+                                <tr>
+                                    <td>
+                                        <strong>
+                                            <%= designation.name || designation.title || designation.designationName || "Unnamed Designation" %>
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        <%= designation.status || "—" %>
+                                    </td>
+                                </tr>
+                            <% }) %>
+
+                        <% } else { %>
+
+                            <tr>
+                                <td colspan="2" class="org-report-empty">
+                                    No designation data available.
+                                </td>
+                            </tr>
+
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </article>
+
+        <!-- WORKFORCE SUMMARY -->
+
+        <article class="org-report-card">
+            <div class="org-report-card-header">
+                <h3>Workforce Summary</h3>
+                <span>Employee overview</span>
+            </div>
+
+            <div class="org-report-details">
+
+                <div class="org-report-detail">
+                    <span class="org-report-detail-label">
+                        Total Employees
+                    </span>
+
+                    <span class="org-report-detail-value">
+                        <%= employeeCount %>
+                    </span>
+                </div>
+
+                <div class="org-report-detail">
+                    <span class="org-report-detail-label">
+                        Active Employees
+                    </span>
+
+                    <span class="org-report-detail-value">
+                        <%= activeEmployeeCount %>
+                    </span>
+                </div>
+
+                <div class="org-report-detail">
+                    <span class="org-report-detail-label">
+                        Departments
+                    </span>
+
+                    <span class="org-report-detail-value">
+                        <%= departmentCount %>
+                    </span>
+                </div>
+
+                <div class="org-report-detail">
+                    <span class="org-report-detail-label">
+                        Designations
+                    </span>
+
+                    <span class="org-report-detail-value">
+                        <%= designationCount %>
+                    </span>
+                </div>
+
+            </div>
+        </article>
+
+    </section>
+
+    <footer class="org-report-footer">
+        Generated on
+        <%= new Date().toLocaleString("en-IN", {
+            dateStyle: "medium",
+            timeStyle: "short",
+            timeZone: "Asia/Kolkata"
+        }) %>
+        · Gyansify HRMS
+    </footer>
+
+</main>
+
+</body>
+</html>

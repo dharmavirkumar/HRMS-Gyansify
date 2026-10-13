@@ -1,0 +1,916 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Upload Document | Gyansify HRMS</title>
+    <link rel="stylesheet" href="/css/dashboard.css">
+
+    <style>
+        :root {
+            --upload-primary: #2563eb;
+            --upload-primary-dark: #1d4ed8;
+            --upload-text: #111827;
+            --upload-muted: #64748b;
+            --upload-border: #e2e8f0;
+            --upload-surface: #fff;
+            --upload-background: #f8fafc;
+            --upload-danger: #dc2626;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background: var(--upload-background);
+            color: var(--upload-text);
+            font-family: Inter, -apple-system, BlinkMacSystemFont,
+                "Segoe UI", sans-serif;
+        }
+
+        .document-page {
+            width: 100%;
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 32px 24px 48px;
+        }
+
+        .page-heading {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 18px;
+            margin-bottom: 26px;
+        }
+
+        .breadcrumb {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+            color: var(--upload-muted);
+            font-size: 13px;
+        }
+
+        .breadcrumb a {
+            color: var(--upload-primary);
+            text-decoration: none;
+        }
+
+        .page-heading h1 {
+            margin: 0 0 8px;
+            font-size: clamp(25px, 3vw, 32px);
+            font-weight: 750;
+            letter-spacing: -.8px;
+        }
+
+        .page-heading p {
+            margin: 0;
+            color: var(--upload-muted);
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .secure-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 13px;
+            border: 1px solid #bbf7d0;
+            border-radius: 9px;
+            background: #f0fdf4;
+            color: #166534;
+            font-size: 12px;
+            font-weight: 650;
+        }
+
+        .upload-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 290px;
+            align-items: start;
+            gap: 24px;
+        }
+
+        .upload-card, .info-card {
+            background: var(--upload-surface);
+            border: 1px solid var(--upload-border);
+            border-radius: 15px;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, .035);
+        }
+
+        .upload-card { overflow: hidden; }
+
+        .card-heading {
+            padding: 22px 25px;
+            border-bottom: 1px solid var(--upload-border);
+        }
+
+        .card-heading h2 {
+            margin: 0 0 6px;
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        .card-heading p {
+            margin: 0;
+            color: var(--upload-muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .form-body { padding: 25px; }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 22px 18px;
+        }
+
+        .form-field { min-width: 0; }
+        .form-field.full-width { grid-column: 1 / -1; }
+
+        .form-field > label {
+            display: block;
+            margin-bottom: 9px;
+            color: #334155;
+            font-size: 13px;
+            font-weight: 650;
+        }
+
+        .required { color: var(--upload-danger); }
+
+        .optional {
+            color: #94a3b8;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .form-control {
+            display: block;
+            width: 100%;
+            min-height: 45px;
+            padding: 11px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            outline: none;
+            background: #fff;
+            color: #0f172a;
+            font: inherit;
+            font-size: 13px;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        .form-control:focus {
+            border-color: var(--upload-primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, .11);
+        }
+
+        .form-control:disabled {
+            background: #f1f5f9;
+            cursor: not-allowed;
+        }
+
+        .field-help {
+            margin: 8px 0 0;
+            color: var(--upload-muted);
+            font-size: 11px;
+            line-height: 1.6;
+        }
+
+        .record-type-options {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .record-option {
+            display: flex !important;
+            align-items: flex-start;
+            gap: 10px;
+            min-height: 78px;
+            padding: 15px;
+            margin: 0 !important;
+            border: 1px solid var(--upload-border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: .2s;
+        }
+
+        .record-option:has(input:checked) {
+            border-color: var(--upload-primary);
+            background: #eff6ff;
+        }
+
+        .record-option input {
+            margin-top: 3px;
+            accent-color: var(--upload-primary);
+        }
+
+        .record-option strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 13px;
+        }
+
+        .record-option small {
+            display: block;
+            color: var(--upload-muted);
+            font-size: 11px;
+            line-height: 1.5;
+            font-weight: 400;
+        }
+
+        .drop-zone {
+            position: relative;
+            padding: 27px 18px;
+            border: 1.5px dashed #94a3b8;
+            border-radius: 12px;
+            background: #f8fbff;
+            text-align: center;
+            transition: .2s;
+        }
+
+        .drop-zone.drag-over {
+            border-color: var(--upload-primary);
+            background: #eff6ff;
+        }
+
+        .upload-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 13px;
+            border-radius: 12px;
+            background: #dbeafe;
+            color: var(--upload-primary);
+            font-size: 24px;
+        }
+
+        .drop-zone h3 {
+            margin: 0 0 7px;
+            font-size: 14px;
+        }
+
+        .drop-zone p {
+            margin: 0 0 13px;
+            color: var(--upload-muted);
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .browse-button {
+            display: inline-block;
+            padding: 9px 14px;
+            border: 1px solid #bfdbfe;
+            border-radius: 7px;
+            background: #fff;
+            color: var(--upload-primary);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .browse-button:hover { background: #eff6ff; }
+
+        .file-input {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            clip-path: inset(50%);
+        }
+
+        .file-input:focus-visible + .unused-focus-target { outline: 2px solid blue; }
+
+        .file-preview {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            margin-top: 14px;
+            padding: 13px;
+            border: 1px solid var(--upload-border);
+            border-radius: 9px;
+            background: #fff;
+            text-align: left;
+        }
+
+        .file-preview.visible { display: flex; }
+
+        .file-badge {
+            display: flex;
+            flex-shrink: 0;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 9px;
+            background: #dbeafe;
+            color: #1d4ed8;
+            font-size: 10px;
+            font-weight: 800;
+        }
+
+        .file-details { flex: 1; min-width: 0; }
+
+        .file-name {
+            overflow-wrap: anywhere;
+            margin-bottom: 4px;
+            font-size: 12px;
+            font-weight: 650;
+        }
+
+        .file-size {
+            color: var(--upload-muted);
+            font-size: 11px;
+        }
+
+        .remove-file {
+            border: 0;
+            background: transparent;
+            color: var(--upload-danger);
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .form-alert {
+            display: none;
+            margin: 0 0 20px;
+            padding: 12px 14px;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            background: #fef2f2;
+            color: #991b1b;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .form-alert.visible { display: block; }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 27px;
+            padding-top: 22px;
+            border-top: 1px solid var(--upload-border);
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 43px;
+            padding: 11px 17px;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            font: inherit;
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .button-secondary {
+            border-color: #cbd5e1;
+            background: #fff;
+            color: #334155;
+        }
+
+        .button-primary {
+            background: var(--upload-primary);
+            color: #fff;
+        }
+
+        .button-primary:hover { background: var(--upload-primary-dark); }
+
+        .button:disabled {
+            opacity: .65;
+            cursor: not-allowed;
+        }
+
+        .side-column { display: grid; gap: 18px; }
+
+        .info-card { padding: 21px; }
+
+        .info-card h3 {
+            margin: 0 0 17px;
+            font-size: 14px;
+        }
+
+        .info-list { display: grid; gap: 17px; }
+
+        .info-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 11px;
+        }
+
+        .info-item-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            width: 33px;
+            height: 33px;
+            border-radius: 9px;
+            background: #eff6ff;
+            color: var(--upload-primary);
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .info-item strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 12px;
+        }
+
+        .info-item p {
+            margin: 0;
+            color: var(--upload-muted);
+            font-size: 11px;
+            line-height: 1.6;
+        }
+
+        .security-note {
+            padding: 14px;
+            border: 1px solid #dbeafe;
+            border-radius: 9px;
+            background: #eff6ff;
+            color: #1e40af;
+            font-size: 11px;
+            line-height: 1.7;
+        }
+
+        [hidden] { display: none !important; }
+
+        @media (max-width: 850px) {
+            .upload-layout { grid-template-columns: minmax(0, 1fr); }
+            .side-column { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
+        @media (max-width: 560px) {
+            .document-page { padding: 22px 14px 32px; }
+            .form-body, .card-heading { padding: 19px; }
+            .form-grid, .record-type-options, .side-column {
+                grid-template-columns: minmax(0, 1fr);
+            }
+            .form-field.full-width { grid-column: auto; }
+            .form-actions { flex-direction: column-reverse; }
+            .form-actions .button { width: 100%; }
+        }
+    </style>
+</head>
+
+<body>
+<main class="document-page">
+    <header class="page-heading">
+        <div>
+            <nav class="breadcrumb" aria-label="Breadcrumb">
+                <a href="/dashboard">Dashboard</a>
+                <span>/</span>
+                <a href="/documents">Documents</a>
+                <span>/</span>
+                <span>Upload</span>
+            </nav>
+
+            <h1>Upload Document</h1>
+            <p>Securely add and manage employee or onboarding documents.</p>
+        </div>
+
+        <div class="secure-label">
+            <span aria-hidden="true">✓</span>
+            Secure document workflow
+        </div>
+    </header>
+
+    <div class="upload-layout">
+        <section class="upload-card">
+            <div class="card-heading">
+                <h2>Document information</h2>
+                <p>Complete the details below and select the file you want to upload.</p>
+            </div>
+
+            <form
+                id="documentUploadForm"
+                action="/documents/upload"
+                method="POST"
+                enctype="multipart/form-data"
+                class="form-body"
+            >
+                <div
+                    id="formAlert"
+                    class="form-alert <%= typeof error !== 'undefined' && error ? 'visible' : '' %>"
+                    role="alert"
+                    aria-live="polite"
+                ><%= typeof error !== 'undefined' && error ? error : '' %></div>
+
+                <div class="form-grid">
+                    <div class="form-field full-width">
+                        <label>Link this document to <span class="required">*</span></label>
+
+                        <div class="record-type-options">
+                            <label class="record-option">
+                                <input
+                                    type="radio"
+                                    name="targetType"
+                                    value="employee"
+                                    checked
+                                    required
+                                >
+                                <span>
+                                    <strong>Employee</strong>
+                                    <small>Attach to an existing employee record.</small>
+                                </span>
+                            </label>
+
+                            <label class="record-option">
+                                <input
+                                    type="radio"
+                                    name="targetType"
+                                    value="onboarding"
+                                    required
+                                >
+                                <span>
+                                    <strong>Onboarding</strong>
+                                    <small>Attach to an onboarding record.</small>
+                                </span>
+                            </label>
+                        </div>
+
+                        <p class="field-help">Choose one record type and select the corresponding record below.</p>
+                    </div>
+
+                    <div class="form-field full-width" id="employeeField">
+                        <label for="employeeId">Employee <span class="required">*</span></label>
+
+                        <select class="form-control" id="employeeId" name="employeeId" required>
+                            <option value="">Select an employee</option>
+
+                            <% if (typeof employees !== "undefined" && Array.isArray(employees)) { %>
+                                <% employees.forEach(function(employee) { %>
+                                    <option value="<%= employee._id %>">
+                                        <%= [employee.firstName, employee.lastName].filter(Boolean).join(" ") || employee.name || "Employee" %>
+                                        <% if (employee.employeeId) { %>
+                                            — <%= employee.employeeId %>
+                                        <% } %>
+                                    </option>
+                                <% }) %>
+                            <% } %>
+                        </select>
+
+                        <p class="field-help">Select an employee belonging to your organization.</p>
+                    </div>
+
+                    <div class="form-field full-width" id="onboardingField" hidden>
+                        <label for="onboardingId">Onboarding record <span class="required">*</span></label>
+
+                        <select class="form-control" id="onboardingId" name="onboardingId" disabled>
+                            <option value="">Select an onboarding record</option>
+
+                            <% if (typeof onboardings !== "undefined" && Array.isArray(onboardings)) { %>
+                                <% onboardings.forEach(function(item) { %>
+                                    <option value="<%= item._id %>">
+                                        <%= [item.firstName, item.lastName].filter(Boolean).join(" ") || "Onboarding candidate" %>
+                                        <% if (item.email) { %>
+                                            — <%= item.email %>
+                                        <% } %>
+                                        <% if (item.status) { %>
+                                            (<%= item.status %>)
+                                        <% } %>
+                                    </option>
+                                <% }) %>
+                            <% } %>
+                        </select>
+
+                        <p class="field-help">Select an existing onboarding record from your organization.</p>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="documentType">Document category <span class="required">*</span></label>
+
+                        <select class="form-control" id="documentType" name="documentType" required>
+                            <option value="">Select category</option>
+                            <option value="AADHAAR">Aadhaar Card</option>
+                            <option value="PAN">PAN Card</option>
+                            <option value="RESUME">Resume</option>
+                            <option value="EDUCATION">Education Certificate</option>
+                            <option value="OFFER_LETTER">Offer Letter</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+
+                        <p class="field-help">Choose the category that matches the file.</p>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="documentReference">
+                            Reference / Notes <span class="optional">(optional)</span>
+                        </label>
+
+                        <input
+                            class="form-control"
+                            type="text"
+                            id="documentReference"
+                            name="reference"
+                            maxlength="100"
+                            placeholder="e.g. Certificate reference"
+                        >
+
+                        <p class="field-help">Optional reference for tracking. Saving this requires controller/model support.</p>
+                    </div>
+
+                    <div class="form-field full-width">
+                        <label for="document">Choose document <span class="required">*</span></label>
+
+                        <div class="drop-zone" id="dropZone">
+                            <div class="upload-icon" aria-hidden="true">↑</div>
+                            <h3>Drag and drop your file here</h3>
+                            <p>PDF, JPG, JPEG or PNG · Maximum size 10 MB</p>
+
+                            <label class="browse-button" for="document">Browse files</label>
+
+                            <input
+                                class="file-input"
+                                type="file"
+                                id="document"
+                                name="document"
+                                accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                                required
+                            >
+                        </div>
+
+                        <div class="file-preview" id="filePreview" aria-live="polite">
+                            <div class="file-badge" id="fileBadge">FILE</div>
+                            <div class="file-details">
+                                <div class="file-name" id="fileName"></div>
+                                <div class="file-size" id="fileSize"></div>
+                            </div>
+                            <button class="remove-file" type="button" id="removeFile">Remove</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <a href="/documents" class="button button-secondary">Cancel</a>
+                    <button type="submit" class="button button-primary" id="submitButton">
+                        <span aria-hidden="true">↑</span>
+                        Upload Document
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <aside class="side-column">
+            <section class="info-card">
+                <h3>Upload guidelines</h3>
+
+                <div class="info-list">
+                    <div class="info-item">
+                        <div class="info-item-icon">PDF</div>
+                        <div>
+                            <strong>Supported formats</strong>
+                            <p>PDF, JPG, JPEG and PNG files.</p>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-item-icon">10 MB</div>
+                        <div>
+                            <strong>Maximum file size</strong>
+                            <p>Each file must be 10 MB or smaller.</p>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-item-icon">✓</div>
+                        <div>
+                            <strong>Record association</strong>
+                            <p>Every document must be linked to an employee or onboarding record.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="info-card">
+                <h3>Before you upload</h3>
+                <div class="security-note">
+                    Verify that the file belongs to the selected employee or onboarding record.
+                    Only upload documents you are authorized to manage.
+                </div>
+            </section>
+        </aside>
+    </div>
+</main>
+
+<script>
+(function () {
+    "use strict";
+
+    const form = document.getElementById("documentUploadForm");
+    const fileInput = document.getElementById("document");
+    const dropZone = document.getElementById("dropZone");
+    const filePreview = document.getElementById("filePreview");
+    const fileName = document.getElementById("fileName");
+    const fileSize = document.getElementById("fileSize");
+    const fileBadge = document.getElementById("fileBadge");
+    const removeFileButton = document.getElementById("removeFile");
+    const formAlert = document.getElementById("formAlert");
+    const submitButton = document.getElementById("submitButton");
+
+    const employeeField = document.getElementById("employeeField");
+    const onboardingField = document.getElementById("onboardingField");
+    const employeeSelect = document.getElementById("employeeId");
+    const onboardingSelect = document.getElementById("onboardingId");
+
+    const MAX_SIZE = 10 * 1024 * 1024;
+    const allowedExtensions = ["pdf", "jpg", "jpeg", "png"];
+    const allowedTypes = ["application/pdf", "image/jpeg", "image/png"];
+
+    function showError(message) {
+        formAlert.textContent = message;
+        formAlert.classList.add("visible");
+        formAlert.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    function clearError() {
+        formAlert.textContent = "";
+        formAlert.classList.remove("visible");
+    }
+
+    function formatSize(bytes) {
+        return bytes < 1024 * 1024
+            ? (bytes / 1024).toFixed(1) + " KB"
+            : (bytes / (1024 * 1024)).toFixed(2) + " MB";
+    }
+
+    function resetFile() {
+        fileInput.value = "";
+        filePreview.classList.remove("visible");
+        fileName.textContent = "";
+        fileSize.textContent = "";
+        fileBadge.textContent = "FILE";
+    }
+
+    function displayFile(file) {
+        clearError();
+
+        if (!file) {
+            resetFile();
+            return true;
+        }
+
+        const extension = file.name.includes(".")
+            ? file.name.split(".").pop().toLowerCase()
+            : "";
+
+        if (!allowedExtensions.includes(extension)) {
+            resetFile();
+            showError("Invalid file type. Select a PDF, JPG, JPEG or PNG file.");
+            return false;
+        }
+
+        if (file.size === 0) {
+            resetFile();
+            showError("The selected file is empty. Choose another file.");
+            return false;
+        }
+
+        if (file.size > MAX_SIZE) {
+            resetFile();
+            showError("File exceeds 10 MB. Choose a smaller file.");
+            return false;
+        }
+
+        if (file.type && !allowedTypes.includes(file.type)) {
+            resetFile();
+            showError("The selected file type is not supported.");
+            return false;
+        }
+
+        fileName.textContent = file.name;
+        fileSize.textContent = formatSize(file.size);
+        fileBadge.textContent = extension.toUpperCase();
+        filePreview.classList.add("visible");
+
+        return true;
+    }
+
+    function updateRecordType() {
+        const selected = form.querySelector('input[name="targetType"]:checked');
+        const isEmployee = !selected || selected.value === "employee";
+
+        employeeField.hidden = !isEmployee;
+        onboardingField.hidden = isEmployee;
+
+        employeeSelect.disabled = !isEmployee;
+        employeeSelect.required = isEmployee;
+
+        onboardingSelect.disabled = isEmployee;
+        onboardingSelect.required = !isEmployee;
+
+        if (isEmployee) {
+            onboardingSelect.value = "";
+        } else {
+            employeeSelect.value = "";
+        }
+
+        clearError();
+    }
+
+    form.querySelectorAll('input[name="targetType"]').forEach(function (radio) {
+        radio.addEventListener("change", updateRecordType);
+    });
+
+    fileInput.addEventListener("change", function () {
+        displayFile(fileInput.files[0]);
+    });
+
+    removeFileButton.addEventListener("click", function () {
+        resetFile();
+        clearError();
+    });
+
+    ["dragenter", "dragover"].forEach(function (eventName) {
+        dropZone.addEventListener(eventName, function (event) {
+            event.preventDefault();
+            dropZone.classList.add("drag-over");
+        });
+    });
+
+    ["dragleave", "drop"].forEach(function (eventName) {
+        dropZone.addEventListener(eventName, function (event) {
+            event.preventDefault();
+            dropZone.classList.remove("drag-over");
+        });
+    });
+
+    dropZone.addEventListener("drop", function (event) {
+        const files = event.dataTransfer.files;
+        if (!files || !files.length) return;
+
+        try {
+            const transfer = new DataTransfer();
+            transfer.items.add(files[0]);
+            fileInput.files = transfer.files;
+            displayFile(files[0]);
+        } catch (error) {
+            showError("Unable to select the dropped file. Please use Browse files.");
+        }
+    });
+
+    form.addEventListener("submit", function (event) {
+        clearError();
+
+        const selected = form.querySelector('input[name="targetType"]:checked');
+
+        if (!selected) {
+            event.preventDefault();
+            showError("Select Employee or Onboarding.");
+            return;
+        }
+
+        if (selected.value === "employee" && !employeeSelect.value) {
+            event.preventDefault();
+            showError("Please select an employee.");
+            employeeSelect.focus();
+            return;
+        }
+
+        if (selected.value === "onboarding" && !onboardingSelect.value) {
+            event.preventDefault();
+            showError("Please select an onboarding record.");
+            onboardingSelect.focus();
+            return;
+        }
+
+        const file = fileInput.files[0];
+
+        if (!file) {
+            event.preventDefault();
+            showError("Please select a document to upload.");
+            return;
+        }
+
+        if (!displayFile(file)) {
+            event.preventDefault();
+            return;
+        }
+
+        submitButton.disabled = true;
+        submitButton.textContent = "Uploading...";
+    });
+
+    updateRecordType();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - Gyansify HRMS</title>
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <style>
+        .report-container { max-width: 1200px; margin: 30px auto; padding: 24px; }
+        .report-header { display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:24px; }
+        .report-header h1 { margin:0 0 8px; }
+        .report-header p { color:#64748b; margin:0; }
+        .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:18px; margin-bottom:26px; }
+        .stat-card { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:22px; }
+        .stat-card p { color:#64748b; margin:0 0 12px; }
+        .stat-card h2 { font-size:28px; margin:0; color:#1e293b; }
+        .report-table { width:100%; border-collapse:collapse; background:#fff; }
+        .report-table th,.report-table td { padding:14px 16px; border-bottom:1px solid #e2e8f0; text-align:left; }
+        .report-table th { background:#f8fafc; color:#475569; }
+        .table-wrap { overflow-x:auto; border:1px solid #e2e8f0; border-radius:12px; }
+        .empty-state { text-align:center; color:#64748b; padding:32px 16px; }
+        .back-link { color:#2563eb; text-decoration:none; }
+        @media print { .no-print { display:none!important; } }
+    </style>
+</head>
+<body>
+    <%- include('../partials/navbar') %>
+    <main class="report-container">
+        <header class="report-header">
+            <div>
+                <h1>Performance Report</h1>
+                <p>Employee performance review overview</p>
+            </div>
+            <div class="no-print">
+                <a class="back-link" href="/reports">← Back to Reports</a>
+                <button type="button" onclick="window.print()">Print / Save PDF</button>
+            </div>
+        </header>
+
+        <section class="stats-grid">
+            <article class="stat-card">
+                <p>Total Reviews</p>
+                <h2><%= stats?.totalReviews ?? 0 %></h2>
+            </article>
+            <article class="stat-card">
+                <p>Completed Reviews</p>
+                <h2><%= stats?.completedReviews ?? 0 %></h2>
+            </article>
+            <article class="stat-card">
+                <p>Pending Reviews</p>
+                <h2><%= stats?.pendingReviews ?? 0 %></h2>
+            </article>
+            <article class="stat-card">
+                <p>Average Rating</p>
+                <h2><%= stats?.averageRating ?? 0 %></h2>
+            </article>
+        </section>
+
+        <section>
+            <h2>Performance Review Records</h2>
+            <div class="table-wrap">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Review Period</th>
+                            <th>Rating</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (performanceReviews && performanceReviews.length) { %>
+                            <% performanceReviews.forEach(function(review) { %>
+                                <tr>
+                                    <td><%= review.employeeName || "—" %></td>
+                                    <td><%= review.reviewPeriod || "—" %></td>
+                                    <td><%= review.rating ?? "—" %></td>
+                                    <td><%= review.status || "—" %></td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="4" class="empty-state">
+                                    No performance review records available yet.
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

@@ -1,0 +1,203 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title || "Start Onboarding" %> - Gyansify HRMS</title>
+    <link rel="stylesheet" href="/css/dashboard.css">
+
+    <style>
+        .onboarding-page{max-width:1050px;margin:auto;padding:28px}
+        .page-heading{margin-bottom:24px}
+        .page-heading h1{margin:0;font-size:28px;font-weight:750;color:#0f172a}
+        .muted{color:#64748b;font-size:14px;margin-top:7px;line-height:1.6}
+        .form-card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:28px;box-shadow:0 4px 18px rgba(15,23,42,.04)}
+        .form-section-title{font-size:17px;font-weight:750;margin:0 0 22px;padding-bottom:14px;border-bottom:1px solid #e5e7eb;color:#0f172a}
+        .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:21px}
+        .field{display:flex;flex-direction:column;gap:8px;min-width:0}
+        .field.full{grid-column:1/-1}
+        .field label{font-size:13px;font-weight:700;color:#334155}
+        .field input,.field select,.field textarea{width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:9px;padding:12px 13px;font:inherit;font-size:14px;color:#0f172a;background:#fff;transition:border-color .15s,box-shadow .15s}
+        .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+        .field input::placeholder,.field textarea::placeholder{color:#94a3b8}
+        .required{color:#dc2626}
+        .hint{font-size:12px;color:#64748b;line-height:1.5}
+        .error-box{padding:13px 15px;background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-radius:10px;margin-bottom:22px;font-size:14px}
+        .form-actions{display:flex;justify-content:flex-end;gap:12px;margin-top:28px;padding-top:22px;border-top:1px solid #e5e7eb}
+        .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 18px;border-radius:9px;font-weight:700;text-decoration:none;border:0;cursor:pointer;font-size:14px;transition:background .15s}
+        .btn-primary{background:#2563eb;color:#fff}
+        .btn-primary:hover{background:#1d4ed8}
+        .btn-secondary{background:#f1f5f9;color:#334155}
+        .btn-secondary:hover{background:#e2e8f0}
+        .section-hint{margin:-12px 0 22px;font-size:13px;color:#64748b}
+        @media(max-width:650px){
+            .onboarding-page{padding:16px}
+            .form-card{padding:19px}
+            .form-grid{grid-template-columns:1fr;gap:18px}
+            .field.full{grid-column:auto}
+            .page-heading h1{font-size:23px}
+            .form-actions{flex-direction:column-reverse}
+            .form-actions .btn{width:100%;box-sizing:border-box}
+        }
+    </style>
+</head>
+
+<body>
+<main class="onboarding-page">
+    <header class="page-heading">
+        <h1>Start Employee Onboarding</h1>
+        <p class="muted">
+            Create an onboarding record and prepare the employee for their first day at Gyansify.
+        </p>
+    </header>
+
+    <section class="form-card">
+        <% if (typeof error !== "undefined" && error) { %>
+            <div class="error-box" role="alert">
+                <strong>Unable to create onboarding.</strong>
+                <div style="margin-top:5px"><%= error %></div>
+            </div>
+        <% } %>
+
+        <form action="/onboarding/create" method="POST">
+            <h2 class="form-section-title">Employee Information</h2>
+
+            <div class="form-grid">
+                <div class="field">
+                    <label for="firstName">First Name <span class="required">*</span></label>
+                    <input
+                        id="firstName"
+                        name="firstName"
+                        type="text"
+                        maxlength="80"
+                        value="<%= formData?.firstName || '' %>"
+                        required
+                        autocomplete="given-name"
+                        placeholder="Enter first name">
+                </div>
+
+                <div class="field">
+                    <label for="lastName">Last Name</label>
+                    <input
+                        id="lastName"
+                        name="lastName"
+                        type="text"
+                        maxlength="80"
+                        value="<%= formData?.lastName || '' %>"
+                        autocomplete="family-name"
+                        placeholder="Enter last name">
+                </div>
+
+                <div class="field">
+                    <label for="email">Work Email <span class="required">*</span></label>
+                    <input
+                        id="email"
+                        name="email"
+                        type="email"
+                        maxlength="254"
+                        value="<%= formData?.email || '' %>"
+                        required
+                        autocomplete="email"
+                        placeholder="employee@company.com">
+                </div>
+
+                <div class="field">
+                    <label for="phone">Phone Number</label>
+                    <input
+                        id="phone"
+                        name="phone"
+                        type="tel"
+                        maxlength="20"
+                        value="<%= formData?.phone || '' %>"
+                        autocomplete="tel"
+                        placeholder="Enter phone number">
+                </div>
+
+                <div class="field">
+                    <label for="joiningDate">Joining Date <span class="required">*</span></label>
+                    <input
+                        id="joiningDate"
+                        name="joiningDate"
+                        type="date"
+                        value="<%= formData?.joiningDate || '' %>"
+                        required>
+                </div>
+
+                <div class="field">
+                    <label for="employmentType">Employment Type <span class="required">*</span></label>
+                    <select id="employmentType" name="employmentType" required>
+                        <option value="">Select employment type</option>
+                        <% ["Permanent","Probation","Contract","Intern","Part Time"].forEach(function(type) { %>
+                            <option
+                                value="<%= type %>"
+                                <%= formData?.employmentType === type ? "selected" : "" %>>
+                                <%= type %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="department">Department</label>
+                    <select id="department" name="department">
+                        <option value="">Select department</option>
+                        <% (departments || []).forEach(function(department) { %>
+                            <option
+                                value="<%= department._id %>"
+                                <%= String(formData?.department || "") === String(department._id) ? "selected" : "" %>>
+                                <%= department.name || department.departmentName || "Unnamed Department" %>
+                            </option>
+                        <% }); %>
+                    </select>
+                    <span class="hint">Options are loaded from your department records.</span>
+                </div>
+
+                <div class="field">
+                    <label for="designation">Designation</label>
+                    <select id="designation" name="designation">
+                        <option value="">Select designation</option>
+                        <% (designations || []).forEach(function(designation) { %>
+                            <option
+                                value="<%= designation._id %>"
+                                <%= String(formData?.designation || "") === String(designation._id) ? "selected" : "" %>>
+                                <%= designation.name || designation.designationName || "Unnamed Designation" %>
+                            </option>
+                        <% }); %>
+                    </select>
+                    <span class="hint">Options are loaded from your designation records.</span>
+                </div>
+
+                <div class="field full">
+                    <label for="reportingManager">Reporting Manager</label>
+                    <input
+                        id="reportingManager"
+                        name="reportingManager"
+                        type="text"
+                        maxlength="150"
+                        value="<%= formData?.reportingManager || '' %>"
+                        placeholder="Enter reporting manager name">
+                    <span class="hint">This field currently stores the manager's name as text.</span>
+                </div>
+
+                <div class="field full">
+                    <label for="notes">Onboarding Notes</label>
+                    <textarea
+                        id="notes"
+                        name="notes"
+                        rows="4"
+                        maxlength="2000"
+                        placeholder="Add joining instructions or internal notes"><%= formData?.notes || '' %></textarea>
+                    <span class="hint">Optional. Do not enter passwords or other sensitive credentials here.</span>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a href="/onboarding" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">Create Onboarding →</button>
+            </div>
+        </form>
+    </section>
+</main>
+</body>
+</html>

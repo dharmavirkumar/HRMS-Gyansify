@@ -1,0 +1,497 @@
+<%
+    const officeData =
+        typeof office !== "undefined" && office ? office : {};
+
+    const latitudeValue = officeData.latitude ?? "";
+    const longitudeValue = officeData.longitude ?? "";
+    const radiusValue =
+        officeData.radiusMeters ??
+        (typeof defaultRadiusMeters !== "undefined" ? defaultRadiusMeters : 100);
+
+    const isConfigured =
+        latitudeValue !== "" &&
+        longitudeValue !== "" &&
+        Number.isFinite(Number(latitudeValue)) &&
+        Number.isFinite(Number(longitudeValue));
+
+    const initialMapQuery = isConfigured
+        ? encodeURIComponent(`${latitudeValue},${longitudeValue}`)
+        : "";
+%>
+
+<main class="page-content office-location-page">
+    <header class="office-page-header">
+        <div>
+            <nav class="office-breadcrumb" aria-label="Breadcrumb">
+                <a href="/dashboard">Dashboard</a>
+                <span>/</span>
+                <a href="/organization">Organization</a>
+                <span>/</span>
+                <span aria-current="page">Office Location</span>
+            </nav>
+            <h1>Office Attendance Location</h1>
+            <p>Set the official workplace pin and attendance geofence. The map below shows the coordinates currently entered.</p>
+        </div>
+        <div class="office-header-icon" aria-hidden="true">⌖</div>
+    </header>
+
+    <% if (typeof success !== "undefined" && success) { %>
+        <div class="office-alert office-alert-success" role="status">
+            <strong>✓ Settings saved</strong>
+            <span><%= success %></span>
+        </div>
+    <% } %>
+
+    <% if (typeof error !== "undefined" && error) { %>
+        <div class="office-alert office-alert-error" role="alert">
+            <strong>! Unable to save settings</strong>
+            <span><%= error %></span>
+        </div>
+    <% } %>
+
+    <section class="office-status-card">
+        <div class="office-status-symbol" aria-hidden="true">⌖</div>
+        <div class="office-status-copy">
+            <span class="office-eyebrow">OFFICE CONFIGURATION</span>
+            <h2><%= isConfigured ? "Coordinates are saved" : "Office location needs setup" %></h2>
+            <p>
+                <%= isConfigured
+                    ? "Check the map pin and confirm that it points to your actual workplace before employees use attendance."
+                    : "Enter the actual office latitude and longitude, then use the map preview to verify the location." %>
+            </p>
+        </div>
+        <span class="office-status-pill <%= isConfigured ? 'is-configured' : 'is-pending' %>">
+            <span class="office-status-dot"></span>
+            <%= isConfigured ? "Configured" : "Setup required" %>
+        </span>
+    </section>
+
+    <div class="office-layout">
+        <section class="office-card office-form-card">
+            <div class="office-card-heading">
+                <div>
+                    <h2>Location settings</h2>
+                    <p>Enter the coordinates copied from Google Maps.</p>
+                </div>
+                <span class="office-step-badge">01</span>
+            </div>
+
+            <form id="officeLocationForm" action="/organization/office-location" method="POST">
+                <% /* Keep your existing CSRF hidden input here if CSRF protection is enabled. */ %>
+
+                <div class="office-field-grid">
+                    <div class="office-field">
+                        <label for="latitude">Office latitude <span>*</span></label>
+                        <input
+                            id="latitude"
+                            name="latitude"
+                            type="number"
+                            min="-90"
+                            max="90"
+                            step="any"
+                            inputmode="decimal"
+                            value="<%= latitudeValue %>"
+                            placeholder="e.g. 23.0225"
+                            required
+                        >
+                        <small>Range: -90 to 90</small>
+                    </div>
+
+                    <div class="office-field">
+                        <label for="longitude">Office longitude <span>*</span></label>
+                        <input
+                            id="longitude"
+                            name="longitude"
+                            type="number"
+                            min="-180"
+                            max="180"
+                            step="any"
+                            inputmode="decimal"
+                            value="<%= longitudeValue %>"
+                            placeholder="e.g. 72.5714"
+                            required
+                        >
+                        <small>Range: -180 to 180</small>
+                    </div>
+                </div>
+
+                <div class="office-help">
+                    <span aria-hidden="true">ⓘ</span>
+                    <p>
+                        <strong>How to get the right coordinates:</strong>
+                        open <a href="https://maps.google.com/" target="_blank" rel="noopener noreferrer">Google Maps</a>,
+                        search for your actual office, right-click the office entrance, and copy the coordinates shown.
+                    </p>
+                </div>
+
+                <div class="office-divider"></div>
+
+                <div class="office-card-heading office-radius-heading">
+                    <div>
+                        <h2>Attendance geofence</h2>
+                        <p>Maximum distance from the office pin at which attendance is allowed.</p>
+                    </div>
+                    <span class="office-step-badge">02</span>
+                </div>
+
+                <div class="office-field">
+                    <label for="radiusMeters">Allowed radius <span>*</span></label>
+                    <div class="office-radius-input">
+                        <input
+                            id="radiusMeters"
+                            name="radiusMeters"
+                            type="number"
+                            min="10"
+                            max="5000"
+                            step="1"
+                            value="<%= radiusValue %>"
+                            required
+                        >
+                        <span>meters</span>
+                    </div>
+                    <small>Enter a whole number between 10 and 5,000 meters.</small>
+                    <div class="office-radius-presets" aria-label="Radius presets">
+                        <button type="button" data-radius="50">50 m</button>
+                        <button type="button" data-radius="100">100 m</button>
+                        <button type="button" data-radius="200">200 m</button>
+                        <button type="button" data-radius="500">500 m</button>
+                    </div>
+                </div>
+
+                <div class="office-radius-note">
+                    <span class="office-radius-icon" aria-hidden="true">◎</span>
+                    <div>
+                        <strong><span id="radiusSummary"><%= radiusValue %></span> meter radius</strong>
+                        <p>The map circle is illustrative. Actual attendance eligibility must be enforced by your server-side geofence validation.</p>
+                    </div>
+                </div>
+
+                <div id="officeFormError" class="office-client-error" role="alert" hidden></div>
+
+                <div class="office-actions">
+                    <button type="reset" class="office-btn office-btn-secondary">Reset form</button>
+                    <button type="submit" class="office-btn office-btn-primary" id="saveOfficeButton">Save location settings</button>
+                </div>
+            </form>
+        </section>
+
+        <aside class="office-sidebar">
+            <section class="office-card office-map-card">
+                <div class="office-card-heading">
+                    <div>
+                        <h2>Where is this location?</h2>
+                        <p id="mapStatus"><%= isConfigured ? "Map preview of the saved coordinates" : "Enter coordinates to preview the office pin" %></p>
+                    </div>
+                    <span class="office-live-indicator"><span></span> Map</span>
+                </div>
+
+                <div class="office-map-frame">
+                    <div id="mapPlaceholder" class="office-map-placeholder" <%= isConfigured ? 'hidden' : '' %>>
+                        <span class="office-placeholder-pin">⌖</span>
+                        <strong>Office map preview</strong>
+                        <p>Enter latitude and longitude to show the map here.</p>
+                    </div>
+                    <iframe
+                        id="officeMap"
+                        title="Map preview of office coordinates"
+                        loading="lazy"
+                        referrerpolicy="no-referrer-when-downgrade"
+                        allowfullscreen
+                        <%= isConfigured ? `src="https://maps.google.com/maps?q=${initialMapQuery}&z=16&output=embed"` : "" %>
+                    ></iframe>
+                </div>
+
+                <div class="office-coordinate-summary">
+                    <div class="office-coordinate-row">
+                        <span class="office-coordinate-icon">N</span>
+                        <div><small>Latitude</small><strong id="latitudeSummary"><%= isConfigured ? latitudeValue : "Not set" %></strong></div>
+                    </div>
+                    <div class="office-coordinate-row">
+                        <span class="office-coordinate-icon">E</span>
+                        <div><small>Longitude</small><strong id="longitudeSummary"><%= isConfigured ? longitudeValue : "Not set" %></strong></div>
+                    </div>
+                    <div class="office-coordinate-row">
+                        <span class="office-coordinate-icon">◎</span>
+                        <div><small>Allowed radius</small><strong><span id="radiusSideSummary"><%= radiusValue %></span> m</strong></div>
+                    </div>
+                </div>
+
+                <a
+                    id="officeGoogleMapsLink"
+                    class="office-btn office-btn-map"
+                    href="<%= isConfigured ? `https://www.google.com/maps?q=${initialMapQuery}` : 'https://maps.google.com/' %>"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >Open this pin in Google Maps ↗</a>
+
+                <p class="office-map-warning" id="officeMapWarning" <%= isConfigured ? '' : 'hidden' %>>
+                    <strong>Verify before saving:</strong> make sure the map pin is at your real office entrance. Coordinates alone do not confirm the office address.
+                </p>
+            </section>
+
+            <section class="office-card office-guidance-card">
+                <h2>Before you save</h2>
+                <ul>
+                    <li>Do not use example coordinates or your current personal location.</li>
+                    <li>Verify the pin on the map before saving the settings.</li>
+                    <li>Choose a radius appropriate for your workplace and GPS accuracy.</li>
+                    <li>This page stores coordinates and radius; it does not automatically identify a street address.</li>
+                </ul>
+            </section>
+        </aside>
+    </div>
+
+    <footer class="office-page-footer">
+        <span>Gyansify HRMS</span>
+        <span>Organization settings / Office attendance location</span>
+    </footer>
+</main>
+
+<style>
+.office-location-page {
+    --ol-blue: #2563eb;
+    --ol-blue-dark: #1d4ed8;
+    --ol-text: #172033;
+    --ol-muted: #64748b;
+    --ol-border: #e2e8f0;
+    --ol-bg: #f5f7fb;
+    padding: 28px;
+    color: var(--ol-text);
+    background: var(--ol-bg);
+}
+.office-location-page, .office-location-page * { box-sizing: border-box; }
+.office-page-header { display:flex; justify-content:space-between; align-items:center; gap:20px; margin-bottom:24px; }
+.office-breadcrumb { display:flex; flex-wrap:wrap; gap:9px; margin-bottom:12px; color:var(--ol-muted); font-size:12px; }
+.office-breadcrumb a { color:inherit; text-decoration:none; }
+.office-breadcrumb a:hover { color:var(--ol-blue); }
+.office-page-header h1 { margin:0; font-size:clamp(24px,3vw,31px); line-height:1.3; letter-spacing:-.6px; font-weight:800; }
+.office-page-header p { margin:8px 0 0; max-width:760px; color:var(--ol-muted); font-size:13px; line-height:1.7; }
+.office-header-icon { display:grid; place-items:center; flex-shrink:0; width:54px; height:54px; color:var(--ol-blue); background:#eaf1ff; border-radius:14px; font-size:34px; }
+.office-alert { display:flex; flex-wrap:wrap; gap:8px; padding:13px 16px; margin-bottom:18px; border:1px solid; border-radius:10px; font-size:12px; }
+.office-alert-success { color:#166534; background:#f0fdf4; border-color:#bbf7d0; }
+.office-alert-error { color:#991b1b; background:#fef2f2; border-color:#fecaca; }
+.office-status-card { display:flex; align-items:center; gap:15px; padding:20px 22px; margin-bottom:22px; background:#fff; border:1px solid var(--ol-border); border-radius:14px; }
+.office-status-symbol { display:grid; place-items:center; flex-shrink:0; width:48px; height:48px; color:var(--ol-blue); background:#eaf1ff; border-radius:12px; font-size:30px; }
+.office-status-copy { flex:1; min-width:0; }
+.office-eyebrow { color:var(--ol-muted); font-size:10px; font-weight:800; letter-spacing:1.1px; }
+.office-status-card h2 { margin:5px 0; font-size:15px; font-weight:800; }
+.office-status-card p { margin:0; color:var(--ol-muted); font-size:12px; line-height:1.6; }
+.office-status-pill { display:inline-flex; align-items:center; gap:7px; flex-shrink:0; padding:8px 11px; border-radius:30px; font-size:11px; font-weight:750; }
+.office-status-pill.is-configured { color:#166534; background:#dcfce7; }
+.office-status-pill.is-pending { color:#92400e; background:#fef3c7; }
+.office-status-dot, .office-live-indicator span { width:7px; height:7px; background:currentColor; border-radius:50%; }
+.office-layout { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(320px,.85fr); align-items:start; gap:22px; }
+.office-sidebar { display:grid; gap:20px; min-width:0; }
+.office-card { min-width:0; padding:23px; background:#fff; border:1px solid var(--ol-border); border-radius:14px; box-shadow:0 3px 12px rgba(15,23,42,.025); }
+.office-card-heading { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; padding-bottom:18px; margin-bottom:21px; border-bottom:1px solid #edf0f5; }
+.office-card-heading h2 { margin:0; font-size:15px; font-weight:800; }
+.office-card-heading p { margin:7px 0 0; color:var(--ol-muted); font-size:12px; line-height:1.6; }
+.office-step-badge { display:grid; place-items:center; flex-shrink:0; width:32px; height:32px; color:var(--ol-blue); background:#eff6ff; border-radius:8px; font-size:11px; font-weight:800; }
+.office-field-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+.office-field { min-width:0; margin-bottom:19px; }
+.office-field label { display:block; margin-bottom:9px; font-size:12px; font-weight:750; }
+.office-field label span { color:#dc2626; }
+.office-location-page input { width:100%; min-width:0; height:44px; padding:0 12px; color:var(--ol-text); background:#fff; border:1px solid #dce3ed; border-radius:8px; outline:none; font:inherit; font-size:13px; }
+.office-location-page input:focus { border-color:var(--ol-blue); box-shadow:0 0 0 3px rgba(37,99,235,.10); }
+.office-location-page input[aria-invalid="true"] { border-color:#dc2626; }
+.office-field small { display:block; margin-top:7px; color:var(--ol-muted); font-size:10px; line-height:1.6; }
+.office-help { display:flex; align-items:flex-start; gap:10px; padding:13px; background:#f8faff; border:1px solid #e6edfb; border-radius:9px; }
+.office-help > span { color:var(--ol-blue); font-weight:800; }
+.office-help p { margin:0; color:var(--ol-muted); font-size:11px; line-height:1.8; }
+.office-help a { color:var(--ol-blue); font-weight:750; }
+.office-divider { height:1px; margin:24px 0; background:#edf0f5; }
+.office-radius-heading { margin-bottom:20px; }
+.office-radius-input { position:relative; }
+.office-radius-input input { padding-right:80px; }
+.office-radius-input > span { position:absolute; top:50%; right:13px; color:var(--ol-muted); font-size:12px; transform:translateY(-50%); pointer-events:none; }
+.office-radius-presets { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.office-radius-presets button { padding:8px 12px; color:#475569; background:#f8fafc; border:1px solid #e2e8f0; border-radius:7px; font:inherit; font-size:11px; font-weight:750; cursor:pointer; }
+.office-radius-presets button:hover, .office-radius-presets button.is-selected { color:var(--ol-blue); background:#eff6ff; border-color:#93b4ff; }
+.office-radius-note { display:flex; align-items:flex-start; gap:12px; padding:14px; margin-top:20px; background:#f8faff; border:1px solid #e6edfb; border-radius:10px; }
+.office-radius-icon { display:grid; place-items:center; flex:0 0 33px; height:33px; color:var(--ol-blue); background:#e5edff; border-radius:8px; font-size:21px; }
+.office-radius-note strong { display:block; font-size:12px; }
+.office-radius-note p { margin:6px 0 0; color:var(--ol-muted); font-size:11px; line-height:1.7; }
+.office-client-error { padding:11px 13px; margin-top:15px; color:#991b1b; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; font-size:12px; line-height:1.6; }
+.office-actions { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:10px; padding-top:20px; margin-top:24px; border-top:1px solid #edf0f5; }
+.office-btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:42px; padding:0 15px; border:1px solid transparent; border-radius:8px; font:inherit; font-size:12px; font-weight:750; text-align:center; text-decoration:none; cursor:pointer; transition:background .15s; }
+.office-btn-primary { color:#fff; background:var(--ol-blue); }
+.office-btn-primary:hover { background:var(--ol-blue-dark); }
+.office-btn-primary:disabled { opacity:.65; cursor:wait; }
+.office-btn-secondary { color:#475569; background:#fff; border-color:#dce3ed; }
+.office-btn-secondary:hover { background:#f8fafc; }
+.office-live-indicator { display:inline-flex; align-items:center; gap:6px; color:#166534; background:#f0fdf4; border-radius:30px; padding:6px 9px; font-size:10px; font-weight:800; }
+.office-map-frame { position:relative; height:300px; overflow:hidden; background:#edf4ff; border:1px solid #e2e8f0; border-radius:10px; }
+.office-map-frame iframe { display:block; width:100%; height:100%; border:0; }
+.office-map-placeholder { position:absolute; inset:0; z-index:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:9px; padding:20px; text-align:center; background:linear-gradient(135deg,#f0f6ff,#e8f0fb); }
+.office-map-placeholder[hidden] { display:none; }
+.office-placeholder-pin { display:grid; place-items:center; width:54px; height:54px; color:#fff; background:var(--ol-blue); border:5px solid #dbeafe; border-radius:50%; font-size:30px; }
+.office-map-placeholder strong { font-size:13px; }
+.office-map-placeholder p { max-width:230px; margin:0; color:var(--ol-muted); font-size:11px; line-height:1.7; }
+.office-coordinate-summary { display:grid; gap:0; margin-top:15px; }
+.office-coordinate-row { display:flex; align-items:center; gap:11px; padding:12px 0; border-bottom:1px solid #edf0f5; }
+.office-coordinate-icon { display:grid; place-items:center; flex-shrink:0; width:31px; height:31px; color:var(--ol-blue); background:#eff6ff; border-radius:8px; font-size:11px; font-weight:800; }
+.office-coordinate-row div { display:grid; gap:3px; min-width:0; }
+.office-coordinate-row small { color:var(--ol-muted); font-size:10px; }
+.office-coordinate-row strong { overflow-wrap:anywhere; font-size:12px; }
+.office-btn-map { width:100%; margin-top:14px; color:var(--ol-blue); background:#eff6ff; border-color:#dbeafe; }
+.office-btn-map:hover { background:#dbeafe; }
+.office-map-warning { padding:11px 12px; margin:13px 0 0; color:#854d0e; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; font-size:11px; line-height:1.7; }
+.office-map-warning[hidden] { display:none; }
+.office-guidance-card h2 { margin:0 0 13px; font-size:14px; }
+.office-guidance-card ul { display:grid; gap:10px; margin:0; padding-left:18px; color:var(--ol-muted); font-size:11px; line-height:1.8; }
+.office-guidance-card li::marker { color:var(--ol-blue); }
+.office-page-footer { display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-top:24px; color:var(--ol-muted); font-size:10px; }
+@media (max-width:1050px) { .office-layout { grid-template-columns:minmax(0,1fr); } .office-sidebar { grid-template-columns:minmax(0,1fr); } }
+@media (max-width:650px) {
+    .office-location-page { padding:18px 12px; }
+    .office-page-header { align-items:flex-start; }
+    .office-header-icon { width:43px; height:43px; }
+    .office-status-card { align-items:flex-start; flex-wrap:wrap; padding:17px; }
+    .office-card { padding:17px; }
+    .office-field-grid { grid-template-columns:minmax(0,1fr); gap:0; }
+    .office-actions { flex-direction:column-reverse; }
+    .office-actions .office-btn { width:100%; }
+    .office-map-frame { height:260px; }
+}
+</style>
+
+<script>
+(function () {
+    "use strict";
+
+    const form = document.getElementById("officeLocationForm");
+    if (!form) return;
+
+    const latitude = document.getElementById("latitude");
+    const longitude = document.getElementById("longitude");
+    const radius = document.getElementById("radiusMeters");
+    const latitudeSummary = document.getElementById("latitudeSummary");
+    const longitudeSummary = document.getElementById("longitudeSummary");
+    const radiusSummary = document.getElementById("radiusSummary");
+    const radiusSideSummary = document.getElementById("radiusSideSummary");
+    const mapsLink = document.getElementById("officeGoogleMapsLink");
+    const map = document.getElementById("officeMap");
+    const mapPlaceholder = document.getElementById("mapPlaceholder");
+    const mapStatus = document.getElementById("mapStatus");
+    const mapWarning = document.getElementById("officeMapWarning");
+    const clientError = document.getElementById("officeFormError");
+    const saveButton = document.getElementById("saveOfficeButton");
+    const presetButtons = Array.from(document.querySelectorAll("[data-radius]"));
+
+    function validCoordinates() {
+        const latText = latitude.value.trim();
+        const lngText = longitude.value.trim();
+        const lat = Number(latText);
+        const lng = Number(lngText);
+
+        return latText !== "" && lngText !== "" &&
+            Number.isFinite(lat) && Number.isFinite(lng) &&
+            lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+    }
+
+    function updateSummary() {
+        const latText = latitude.value.trim();
+        const lngText = longitude.value.trim();
+        const radiusText = radius.value.trim() || "100";
+
+        latitudeSummary.textContent = latText || "Not set";
+        longitudeSummary.textContent = lngText || "Not set";
+        radiusSummary.textContent = radiusText;
+        radiusSideSummary.textContent = radiusText;
+
+        presetButtons.forEach(function (button) {
+            button.classList.toggle("is-selected", button.dataset.radius === radius.value);
+        });
+
+        if (validCoordinates()) {
+            const query = encodeURIComponent(Number(latitude.value) + "," + Number(longitude.value));
+            const mapUrl = "https://maps.google.com/maps?q=" + query + "&z=16&output=embed";
+            map.src = mapUrl;
+            mapPlaceholder.hidden = true;
+            mapsLink.href = "https://www.google.com/maps?q=" + query;
+            mapStatus.textContent = "Live preview of the coordinates currently in the form";
+            mapWarning.hidden = false;
+        } else {
+            map.removeAttribute("src");
+            mapPlaceholder.hidden = false;
+            mapsLink.href = "https://maps.google.com/";
+            mapStatus.textContent = "Enter valid coordinates to preview the office pin";
+            mapWarning.hidden = true;
+        }
+    }
+
+    function clearError() {
+        clientError.hidden = true;
+        clientError.textContent = "";
+        [latitude, longitude, radius].forEach(function (input) {
+            input.removeAttribute("aria-invalid");
+        });
+    }
+
+    function showError(message, input) {
+        clientError.textContent = message;
+        clientError.hidden = false;
+        if (input) {
+            input.setAttribute("aria-invalid", "true");
+            input.focus();
+        }
+    }
+
+    [latitude, longitude, radius].forEach(function (input) {
+        input.addEventListener("input", function () {
+            clearError();
+            updateSummary();
+        });
+    });
+
+    presetButtons.forEach(function (button) {
+        button.addEventListener("click", function () {
+            radius.value = button.dataset.radius;
+            clearError();
+            updateSummary();
+        });
+    });
+
+    form.addEventListener("reset", function () {
+        window.setTimeout(function () {
+            clearError();
+            updateSummary();
+        }, 0);
+    });
+
+    form.addEventListener("submit", function (event) {
+        clearError();
+
+        const latText = latitude.value.trim();
+        const lngText = longitude.value.trim();
+        const radiusText = radius.value.trim();
+        const lat = Number(latText);
+        const lng = Number(lngText);
+        const radiusNumber = Number(radiusText);
+
+        if (!latText || !Number.isFinite(lat) || lat < -90 || lat > 90) {
+            event.preventDefault();
+            showError("Enter a valid office latitude between -90 and 90.", latitude);
+            return;
+        }
+
+        if (!lngText || !Number.isFinite(lng) || lng < -180 || lng > 180) {
+            event.preventDefault();
+            showError("Enter a valid office longitude between -180 and 180.", longitude);
+            return;
+        }
+
+        if (!/^\d+$/.test(radiusText) || !Number.isSafeInteger(radiusNumber) ||
+            radiusNumber < 10 || radiusNumber > 5000) {
+            event.preventDefault();
+            showError("Radius must be a whole number between 10 and 5,000 meters.", radius);
+            return;
+        }
+
+        saveButton.disabled = true;
+        saveButton.textContent = "Saving settings...";
+    });
+
+    updateSummary();
+})();
+</script>

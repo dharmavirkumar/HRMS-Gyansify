@@ -1,9 +1,5 @@
 
-/**
- * Gyansify HRMS
- * Express + EJS + MongoDB + Mongoose
- * Production-ready session configuration for Render
- */
+"use strict";
 
 // =====================================================
 // ENVIRONMENT
@@ -18,59 +14,21 @@ require("dotenv").config();
 const express = require("express");
 const path = require("path");
 const session = require("express-session");
-const MongoStore = require("connect-mongo");
 
-// =====================================================
-// DATABASE
-// =====================================================
+const connectMongo = require("connect-mongo");
+const MongoStore = connectMongo.default || connectMongo;
 
 const connectDB = require("./config/db");
-
-// =====================================================
-// ROUTES
-// =====================================================
-
-const authRoutes = require("./routes/authRoutes");
-const dashboardRoutes = require("./routes/dashboardRoutes");
-const employeeRoutes = require("./routes/employeeRoutes");
-const organizationRoutes = require("./routes/organizationRoutes");
-const documentRoutes = require("./routes/documentRoutes");
-const attendanceRoutes = require("./routes/attendanceRoutes");
-const leaveRoutes = require("./routes/leaveRoutes");
-const leaveAdminRoutes = require("./routes/leaveAdminRoutes");
-const payrollRoutes = require("./routes/payrollRoutes");
-const assetRoutes = require("./routes/assetRoutes");
-const trainingRoutes = require("./routes/trainingRoutes");
-const performanceRoutes = require("./routes/performanceRoutes");
-const recruitmentRoutes = require("./routes/recruitmentRoutes");
-const settingsRoutes = require("./routes/settingsRoutes");
-const reportsRoutes = require("./routes/reportsRoutes");
-
-// =====================================================
-// APP CONFIGURATION
-// =====================================================
 
 const app = express();
 
 const PORT = process.env.PORT || 3000;
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
-// Trust Render's HTTPS reverse proxy.
-if (IS_PRODUCTION) {
-    app.set("trust proxy", 1);
-}
-
 // =====================================================
-// VALIDATE ENVIRONMENT
+// ENVIRONMENT VALIDATION
 // =====================================================
 
-if (IS_PRODUCTION && !process.env.SESSION_SECRET) {
-    throw new Error(
-        "SESSION_SECRET must be configured in Render Environment."
-    );
-}
-
-// Use the same MongoDB URI variable as config/db.js.
 const MONGODB_URI =
     process.env.MONGODB_URI ||
     process.env.MONGO_URI;
@@ -81,6 +39,45 @@ if (!MONGODB_URI) {
     );
 }
 
+if (IS_PRODUCTION && !process.env.SESSION_SECRET) {
+    throw new Error(
+        "SESSION_SECRET must be configured in production."
+    );
+}
+
+if (IS_PRODUCTION) {
+    app.set("trust proxy", 1);
+}
+
+// =====================================================
+// ROUTES
+// =====================================================
+
+const authRoutes = require("./routes/authRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
+const employeeRoutes = require("./routes/employeeRoutes");
+const organizationRoutes = require("./routes/organizationRoutes");
+
+const documentRoutes = require("./routes/documentRoutes");
+const attendanceRoutes = require("./routes/attendanceRoutes");
+
+const leaveRoutes = require("./routes/leaveRoutes");
+const leaveAdminRoutes = require("./routes/leaveAdminRoutes");
+
+const payrollRoutes = require("./routes/payrollRoutes");
+const assetRoutes = require("./routes/assetRoutes");
+const trainingRoutes = require("./routes/trainingRoutes");
+
+const performanceRoutes = require("./routes/performanceRoutes");
+const recruitmentRoutes = require("./routes/recruitmentRoutes");
+
+const settingsRoutes = require("./routes/settingsRoutes");
+const reportsRoutes = require("./routes/reportsRoutes");
+const onboardingRoutes = require("./routes/onboardingRoutes");
+
+const officeLocationRoutes = require(
+    "./routes/officeLocationRoutes"
+);
 // =====================================================
 // VIEW ENGINE
 // =====================================================
@@ -92,11 +89,12 @@ app.set("views", path.join(__dirname, "views"));
 // REQUEST PARSING
 // =====================================================
 
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
 
 app.use(
     express.urlencoded({
-        extended: true
+        extended: true,
+        limit: "1mb"
     })
 );
 
@@ -105,14 +103,35 @@ app.use(
 // =====================================================
 
 app.use(
-    express.static(
-        path.join(__dirname, "public")
-    )
+    express.static(path.join(__dirname, "public"))
 );
 
 // =====================================================
-// SESSION CONFIGURATION
+// SESSION STORE
+// Supports current and legacy connect-mongo APIs
 // =====================================================
+
+function createMongoSessionStore() {
+    const options = {
+        mongoUrl: MONGODB_URI,
+        collectionName: "sessions",
+        ttl: 24 * 60 * 60
+    };
+
+    if (typeof MongoStore.create === "function") {
+        return MongoStore.create(options);
+    }
+
+    // Compatibility for older connect-mongo versions.
+    if (typeof MongoStore === "function") {
+        const LegacyMongoStore = MongoStore(session);
+        return new LegacyMongoStore(options);
+    }
+
+    throw new Error(
+        "Unsupported connect-mongo version. Check your installed package version."
+    );
+}
 
 app.use(
     session({
@@ -120,19 +139,13 @@ app.use(
 
         secret:
             process.env.SESSION_SECRET ||
-            "gyansify_local_development_secret",
+            "gyansify_local_development_secret_change_me",
 
         resave: false,
-
         saveUninitialized: false,
-
         rolling: true,
 
-        store: MongoStore.create({
-            mongoUrl: MONGODB_URI,
-            collectionName: "sessions",
-            ttl: 24 * 60 * 60
-        }),
+        store: createMongoSessionStore(),
 
         cookie: {
             httpOnly: true,
@@ -154,6 +167,18 @@ app.use((req, res, next) => {
     res.locals.currentYear = new Date().getFullYear();
 
     next();
+});
+
+// =====================================================
+// HEALTH CHECK
+// =====================================================
+
+app.get("/health", (req, res) => {
+    res.status(200).json({
+        success: true,
+        app: "Gyansify HRMS",
+        status: "running"
+    });
 });
 
 // =====================================================
@@ -179,11 +204,17 @@ app.use("/", authRoutes);
 app.use("/dashboard", dashboardRoutes);
 
 // =====================================================
-// EMPLOYEES & DOCUMENTS
+// EMPLOYEES
 // =====================================================
 
 app.use("/employees", employeeRoutes);
-app.use("/employees", documentRoutes);
+
+// =====================================================
+// DOCUMENT MANAGEMENT
+// IMPORTANT: dedicated /documents mount
+// =====================================================
+
+app.use("/documents", documentRoutes);
 
 // =====================================================
 // ORGANIZATION
@@ -247,11 +278,21 @@ app.use("/settings", settingsRoutes);
 app.use("/reports", reportsRoutes);
 
 // =====================================================
+// ONBOARDING
+// =====================================================
+
+app.use("/onboarding", onboardingRoutes);
+
+
+
+app.use("/organization", officeLocationRoutes);
+// =====================================================
 // 404 HANDLER
+// Must remain after all routes
 // =====================================================
 
 app.use((req, res) => {
-    console.log(
+    console.warn(
         `404 - ${req.method} ${req.originalUrl}`
     );
 
@@ -265,10 +306,34 @@ app.use((req, res) => {
 // =====================================================
 
 app.use((err, req, res, next) => {
-    console.error("GYANSIFY HRMS SERVER ERROR:", err);
+    console.error(
+        "GYANSIFY HRMS SERVER ERROR:",
+        err
+    );
 
     if (res.headersSent) {
         return next(err);
+    }
+
+    // Handle common Multer upload errors.
+    if (err.name === "MulterError") {
+        if (err.code === "LIMIT_FILE_SIZE") {
+            return res.status(400).send(
+                "File is too large. Maximum allowed size is 10 MB."
+            );
+        }
+
+        return res.status(400).send(
+            "The uploaded file could not be processed."
+        );
+    }
+
+    const status = Number(err.status || err.statusCode);
+
+    if (status >= 400 && status < 500) {
+        return res.status(status).send(
+            err.message || "The request could not be processed."
+        );
     }
 
     res.status(500).send(
@@ -290,15 +355,19 @@ async function startServer() {
             console.log("====================================");
             console.log(`Port: ${PORT}`);
             console.log(
-                `Environment: ${process.env.NODE_ENV || "development"}`
+                `Environment: ${
+                    process.env.NODE_ENV || "development"
+                }`
             );
             console.log("MongoDB connected; server started.");
+            console.log("Documents: /documents");
+            console.log("Health check: /health");
             console.log("====================================");
         });
     } catch (error) {
         console.error(
             "Failed to start Gyansify HRMS:",
-            error.message
+            error
         );
 
         process.exit(1);
@@ -306,3 +375,5 @@ async function startServer() {
 }
 
 startServer();
+
+module.exports = app;
