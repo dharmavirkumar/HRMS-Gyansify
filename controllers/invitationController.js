@@ -1,117 +1,266 @@
 
+"use strict";
+
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 
-const hashToken = (token) =>
-    crypto.createHash("sha256").update(token).digest("hex");
+// =====================================================
+// CONFIGURATION
+// =====================================================
 
-// Show password setup page
-exports.getSetPassword = async (req, res) => {
+const PASSWORD_MIN_LENGTH = 12;
+const PASSWORD_MAX_LENGTH = 128;
+const BCRYPT_ROUNDS = 12;
+
+// =====================================================
+// HELPERS
+// =====================================================
+
+function normalizeToken(token) {
+    if (typeof token !== "string") {
+        return "";
+    }
+
+    return token.trim().toLowerCase();
+}
+
+function isValidToken(token) {
+    return (
+        typeof token === "string" &&
+        /^[a-f0-9]{64}$/.test(token)
+    );
+}
+
+function hashToken(token) {
+    return crypto
+        .createHash("sha256")
+        .update(normalizeToken(token))
+        .digest("hex");
+}
+
+function renderPasswordPage(res, options = {}) {
+    const {
+        statusCode = 200,
+        title = "Set Your Password",
+        error = null,
+        success = null,
+        token = "",
+        email = ""
+    } = options;
+
+    return res.status(statusCode).render("auth/set-password", {
+        title,
+        error,
+        success,
+        token,
+        email,
+        currentYear: new Date().getFullYear()
+    });
+}
+
+// Find a valid, unused invitation.
+async function findPendingInvitation(token) {
+    return User.findOne({
+        invitationTokenHash: hashToken(token),
+        invitationExpiresAt: {
+            $gt: new Date()
+        },
+        status: "INACTIVE"
+    }).select("+invitationTokenHash");
+}
+
+// =====================================================
+// GET /set-password
+// GET /accept-invitation
+// Display the password setup page.
+// =====================================================
+
+
+exports.getSetPassword = async (req, res, next) => {
     try {
-        const { token, email } = req.query;
+        const token = normalizeToken(req.query?.token);
 
-        if (
-            typeof token !== "string" ||
-            typeof email !== "string" ||
-            !/^[a-f0-9]{64}$/i.test(token)
-        ) {
-            return res.status(400).render("auth/set-password", {
-                title: "Set Password",
-                error: "This invitation link is invalid or incomplete.",
-                token: "",
-                email: ""
+        console.log("INVITATION DEBUG:", {
+            tokenPresent: Boolean(token),
+            tokenLength: token.length,
+            tokenFormatValid: isValidToken(token)
+        });
+
+        if (!isValidToken(token)) {
+            return renderPasswordPage(res, {
+                statusCode: 400,
+                title: "Invalid Invitation",
+                error: "This invitation link is invalid or incomplete."
             });
         }
 
+        const hashedToken = hashToken(token);
+
         const user = await User.findOne({
-            email: email.trim().toLowerCase(),
-            invitationTokenHash: hashToken(token),
+            invitationTokenHash: hashedToken,
             invitationExpiresAt: { $gt: new Date() },
             status: "INACTIVE"
         }).select("+invitationTokenHash");
 
+        console.log("INVITATION LOOKUP:", {
+            userFound: Boolean(user),
+            status: user?.status || null,
+            expiry: user?.invitationExpiresAt || null
+        });
+
         if (!user) {
-            return res.status(400).render("auth/set-password", {
-                title: "Set Password",
-                error: "This invitation has expired or is invalid. Please contact HR for a new invitation.",
-                token: "",
-                email: ""
+            return renderPasswordPage(res, {
+                statusCode: 400,
+                title: "Invitation Expired",
+                error:
+                    "This invitation is invalid, expired, or has already been used. Please contact HR for a new invitation."
             });
         }
 
-        return res.render("auth/set-password", {
+        return renderPasswordPage(res, {
             title: "Set Your Password",
-            error: null,
             token,
             email: user.email
         });
     } catch (error) {
         console.error("Get Set Password Error:", error);
-        return res.status(500).send("Unable to open password setup page.");
+        return next(error);
     }
 };
 
-// Set password and activate employee account
-exports.postSetPassword = async (req, res) => {
-    try {
-        const { token, email, password, confirmPassword } = req.body;
 
-        if (
-            typeof token !== "string" ||
-            !/^[a-f0-9]{64}$/i.test(token) ||
-            typeof email !== "string"
-        ) {
-            return res.status(400).send("Invalid invitation details.");
+// =====================================================
+// POST /set-password
+// POST /accept-invitation
+// Validate password and activate the account.
+// =====================================================
+
+exports.postSetPassword = async (req, res, next) => {
+    try {
+        const token = normalizeToken(req.body?.token);
+        const password = req.body?.password;
+        const confirmPassword = req.body?.confirmPassword;
+
+        // -------------------------------------------------
+        // 1. Validate invitation token
+        // -------------------------------------------------
+
+        if (!isValidToken(token)) {
+            return renderPasswordPage(res, {
+                statusCode: 400,
+                title: "Invalid Invitation",
+                error:
+                    "Your invitation link is invalid. Please request a new invitation from HR."
+            });
         }
+
+        // -------------------------------------------------
+        // 2. Verify invitation before processing password
+        // -------------------------------------------------
+
+        const user = await findPendingInvitation(token);
+
+        if (!user) {
+            return renderPasswordPage(res, {
+                statusCode: 400,
+                title: "Invitation Expired",
+                error:
+                    "This invitation has expired, is invalid, or has already been used. Please contact HR."
+            });
+        }
+
+        // -------------------------------------------------
+        // 3. Validate password
+        // -------------------------------------------------
 
         if (
             typeof password !== "string" ||
-            password.length < 12 ||
-            password.length > 128
+            password.length < PASSWORD_MIN_LENGTH ||
+            password.length > PASSWORD_MAX_LENGTH
         ) {
-            return res.status(400).render("auth/set-password", {
+            return renderPasswordPage(res, {
+                statusCode: 400,
                 title: "Set Your Password",
-                error: "Password must be between 12 and 128 characters.",
+                error:
+                    `Password must be between ${PASSWORD_MIN_LENGTH} and ${PASSWORD_MAX_LENGTH} characters.`,
                 token,
-                email
+                email: user.email
             });
         }
 
-        if (password !== confirmPassword) {
-            return res.status(400).render("auth/set-password", {
+        if (
+            typeof confirmPassword !== "string" ||
+            password !== confirmPassword
+        ) {
+            return renderPasswordPage(res, {
+                statusCode: 400,
                 title: "Set Your Password",
                 error: "Passwords do not match.",
                 token,
-                email
+                email: user.email
             });
         }
 
-        const user = await User.findOne({
-            email: email.trim().toLowerCase(),
-            invitationTokenHash: hashToken(token),
-            invitationExpiresAt: { $gt: new Date() },
-            status: "INACTIVE"
-        }).select("+invitationTokenHash");
+        // -------------------------------------------------
+        // 4. Hash the password
+        // -------------------------------------------------
 
-        if (!user) {
-            return res.status(400).send(
-                "This invitation has expired or has already been used. Please contact HR."
-            );
+        const passwordHash = await bcrypt.hash(
+            password,
+            BCRYPT_ROUNDS
+        );
+
+        // -------------------------------------------------
+        // 5. Activate account atomically
+        //
+        // The token must still be valid when the update runs.
+        // A previously used invitation cannot activate twice.
+        // -------------------------------------------------
+
+        const result = await User.updateOne(
+            {
+                _id: user._id,
+                invitationTokenHash: hashToken(token),
+                invitationExpiresAt: {
+                    $gt: new Date()
+                },
+                status: "INACTIVE"
+            },
+            {
+                $set: {
+                    password: passwordHash,
+                    status: "ACTIVE"
+                },
+                $unset: {
+                    invitationTokenHash: 1,
+                    invitationExpiresAt: 1
+                }
+            },
+            {
+                runValidators: true
+            }
+        );
+
+        const updatedCount =
+            result.modifiedCount ?? result.nModified ?? 0;
+
+        if (updatedCount !== 1) {
+            return renderPasswordPage(res, {
+                statusCode: 400,
+                title: "Invitation Expired",
+                error:
+                    "This invitation has expired or has already been used. Please request a new invitation from HR."
+            });
         }
 
-        user.password = await bcrypt.hash(password, 12);
-        user.status = "ACTIVE";
-
-        // Remove invitation credentials after successful use.
-        user.invitationTokenHash = undefined;
-        user.invitationExpiresAt = undefined;
-
-        await user.save();
+        // -------------------------------------------------
+        // 6. Redirect to login
+        // -------------------------------------------------
 
         return res.redirect("/login?passwordSet=1");
     } catch (error) {
         console.error("Set Password Error:", error);
-        return res.status(500).send("Unable to set password. Please try again.");
+        return next(error);
     }
 };

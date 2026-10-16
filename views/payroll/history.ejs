@@ -1,220 +1,1146 @@
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payroll History | Gyansify HRMS</title>
-    <link rel="stylesheet" href="/css/dashboard.css">
+<%
+    const records = Array.isArray(payrolls) ? payrolls : [];
 
-    <style>
-        .payroll-page {
-            padding: 30px;
-            max-width: 1400px;
-            margin: auto;
+    const money = (value) => {
+        const amount = Number(value || 0);
+
+        return new Intl.NumberFormat("en-IN", {
+            style: "currency",
+            currency: "INR",
+            maximumFractionDigits: 2
+        }).format(Number.isFinite(amount) ? amount : 0);
+    };
+
+    const formatDate = (value) => {
+        if (!value) return "—";
+
+        const date = new Date(value);
+
+        if (Number.isNaN(date.getTime())) return "—";
+
+        return date.toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+            timeZone: "Asia/Kolkata"
+        });
+    };
+
+    const monthNames = [
+        "January", "February", "March", "April",
+        "May", "June", "July", "August",
+        "September", "October", "November", "December"
+    ];
+
+    const getMonthName = (month) => {
+        const number = Number(month);
+
+        return Number.isInteger(number) && number >= 1 && number <= 12
+            ? monthNames[number - 1]
+            : "Unknown month";
+    };
+
+    const getStatus = (record) => {
+        return String(record?.status || "UNKNOWN").toUpperCase();
+    };
+
+    const statusClass = (status) => {
+        const map = {
+            PAID: "ph-status-paid",
+            PROCESSED: "ph-status-processed",
+            APPROVED: "ph-status-approved",
+            PROCESSING: "ph-status-processing",
+            PENDING: "ph-status-pending",
+            FAILED: "ph-status-failed",
+            CANCELLED: "ph-status-cancelled"
+        };
+
+        return map[status] || "ph-status-unknown";
+    };
+
+    const totalBatches = records.length;
+
+    const processedBatches = records.filter(
+        item => ["PROCESSED", "APPROVED", "PAID"].includes(getStatus(item))
+    ).length;
+
+    const processingBatches = records.filter(
+        item => ["PROCESSING", "PENDING"].includes(getStatus(item))
+    ).length;
+
+    const cancelledBatches = records.filter(
+        item => ["CANCELLED", "FAILED"].includes(getStatus(item))
+    ).length;
+
+    const totalGross = records.reduce(
+        (sum, item) => sum + (Number(item.totalGrossSalary) || 0),
+        0
+    );
+
+    const totalDeductions = records.reduce(
+        (sum, item) => sum + (Number(item.totalDeductions) || 0),
+        0
+    );
+
+    const totalNet = records.reduce(
+        (sum, item) => sum + (Number(item.totalNetSalary) || 0),
+        0
+    );
+
+    const totalEmployeesProcessed = records.reduce(
+        (sum, item) => sum + (Number(item.processedEmployees) || 0),
+        0
+    );
+
+    const years = [...new Set(
+        records
+            .map(item => Number(item.payrollYear))
+            .filter(year => Number.isInteger(year) && year >= 2000 && year <= 2100)
+    )].sort((a, b) => b - a);
+
+    const availableStatuses = [...new Set(
+        records.map(getStatus)
+    )].sort();
+
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+%>
+
+<style>
+    .ph-page {
+        --ph-ink: #172033;
+        --ph-muted: #748096;
+        --ph-border: #e7ebf2;
+        --ph-primary: #4f46e5;
+        color: var(--ph-ink);
+        padding: 8px 0 35px;
+    }
+
+    .ph-page * {
+        box-sizing: border-box;
+    }
+
+    .ph-page a {
+        text-decoration: none;
+    }
+
+    .ph-hero {
+        position: relative;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 22px;
+        overflow: hidden;
+        padding: 29px;
+        margin-bottom: 23px;
+        border-radius: 21px;
+        color: #fff;
+        background: linear-gradient(120deg, #25215e, #4f46e5 63%, #7c3aed);
+        box-shadow: 0 14px 34px rgba(79,70,229,.15);
+    }
+
+    .ph-hero::after {
+        content: "";
+        position: absolute;
+        width: 250px;
+        height: 250px;
+        right: 12%;
+        top: -175px;
+        border: 35px solid rgba(255,255,255,.08);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    .ph-hero-content,
+    .ph-hero-actions {
+        position: relative;
+        z-index: 1;
+    }
+
+    .ph-eyebrow {
+        margin-bottom: 10px;
+        color: #d9d7ff;
+        font-size: 11px;
+        font-weight: 850;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+    }
+
+    .ph-hero h1 {
+        margin: 0 0 9px;
+        color: #fff;
+        font-size: clamp(26px, 3vw, 35px);
+        font-weight: 850;
+        letter-spacing: -.7px;
+    }
+
+    .ph-hero p {
+        max-width: 580px;
+        margin: 0;
+        color: #e6e5ff;
+        font-size: 13px;
+        line-height: 1.8;
+    }
+
+    .ph-hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .ph-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 42px;
+        padding: 10px 15px;
+        border: 1px solid transparent;
+        border-radius: 10px;
+        font-size: 12px;
+        font-weight: 800;
+        cursor: pointer;
+        transition: transform .18s ease, box-shadow .18s ease;
+    }
+
+    .ph-btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .ph-btn-light {
+        color: #3730a3;
+        background: #fff;
+    }
+
+    .ph-btn-outline {
+        color: #fff;
+        border-color: rgba(255,255,255,.35);
+        background: rgba(255,255,255,.1);
+    }
+
+    .ph-btn-primary {
+        color: #fff;
+        background: var(--ph-primary);
+    }
+
+    .ph-btn-secondary {
+        color: #344054;
+        border-color: var(--ph-border);
+        background: #fff;
+    }
+
+    .ph-section-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin: 25px 0 15px;
+    }
+
+    .ph-section-heading h2 {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 850;
+    }
+
+    .ph-section-heading p {
+        margin: 5px 0 0;
+        color: var(--ph-muted);
+        font-size: 12px;
+    }
+
+    .ph-period {
+        padding: 9px 12px;
+        border: 1px solid var(--ph-border);
+        border-radius: 10px;
+        background: #fff;
+        color: #475467;
+        font-size: 12px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .ph-stats {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 15px;
+    }
+
+    .ph-stat {
+        min-width: 0;
+        padding: 20px;
+        border: 1px solid var(--ph-border);
+        border-radius: 16px;
+        background: #fff;
+        box-shadow: 0 3px 12px rgba(16,24,40,.025);
+    }
+
+    .ph-stat-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 17px;
+    }
+
+    .ph-stat-label {
+        color: var(--ph-muted);
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .ph-stat-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        flex-shrink: 0;
+        border-radius: 12px;
+        font-size: 19px;
+    }
+
+    .ph-purple { background: #eeebff; color: #5b4bdb; }
+    .ph-green { background: #e3f8ee; color: #168653; }
+    .ph-blue { background: #e4f2ff; color: #1671c5; }
+    .ph-orange { background: #fff0df; color: #b96912; }
+
+    .ph-stat-value {
+        margin: 0;
+        overflow-wrap: anywhere;
+        font-size: clamp(21px, 2vw, 27px);
+        font-weight: 850;
+        letter-spacing: -.7px;
+        line-height: 1.35;
+    }
+
+    .ph-stat-note {
+        display: block;
+        margin-top: 7px;
+        color: var(--ph-muted);
+        font-size: 10px;
+        line-height: 1.6;
+    }
+
+    .ph-panel {
+        min-width: 0;
+        margin-top: 22px;
+        overflow: hidden;
+        border: 1px solid var(--ph-border);
+        border-radius: 17px;
+        background: #fff;
+        box-shadow: 0 3px 12px rgba(16,24,40,.025);
+    }
+
+    .ph-panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        padding: 21px 22px;
+        border-bottom: 1px solid var(--ph-border);
+    }
+
+    .ph-panel-header h2 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 850;
+    }
+
+    .ph-panel-header p {
+        margin: 5px 0 0;
+        color: var(--ph-muted);
+        font-size: 11px;
+    }
+
+    .ph-count {
+        padding: 6px 10px;
+        border-radius: 20px;
+        background: #eeebff;
+        color: #5145cd;
+        font-size: 11px;
+        font-weight: 850;
+        white-space: nowrap;
+    }
+
+    .ph-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        padding: 17px 20px;
+        border-bottom: 1px solid #f0f2f6;
+        background: #fff;
+    }
+
+    .ph-search {
+        position: relative;
+        flex: 1 1 220px;
+        min-width: 160px;
+    }
+
+    .ph-search span {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #8490a3;
+        font-size: 16px;
+        pointer-events: none;
+    }
+
+    .ph-control {
+        width: 100%;
+        min-height: 41px;
+        padding: 10px 12px;
+        border: 1px solid #dfe4ed;
+        border-radius: 10px;
+        outline: none;
+        background: #fff;
+        color: #344054;
+        font-family: inherit;
+        font-size: 12px;
+    }
+
+    .ph-search .ph-control {
+        padding-left: 35px;
+    }
+
+    .ph-control:focus {
+        border-color: #8178ee;
+        box-shadow: 0 0 0 3px rgba(79,70,229,.09);
+    }
+
+    .ph-filter {
+        flex: 0 1 145px;
+        min-width: 120px;
+    }
+
+    .ph-table-wrap {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .ph-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        white-space: nowrap;
+    }
+
+    .ph-table thead th {
+        padding: 13px 17px;
+        background: #fafbfe;
+        color: #667085;
+        font-size: 10px;
+        font-weight: 850;
+        letter-spacing: .5px;
+        text-transform: uppercase;
+    }
+
+    .ph-table tbody td {
+        padding: 15px 17px;
+        border-top: 1px solid #f0f2f6;
+        color: #475467;
+        font-size: 12px;
+        vertical-align: middle;
+    }
+
+    .ph-table tbody tr:hover {
+        background: #fbfcff;
+    }
+
+    .ph-batch {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        min-width: 180px;
+    }
+
+    .ph-batch-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 39px;
+        height: 39px;
+        flex-shrink: 0;
+        border-radius: 12px;
+        background: #eeebff;
+        color: #5145cd;
+        font-size: 17px;
+    }
+
+    .ph-batch-number {
+        display: block;
+        color: #202939;
+        font-size: 12px;
+        font-weight: 850;
+    }
+
+    .ph-batch-period {
+        display: block;
+        margin-top: 4px;
+        color: #8490a3;
+        font-size: 10px;
+    }
+
+    .ph-amount {
+        color: #253047 !important;
+        font-weight: 800;
+    }
+
+    .ph-net {
+        color: #138253 !important;
+        font-weight: 850;
+    }
+
+    .ph-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 9px;
+        border-radius: 30px;
+        font-size: 10px;
+        font-weight: 850;
+    }
+
+    .ph-status::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+    .ph-status-paid,
+    .ph-status-approved {
+        color: #157347;
+        background: #e6f8ee;
+    }
+
+    .ph-status-processed {
+        color: #1759a6;
+        background: #e6f1ff;
+    }
+
+    .ph-status-processing {
+        color: #946200;
+        background: #fff3d8;
+    }
+
+    .ph-status-pending {
+        color: #805b14;
+        background: #fff6df;
+    }
+
+    .ph-status-failed {
+        color: #b42318;
+        background: #feeceb;
+    }
+
+    .ph-status-cancelled,
+    .ph-status-unknown {
+        color: #5b6472;
+        background: #eef1f6;
+    }
+
+    .ph-row-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 33px;
+        padding: 7px 10px;
+        border: 1px solid #e2e5ff;
+        border-radius: 8px;
+        background: #f7f6ff;
+        color: #5145cd;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .ph-row-action:hover {
+        background: #eeebff;
+    }
+
+    .ph-empty {
+        padding: 45px 20px;
+        text-align: center;
+    }
+
+    .ph-empty-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 57px;
+        height: 57px;
+        margin: 0 auto 14px;
+        border-radius: 17px;
+        background: #eeebff;
+        color: #5145cd;
+        font-size: 25px;
+    }
+
+    .ph-empty h3 {
+        margin: 0 0 7px;
+        font-size: 15px;
+        font-weight: 850;
+    }
+
+    .ph-empty p {
+        max-width: 370px;
+        margin: 0 auto 18px;
+        color: var(--ph-muted);
+        font-size: 12px;
+        line-height: 1.8;
+    }
+
+    .ph-no-results {
+        display: none;
+        padding: 30px 20px;
+        color: var(--ph-muted);
+        text-align: center;
+        font-size: 12px;
+    }
+
+    .ph-table-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 15px 20px;
+        border-top: 1px solid #f0f2f6;
+        color: var(--ph-muted);
+        font-size: 11px;
+    }
+
+    .ph-clear {
+        border: 0;
+        background: transparent;
+        color: var(--ph-primary);
+        font-size: 11px;
+        font-weight: 850;
+        cursor: pointer;
+    }
+
+    .ph-info {
+        display: flex;
+        align-items: flex-start;
+        gap: 11px;
+        margin-top: 19px;
+        padding: 14px 16px;
+        border: 1px solid #e2e5ff;
+        border-radius: 12px;
+        background: #f7f6ff;
+        color: #5145cd;
+        font-size: 11px;
+        line-height: 1.8;
+    }
+
+    .ph-info strong {
+        display: block;
+        margin-bottom: 2px;
+        font-size: 12px;
+    }
+
+    @media (max-width: 1100px) {
+        .ph-stats {
+            grid-template-columns: repeat(2, minmax(0,1fr));
+        }
+    }
+
+    @media (max-width: 700px) {
+        .ph-hero {
+            align-items: flex-start;
+            flex-direction: column;
+            padding: 23px 19px;
         }
 
-        .page-heading {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 16px;
-            flex-wrap: wrap;
-            margin-bottom: 24px;
-        }
-
-        .page-heading h1 {
-            margin: 0 0 8px;
-            font-size: 28px;
-        }
-
-        .page-heading p {
-            margin: 0;
-            color: #64748b;
-        }
-
-        .primary-btn {
-            display: inline-block;
-            padding: 11px 18px;
-            background: #2563eb;
-            color: white;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .history-card {
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            overflow: hidden;
-        }
-
-        .table-scroll {
-            overflow-x: auto;
-        }
-
-        table {
+        .ph-hero-actions {
             width: 100%;
-            border-collapse: collapse;
-            min-width: 850px;
         }
 
-        th, td {
-            padding: 15px 18px;
-            text-align: left;
-            border-bottom: 1px solid #e2e8f0;
-            white-space: nowrap;
+        .ph-hero-actions .ph-btn {
+            flex: 1;
         }
 
-        th {
-            background: #f8fafc;
-            color: #475569;
-            font-size: 12px;
-            text-transform: uppercase;
+        .ph-stat {
+            padding: 14px;
         }
 
-        td {
-            color: #334155;
-            font-size: 14px;
+        .ph-stat-top {
+            align-items: flex-start;
+            flex-direction: column;
+            margin-bottom: 12px;
         }
 
-        .status {
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 700;
-            background: #dbeafe;
-            color: #1d4ed8;
+        .ph-stat-value {
+            font-size: 20px;
         }
 
-        .status.paid,
-        .status.approved {
-            background: #dcfce7;
-            color: #166534;
+        .ph-section-heading {
+            align-items: flex-start;
         }
 
-        .status.failed,
-        .status.cancelled {
-            background: #fee2e2;
-            color: #991b1b;
+        .ph-toolbar {
+            padding: 14px;
         }
 
-        .empty-state {
-            padding: 45px 20px;
-            text-align: center;
-            color: #64748b;
+        .ph-search,
+        .ph-filter {
+            flex: 1 1 100%;
         }
 
-        .amount {
-            font-weight: 700;
-            color: #0f172a;
+        .ph-panel-header {
+            padding: 17px;
         }
 
-        @media (max-width: 640px) {
-            .payroll-page {
-                padding: 18px;
-            }
+        .ph-table-footer {
+            align-items: flex-start;
+            flex-direction: column;
         }
-    </style>
-</head>
+    }
 
-<body>
+    @media (prefers-reduced-motion: reduce) {
+        .ph-page *,
+        .ph-page *::before,
+        .ph-page *::after {
+            transition: none !important;
+        }
+    }
+</style>
 
-    <%- include('../partials/navbar') %>
-<main class="payroll-page">
+<div class="ph-page">
 
-    <header class="page-heading">
-        <div>
+    <!-- HEADER -->
+    <section class="ph-hero">
+        <div class="ph-hero-content">
+            <div class="ph-eyebrow">GYANSIFY HRMS · FINANCE</div>
+
             <h1>Payroll History</h1>
-            <p>Review processed payrolls and employee salary totals.</p>
+
+            <p>
+                Review monthly payroll batches, monitor processing status,
+                and track salary disbursement records for your organization.
+            </p>
         </div>
 
-        <a class="primary-btn" href="/payroll/process">
-            + Process Payroll
-        </a>
-    </header>
+        <div class="ph-hero-actions">
+            <a href="/payroll" class="ph-btn ph-btn-light">
+                ← Payroll Dashboard
+            </a>
 
-    <section class="history-card">
-        <% const records = typeof payrolls !== "undefined" && Array.isArray(payrolls) ? payrolls : []; %>
+            <a href="/payroll/salary-structures"
+               class="ph-btn ph-btn-outline">
+                + Salary Structures
+            </a>
+        </div>
+    </section>
+
+    <!-- SUMMARY -->
+    <div class="ph-section-heading">
+        <div>
+            <h2>Payroll Summary</h2>
+            <p>Overview of the payroll batches returned by your controller.</p>
+        </div>
+
+        <div class="ph-period">
+            ▦ <%= getMonthName(currentMonth) %> <%= currentYear %>
+        </div>
+    </div>
+
+    <section class="ph-stats">
+
+        <article class="ph-stat">
+            <div class="ph-stat-top">
+                <span class="ph-stat-label">Total Payroll Batches</span>
+                <div class="ph-stat-icon ph-purple" aria-hidden="true">▤</div>
+            </div>
+
+            <h3 class="ph-stat-value">
+                <%= totalBatches.toLocaleString("en-IN") %>
+            </h3>
+
+            <span class="ph-stat-note">All returned payroll records</span>
+        </article>
+
+        <article class="ph-stat">
+            <div class="ph-stat-top">
+                <span class="ph-stat-label">Processed Batches</span>
+                <div class="ph-stat-icon ph-green" aria-hidden="true">✓</div>
+            </div>
+
+            <h3 class="ph-stat-value">
+                <%= processedBatches.toLocaleString("en-IN") %>
+            </h3>
+
+            <span class="ph-stat-note">Processed, approved or paid status</span>
+        </article>
+
+        <article class="ph-stat">
+            <div class="ph-stat-top">
+                <span class="ph-stat-label">Total Net Payroll</span>
+                <div class="ph-stat-icon ph-blue" aria-hidden="true">₹</div>
+            </div>
+
+            <h3 class="ph-stat-value"><%= money(totalNet) %></h3>
+
+            <span class="ph-stat-note">Combined net amount of returned batches</span>
+        </article>
+
+        <article class="ph-stat">
+            <div class="ph-stat-top">
+                <span class="ph-stat-label">Employees Processed</span>
+                <div class="ph-stat-icon ph-orange" aria-hidden="true">♙</div>
+            </div>
+
+            <h3 class="ph-stat-value">
+                <%= totalEmployeesProcessed.toLocaleString("en-IN") %>
+            </h3>
+
+            <span class="ph-stat-note">Sum of processed employee counts</span>
+        </article>
+
+    </section>
+
+    <!-- PAYROLL HISTORY TABLE -->
+    <section class="ph-panel">
+
+        <div class="ph-panel-header">
+            <div>
+                <h2>All Payroll Records</h2>
+                <p>Search and filter payroll batches by period, status or reference.</p>
+            </div>
+
+            <span class="ph-count" id="phVisibleBadge">
+                <%= totalBatches %> Records
+            </span>
+        </div>
 
         <% if (records.length > 0) { %>
-            <div class="table-scroll">
-                <table>
+
+            <div class="ph-toolbar">
+
+                <div class="ph-search">
+                    <span aria-hidden="true">⌕</span>
+
+                    <input
+                        type="search"
+                        id="phSearch"
+                        class="ph-control"
+                        placeholder="Search payroll number..."
+                        aria-label="Search payroll number"
+                        autocomplete="off"
+                    >
+                </div>
+
+                <div class="ph-filter">
+                    <select id="phMonth" class="ph-control" aria-label="Filter by month">
+                        <option value="">All months</option>
+
+                        <% monthNames.forEach((name, index) => { %>
+                            <option value="<%= index + 1 %>">
+                                <%= name %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+
+                <div class="ph-filter">
+                    <select id="phYear" class="ph-control" aria-label="Filter by year">
+                        <option value="">All years</option>
+
+                        <% years.forEach(year => { %>
+                            <option value="<%= year %>"><%= year %></option>
+                        <% }); %>
+                    </select>
+                </div>
+
+                <div class="ph-filter">
+                    <select id="phStatus" class="ph-control" aria-label="Filter by status">
+                        <option value="">All statuses</option>
+
+                        <% availableStatuses.forEach(status => { %>
+                            <option value="<%= status %>">
+                                <%= status.replace(/_/g, " ") %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+
+                <button type="button" class="ph-clear" id="phClearFilters">
+                    Reset filters
+                </button>
+
+            </div>
+
+            <div class="ph-table-wrap">
+                <table class="ph-table">
                     <thead>
                         <tr>
-                            <th>Payroll Number</th>
+                            <th>Payroll Reference</th>
                             <th>Payroll Period</th>
                             <th>Employees</th>
                             <th>Gross Salary</th>
                             <th>Deductions</th>
-                            <th>Net Salary</th>
+                            <th>Net Payroll</th>
                             <th>Status</th>
-                            <th>Payment Date</th>
+                            <th>Created</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
 
-                    <tbody>
-                        <% records.forEach(payroll => { %>
-                            <tr>
+                    <tbody id="phTableBody">
+
+                        <% records.forEach((item) => {
+                            const status = getStatus(item);
+                            const month = Number(item.payrollMonth);
+                            const year = Number(item.payrollYear);
+
+                            const payrollNumber = String(
+                                item.payrollNumber || "Reference unavailable"
+                            );
+
+                            const searchable = [
+                                payrollNumber,
+                                status,
+                                getMonthName(month),
+                                year
+                            ].join(" ").toLowerCase();
+
+                            const employeeCount = Number(
+                                item.processedEmployees || 0
+                            );
+
+                            const batchTotalEmployees = Number(
+                                item.totalEmployees || 0
+                            );
+
+                            const dateValue =
+                                item.createdAt ||
+                                item.processedAt ||
+                                item.periodStart;
+                        %>
+
+                            <tr
+                                class="ph-record-row"
+                                data-search="<%= searchable %>"
+                                data-month="<%= month %>"
+                                data-year="<%= year %>"
+                                data-status="<%= status %>"
+                            >
                                 <td>
-                                    <strong>
-                                        <%= payroll.payrollNumber || "—" %>
-                                    </strong>
+                                    <div class="ph-batch">
+                                        <div class="ph-batch-icon" aria-hidden="true">
+                                            ₹
+                                        </div>
+
+                                        <div>
+                                            <span class="ph-batch-number">
+                                                <%= payrollNumber %>
+                                            </span>
+
+                                            <span class="ph-batch-period">
+                                                <%= employeeCount %> of
+                                                <%= batchTotalEmployees %> processed
+                                            </span>
+                                        </div>
+                                    </div>
                                 </td>
 
                                 <td>
-                                    <%= String(payroll.payrollMonth || "").padStart(2, "0") %>
-                                    /
-                                    <%= payroll.payrollYear || "—" %>
+                                    <strong><%= getMonthName(month) %></strong>
+                                    <span style="color:#8490a3;"> <%= year || "—" %></span>
                                 </td>
 
                                 <td>
-                                    <%= payroll.processedEmployees || 0 %>
-                                    /
-                                    <%= payroll.totalEmployees || 0 %>
+                                    <%= batchTotalEmployees.toLocaleString("en-IN") %>
                                 </td>
 
-                                <td class="amount">
-                                    ₹<%= Number(payroll.totalGrossSalary || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+                                <td class="ph-amount">
+                                    <%= money(item.totalGrossSalary) %>
+                                </td>
+
+                                <td class="ph-amount">
+                                    <%= money(item.totalDeductions) %>
+                                </td>
+
+                                <td class="ph-net">
+                                    <%= money(item.totalNetSalary) %>
                                 </td>
 
                                 <td>
-                                    ₹<%= Number(payroll.totalDeductions || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
-                                </td>
-
-                                <td class="amount">
-                                    ₹<%= Number(payroll.totalNetSalary || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
-                                </td>
-
-                                <td>
-                                    <span class="status <%= String(payroll.status || "").toLowerCase() %>">
-                                        <%= payroll.status || "UNKNOWN" %>
+                                    <span class="ph-status <%= statusClass(status) %>">
+                                        <%= status.replace(/_/g, " ") %>
                                     </span>
                                 </td>
 
+                                <td><%= formatDate(dateValue) %></td>
+
                                 <td>
-                                    <%= payroll.paymentDate
-                                        ? new Date(payroll.paymentDate).toLocaleDateString("en-IN")
-                                        : "Not paid" %>
+                                    <a
+                                        class="ph-row-action"
+                                        href="/payroll/payslips?month=<%= month %>&year=<%= year %>"
+                                        aria-label="View payslips for <%= getMonthName(month) %> <%= year %>"
+                                    >
+                                        Payslips ↗
+                                    </a>
                                 </td>
                             </tr>
+
                         <% }); %>
+
                     </tbody>
                 </table>
             </div>
+
+            <div class="ph-no-results" id="phNoResults">
+                No payroll records match your filters. Try changing your search.
+            </div>
+
+            <div class="ph-table-footer">
+                <span id="phFooterCount">
+                    Showing <%= totalBatches %> of <%= totalBatches %> records
+                </span>
+
+                <button type="button" class="ph-clear" id="phClearFiltersBottom">
+                    Clear all filters
+                </button>
+            </div>
+
         <% } else { %>
-            <div class="empty-state">
-                <h3>No payroll records yet</h3>
-                <p>Once payroll is successfully processed, it will appear here.</p>
-                <a class="primary-btn" href="/payroll/process">
-                    Process Your First Payroll
+
+            <div class="ph-empty">
+                <div class="ph-empty-icon" aria-hidden="true">₹</div>
+
+                <h3>No payroll history yet</h3>
+
+                <p>
+                    Your payroll batches will appear here after a monthly
+                    payroll has been successfully processed. Create salary
+                    structures first if your employees do not have them.
+                </p>
+
+                <a href="/payroll" class="ph-btn ph-btn-primary">
+                    Go to Payroll Dashboard →
+                </a>
+
+                <a href="/payroll/salary-structures"
+                   class="ph-btn ph-btn-secondary">
+                    Manage Salary Structures
                 </a>
             </div>
+
         <% } %>
+
     </section>
 
-</main>
-</body>
-</html>
+    <div class="ph-info">
+        <span aria-hidden="true">ⓘ</span>
+
+        <div>
+            <strong>Payroll records and salary totals</strong>
+
+            This page displays batch totals stored in the payroll database.
+            A processed payroll does not necessarily mean payment has been
+            made. Use the recorded payroll status and payment information
+            to confirm actual disbursement.
+        </div>
+    </div>
+
+</div>
+
+<script>
+(function () {
+    const searchInput = document.getElementById("phSearch");
+    const monthSelect = document.getElementById("phMonth");
+    const yearSelect = document.getElementById("phYear");
+    const statusSelect = document.getElementById("phStatus");
+
+    const rows = Array.from(
+        document.querySelectorAll(".ph-record-row")
+    );
+
+    const badge = document.getElementById("phVisibleBadge");
+    const footer = document.getElementById("phFooterCount");
+    const noResults = document.getElementById("phNoResults");
+
+    if (!searchInput || !monthSelect || !yearSelect || !statusSelect) {
+        return;
+    }
+
+    function applyFilters() {
+        const search = searchInput.value.trim().toLowerCase();
+        const month = monthSelect.value;
+        const year = yearSelect.value;
+        const status = statusSelect.value;
+
+        let visible = 0;
+
+        rows.forEach(function (row) {
+            const matchesSearch =
+                (row.dataset.search || "").includes(search);
+
+            const matchesMonth =
+                !month || row.dataset.month === month;
+
+            const matchesYear =
+                !year || row.dataset.year === year;
+
+            const matchesStatus =
+                !status || row.dataset.status === status;
+
+            const show =
+                matchesSearch &&
+                matchesMonth &&
+                matchesYear &&
+                matchesStatus;
+
+            row.style.display = show ? "" : "none";
+
+            if (show) visible++;
+        });
+
+        if (badge) {
+            badge.textContent = visible + " Records";
+        }
+
+        if (footer) {
+            footer.textContent =
+                "Showing " + visible + " of " + rows.length + " records";
+        }
+
+        if (noResults) {
+            noResults.style.display =
+                rows.length > 0 && visible === 0 ? "block" : "none";
+        }
+    }
+
+    function clearFilters() {
+        searchInput.value = "";
+        monthSelect.value = "";
+        yearSelect.value = "";
+        statusSelect.value = "";
+        applyFilters();
+    }
+
+    searchInput.addEventListener("input", applyFilters);
+    monthSelect.addEventListener("change", applyFilters);
+    yearSelect.addEventListener("change", applyFilters);
+    statusSelect.addEventListener("change", applyFilters);
+
+    const clearButton = document.getElementById("phClearFilters");
+    const clearButtonBottom = document.getElementById("phClearFiltersBottom");
+
+    if (clearButton) {
+        clearButton.addEventListener("click", clearFilters);
+    }
+
+    if (clearButtonBottom) {
+        clearButtonBottom.addEventListener("click", clearFilters);
+    }
+
+    applyFilters();
+})();
+</script>

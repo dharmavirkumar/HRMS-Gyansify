@@ -6,22 +6,33 @@ const router = express.Router();
 const authController = require("../controllers/authController");
 const invitationController = require("../controllers/invitationController");
 
-// =====================================================
-// SET PASSWORD — EMPLOYEE INVITATION
-// =====================================================
 
-// Display password setup page
+ // =====================================================
+ // EMPLOYEE INVITATION — SET PASSWORD
+ // =====================================================
+
+// EMPLOYEE INVITATION — SET PASSWORD
+
 router.get(
     "/set-password",
     invitationController.getSetPassword
 );
 
-// Save password and activate employee account
 router.post(
     "/set-password",
     invitationController.postSetPassword
 );
 
+// Invitation link: /accept-invitation?token=...&email=...
+router.get(
+    "/accept-invitation",
+    invitationController.getSetPassword
+);
+
+router.post(
+    "/accept-invitation",
+    invitationController.postSetPassword
+);
 // =====================================================
 // LOGIN PAGE
 // =====================================================

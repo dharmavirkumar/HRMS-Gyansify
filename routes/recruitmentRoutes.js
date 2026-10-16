@@ -660,44 +660,206 @@ router.get(
 );
 
 
+
 // =====================================================
 // OFFERS
 // GET /recruitment/offers
 // =====================================================
 
+router.get("/offers", requireAuth, async (req, res) => {
+    try {
+        return res.render("recruitment/offers", {
+            title: "Offers",
+            user: getUser(req),
+            offers: []
+        });
+    } catch (error) {
+        console.error("Recruitment Offers Error:", error);
+        return res.status(500).send(
+            "Gyansify HRMS - Internal Server Error"
+        );
+    }
+});
+
+
+// =====================================================
+// CREATE OFFER FORM
+// GET /recruitment/offers/create
+// =====================================================
+
 router.get(
-    "/offers",
+    "/offers/create",
+    requireAuth,
+    (req, res) => {
+        return res.render("recruitment/offers/create", {
+            title: "Create Offer",
+            user: getUser(req),
+            error: null,
+            formData: {
+                candidateName: "",
+                candidateEmail: "",
+                jobTitle: "",
+                department: "",
+                employmentType: "FULL_TIME",
+                offeredSalary: "",
+                joiningDate: "",
+                offerExpiryDate: "",
+                notes: ""
+            }
+        });
+    }
+);
+
+
+// =====================================================
+// SUBMIT OFFER FORM
+// POST /recruitment/offers/create
+// =====================================================
+
+router.post(
+    "/offers/create",
     requireAuth,
     async (req, res) => {
-
         try {
+            const {
+                candidateName,
+                candidateEmail,
+                jobTitle,
+                department,
+                employmentType,
+                offeredSalary,
+                joiningDate,
+                offerExpiryDate,
+                notes
+            } = req.body || {};
 
-            return res.render(
-                "recruitment/offers",
+            const formData = {
+                candidateName: String(candidateName || "").trim(),
+                candidateEmail: String(candidateEmail || "")
+                    .trim()
+                    .toLowerCase(),
+                jobTitle: String(jobTitle || "").trim(),
+                department: String(department || "").trim(),
+                employmentType: String(
+                    employmentType || "FULL_TIME"
+                ),
+                offeredSalary: String(offeredSalary || "").trim(),
+                joiningDate: String(joiningDate || "").trim(),
+                offerExpiryDate: String(
+                    offerExpiryDate || ""
+                ).trim(),
+                notes: String(notes || "").trim()
+            };
+
+            const fail = (message) => res.status(400).render(
+                "recruitment/offers/create",
                 {
-
-                    title: "Offers",
-
+                    title: "Create Offer",
                     user: getUser(req),
-
-                    offers: []
-
+                    error: message,
+                    formData
                 }
             );
 
-        } catch (error) {
+            if (
+                !formData.candidateName ||
+                !formData.candidateEmail ||
+                !formData.jobTitle ||
+                !formData.department ||
+                !formData.joiningDate ||
+                !formData.offeredSalary
+            ) {
+                return fail(
+                    "Please complete all required fields."
+                );
+            }
 
-            console.error(
-                "Recruitment Offers Error:",
-                error
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (!emailPattern.test(formData.candidateEmail)) {
+                return fail("Please enter a valid candidate email.");
+            }
+
+            const salary = Number(formData.offeredSalary);
+
+            if (!Number.isFinite(salary) || salary < 0) {
+                return fail(
+                    "Offered salary must be a valid non-negative number."
+                );
+            }
+
+            const parseDate = (value) => {
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+                    return null;
+                }
+
+                const date = new Date(`${value}T00:00:00.000Z`);
+
+                return !Number.isNaN(date.getTime()) &&
+                    date.toISOString().slice(0, 10) === value
+                    ? date
+                    : null;
+            };
+
+            const joiningDateValue = parseDate(
+                formData.joiningDate
             );
+
+            const expiryDateValue = formData.offerExpiryDate
+                ? parseDate(formData.offerExpiryDate)
+                : null;
+
+            if (!joiningDateValue) {
+                return fail("Please enter a valid joining date.");
+            }
+
+            if (
+                formData.offerExpiryDate &&
+                !expiryDateValue
+            ) {
+                return fail("Please enter a valid offer expiry date.");
+            }
+
+            if (
+                expiryDateValue &&
+                expiryDateValue < new Date(
+                    `${new Date().toISOString().slice(0, 10)}T00:00:00.000Z`
+                )
+            ) {
+                return fail("Offer expiry date cannot be in the past.");
+            }
+
+            if (
+                ![
+                    "FULL_TIME",
+                    "PART_TIME",
+                    "CONTRACT",
+                    "INTERN"
+                ].includes(formData.employmentType)
+            ) {
+                return fail("Please select a valid employment type.");
+            }
+
+            // IMPORTANT:
+            // No Offer model is connected yet. Do not report
+            // this form as saved until persistent storage exists.
+            return res.status(501).render(
+                "recruitment/offers/create",
+                {
+                    title: "Create Offer",
+                    user: getUser(req),
+                    error:
+                        "The form is validated, but offer database saving is not configured yet. Connect an Offer model to save records.",
+                    formData
+                }
+            );
+        } catch (error) {
+            console.error("Create Offer Error:", error);
 
             return res.status(500).send(
-                "Gyansify HRMS - Internal Server Error"
+                "Unable to process the offer form."
             );
-
         }
-
     }
 );
 

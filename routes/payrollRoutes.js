@@ -2,6 +2,8 @@
 "use strict";
 
 const express = require("express");
+const mongoose = require("mongoose");
+
 const router = express.Router();
 
 const {
@@ -22,20 +24,67 @@ router.use(requireAuth);
 // ROLE ACCESS
 // =====================================================
 
-// Roles allowed to manage payroll operations.
 const payrollAdmin = requireRole(
     "SUPER_ADMIN",
     "HR_ADMIN",
     "HR_EXECUTIVE"
 );
 
-// Roles allowed to access the payslips section.
 const payrollUsers = requireRole(
     "SUPER_ADMIN",
     "HR_ADMIN",
     "HR_EXECUTIVE",
     "EMPLOYEE"
 );
+
+// =====================================================
+// COMMON HELPERS
+// =====================================================
+
+/**
+ * Validate MongoDB ObjectId route parameters.
+ * Prevents malformed IDs from reaching controllers.
+ */
+function validateObjectId(paramName) {
+    return function (req, res, next) {
+        const value = req.params[paramName];
+
+        if (
+            typeof value !== "string" ||
+            !mongoose.isValidObjectId(value)
+        ) {
+            return res.status(400).render("error", {
+                title: "Invalid Request",
+                message: "The requested payroll record ID is invalid.",
+                user: req.session?.user || null
+            });
+        }
+
+        return next();
+    };
+}
+
+/**
+ * Ensure controller methods exist before calling them.
+ * This provides a useful error if a method was not exported.
+ */
+function requireControllerMethod(methodName) {
+    return function (req, res, next) {
+        const handler = payrollController[methodName];
+
+        if (typeof handler !== "function") {
+            const error = new Error(
+                `payrollController.${methodName} is not exported or is not a function.`
+            );
+
+            error.status = 500;
+
+            return next(error);
+        }
+
+        return handler(req, res, next);
+    };
+}
 
 // =====================================================
 // PAYROLL DASHBOARD
@@ -46,7 +95,7 @@ const payrollUsers = requireRole(
 router.get(
     "/",
     payrollAdmin,
-    payrollController.getPayrollDashboard
+    requireControllerMethod("getPayrollDashboard")
 );
 
 // =====================================================
@@ -59,13 +108,13 @@ router.get(
 router.get(
     "/salary-structures",
     payrollAdmin,
-    payrollController.getSalaryStructures
+    requireControllerMethod("getSalaryStructures")
 );
 
 router.post(
     "/salary-structures",
     payrollAdmin,
-    payrollController.createSalaryStructure
+    requireControllerMethod("createSalaryStructure")
 );
 
 // =====================================================
@@ -94,39 +143,32 @@ router.get(
 router.post(
     "/process",
     payrollAdmin,
-    (req, res, next) => {
-        if (
-            typeof payrollController.processPayroll !== "function"
-        ) {
-            const error = new Error(
-                "processPayroll is not exported by payrollController."
-            );
-
-            error.status = 500;
-            return next(error);
-        }
-
-        return payrollController.processPayroll(req, res, next);
-    }
+    requireControllerMethod("processPayroll")
 );
 
 // =====================================================
 // EMPLOYEE PAYSLIPS
 // GET /payroll/payslips
-// Logged-in employees and authorized HR roles
+// HR roles and employees
 // =====================================================
 
 router.get(
     "/payslips",
     payrollUsers,
-    payrollController.getPayslips
+    requireControllerMethod("getPayslips")
 );
 
+// =====================================================
+// PAYSLIP DETAILS
+// GET /payroll/payslips/:id
+// HR roles and employees
+// =====================================================
 
 router.get(
     "/payslips/:id",
     payrollUsers,
-    payrollController.getPayslipDetails
+    validateObjectId("id"),
+    requireControllerMethod("getPayslipDetails")
 );
 
 // =====================================================
@@ -138,7 +180,7 @@ router.get(
 router.get(
     "/history",
     payrollAdmin,
-    payrollController.getPayrollHistory
+    requireControllerMethod("getPayrollHistory")
 );
 
 // =====================================================

@@ -1,375 +1,779 @@
 
+<%
+    const safeNumber = (value) => {
+        const number = Number(value || 0);
+        return Number.isFinite(number) ? number : 0;
+    };
+
+    const formatMoney = (value) => {
+        return new Intl.NumberFormat("en-IN", {
+            style: "currency",
+            currency: "INR",
+            maximumFractionDigits: 2
+        }).format(safeNumber(value));
+    };
+
+    const formatDate = (value) => {
+        if (!value) return "—";
+
+        const date = new Date(value);
+
+        if (Number.isNaN(date.getTime())) return "—";
+
+        return date.toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+            timeZone: "Asia/Kolkata"
+        });
+    };
+
+    const structures = Array.isArray(salaryStructures)
+        ? salaryStructures
+        : [];
+
+    const totalEmployees = safeNumber(employeeCount);
+    const totalStructures = structures.length;
+
+    const activeStructures = structures.filter(
+        item => item.status === "ACTIVE"
+    ).length;
+
+    const missingStructures = Math.max(
+        0,
+        totalEmployees - totalStructures
+    );
+
+    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear();
+
+    const monthNames = [
+        "January", "February", "March", "April",
+        "May", "June", "July", "August",
+        "September", "October", "November", "December"
+    ];
+
+    const employeeLabel = (employee) => {
+        if (!employee) return "Employee not found";
+
+        const name = [
+            employee.firstName,
+            employee.lastName
+        ].filter(Boolean).join(" ");
+
+        return name || employee.employeeId || employee.email || "Employee";
+    };
+%>
+
 <style>
     .payroll-page {
-        padding: 28px 32px;
-        color: #111827;
-        max-width: 1600px;
-        margin: 0 auto;
+        --payroll-ink: #172033;
+        --payroll-muted: #718096;
+        --payroll-border: #e7ebf2;
+        --payroll-primary: #4f46e5;
+        --payroll-bg: #f6f8fc;
+        color: var(--payroll-ink);
+        padding: 8px 0 32px;
     }
 
-    .payroll-page *,
-    .payroll-page *::before,
-    .payroll-page *::after {
+    .payroll-page * {
         box-sizing: border-box;
     }
 
-    .payroll-page .page-heading {
+    .payroll-page a {
+        text-decoration: none;
+    }
+
+    .payroll-page button,
+    .payroll-page input,
+    .payroll-page select,
+    .payroll-page textarea {
+        font: inherit;
+    }
+
+    .payroll-hero {
+        position: relative;
+        overflow: hidden;
         display: flex;
-        align-items: center;
         justify-content: space-between;
-        gap: 20px;
-        margin-bottom: 26px;
+        align-items: center;
+        gap: 24px;
+        padding: 30px;
+        margin-bottom: 24px;
+        color: #fff;
+        border-radius: 22px;
+        background: linear-gradient(120deg, #29246d, #4f46e5 62%, #7c3aed);
+        box-shadow: 0 15px 35px rgba(79, 70, 229, .16);
     }
 
-    .payroll-page .heading-copy h1 {
-        margin: 0;
-        font-size: 25px;
-        font-weight: 700;
-        letter-spacing: -0.6px;
+    .payroll-hero::after {
+        content: "";
+        position: absolute;
+        width: 240px;
+        height: 240px;
+        right: 8%;
+        top: -150px;
+        border: 35px solid rgba(255,255,255,.08);
+        border-radius: 50%;
+        pointer-events: none;
     }
 
-    .payroll-page .heading-copy p {
-        margin: 7px 0 0;
-        color: #6b7280;
-        font-size: 13px;
-        line-height: 1.6;
+    .payroll-hero-content {
+        position: relative;
+        z-index: 1;
     }
 
-    .payroll-page .heading-actions {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
-
-    .payroll-page .button {
+    .payroll-eyebrow {
         display: inline-flex;
         align-items: center;
-        justify-content: center;
         gap: 8px;
-        min-height: 40px;
-        padding: 10px 16px;
-        border: 1px solid transparent;
-        border-radius: 8px;
+        margin-bottom: 10px;
         font-size: 12px;
-        font-weight: 600;
-        text-decoration: none;
-        transition: background .2s, border-color .2s;
-        cursor: pointer;
-    }
-
-    .payroll-page .button:focus-visible,
-    .payroll-page .module-link:focus-visible {
-        outline: 3px solid #93c5fd;
-        outline-offset: 3px;
-    }
-
-    .payroll-page .button-primary {
-        background: #2563eb;
-        color: #fff;
-    }
-
-    .payroll-page .button-primary:hover {
-        background: #1d4ed8;
-    }
-
-    .payroll-page .button-secondary {
-        background: #fff;
-        border-color: #e5e7eb;
-        color: #374151;
-    }
-
-    .payroll-page .button-secondary:hover {
-        background: #f9fafb;
-        border-color: #d1d5db;
-    }
-
-    .payroll-page .summary-grid {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 16px;
-        margin-bottom: 25px;
-    }
-
-    .payroll-page .summary-card {
-        min-width: 0;
-        padding: 20px;
-        background: #fff;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-        box-shadow: 0 2px 5px rgb(15 23 42 / 2%);
-    }
-
-    .payroll-page .summary-top {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-    }
-
-    .payroll-page .summary-label {
-        color: #6b7280;
-        font-size: 11px;
-        font-weight: 600;
+        font-weight: 800;
+        letter-spacing: 1.5px;
         text-transform: uppercase;
-        letter-spacing: .5px;
+        color: #dcdcff;
     }
 
-    .payroll-page .summary-icon {
-        display: grid;
-        place-items: center;
-        flex-shrink: 0;
-        width: 36px;
-        height: 36px;
-        border-radius: 9px;
-        background: #eff6ff;
-        color: #2563eb;
-        font-size: 17px;
+    .payroll-hero h1 {
+        margin: 0 0 10px;
+        color: #fff;
+        font-size: clamp(26px, 3vw, 36px);
+        font-weight: 850;
+        letter-spacing: -.8px;
     }
 
-    .payroll-page .summary-value {
-        margin-top: 15px;
-        font-size: clamp(22px, 2vw, 28px);
-        font-weight: 700;
-        line-height: 1.25;
-        letter-spacing: -.6px;
-        overflow-wrap: anywhere;
-    }
-
-    .payroll-page .summary-description {
-        margin-top: 7px;
-        color: #9ca3af;
-        font-size: 11px;
-        line-height: 1.5;
-    }
-
-    .payroll-page .content-card {
-        margin-bottom: 22px;
-        overflow: hidden;
-        background: #fff;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-    }
-
-    .payroll-page .card-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 15px;
-        padding: 20px 22px;
-        border-bottom: 1px solid #f0f1f3;
-    }
-
-    .payroll-page .card-header h2 {
+    .payroll-hero p {
+        max-width: 570px;
         margin: 0;
+        color: #e4e4ff;
         font-size: 14px;
-        font-weight: 700;
+        line-height: 1.8;
     }
 
-    .payroll-page .card-header p {
-        margin: 5px 0 0;
-        color: #9ca3af;
-        font-size: 11px;
-        line-height: 1.5;
-    }
-
-    .payroll-page .section-tag {
-        padding: 6px 9px;
-        border-radius: 6px;
-        background: #f3f4f6;
-        color: #6b7280;
-        font-size: 10px;
-        font-weight: 600;
-        white-space: nowrap;
-    }
-
-    .payroll-page .payroll-grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 15px;
-        padding: 22px;
-    }
-
-    .payroll-page .payroll-card {
+    .payroll-hero-actions {
+        position: relative;
+        z-index: 2;
         display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        min-width: 0;
-        min-height: 180px;
-        padding: 19px;
-        border: 1px solid #e5e7eb;
-        border-radius: 10px;
-        transition: border-color .2s, box-shadow .2s, transform .2s;
+        flex-wrap: wrap;
+        gap: 10px;
     }
 
-    .payroll-page .payroll-card:hover {
-        border-color: #bfdbfe;
-        box-shadow: 0 5px 16px rgb(37 99 235 / 5%);
+    .payroll-btn {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        min-height: 43px;
+        padding: 11px 16px;
+        border: 1px solid transparent;
+        border-radius: 11px;
+        font-size: 13px;
+        font-weight: 750;
+        cursor: pointer;
+        transition: transform .2s ease, box-shadow .2s ease;
+    }
+
+    .payroll-btn:hover {
         transform: translateY(-2px);
     }
 
-    .payroll-page .module-icon {
-        display: grid;
-        place-items: center;
-        width: 38px;
-        height: 38px;
-        margin-bottom: 15px;
-        border-radius: 10px;
-        background: #f3f6ff;
-        color: #2563eb;
-        font-size: 18px;
+    .payroll-btn-light {
+        background: #fff;
+        color: #3730a3;
     }
 
-    .payroll-page .payroll-card h3 {
-        margin: 0 0 8px;
-        font-size: 13px;
-        font-weight: 700;
+    .payroll-btn-outline {
+        color: #fff;
+        border-color: rgba(255,255,255,.35);
+        background: rgba(255,255,255,.10);
     }
 
-    .payroll-page .payroll-card p {
-        margin: 0;
-        color: #6b7280;
-        font-size: 11px;
-        line-height: 1.7;
+    .payroll-btn-primary {
+        color: #fff;
+        background: var(--payroll-primary);
+        box-shadow: 0 5px 14px rgba(79,70,229,.15);
     }
 
-    .payroll-page .module-link {
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        margin-top: auto;
-        padding-top: 16px;
-        color: #2563eb;
-        font-size: 11px;
-        font-weight: 700;
-        text-decoration: none;
+    .payroll-btn-secondary {
+        color: #344054;
+        background: #fff;
+        border-color: var(--payroll-border);
     }
 
-    .payroll-page .module-link:hover {
-        color: #1d4ed8;
-        text-decoration: underline;
-    }
-
-    .payroll-page .setup-panel {
+    .payroll-section-heading {
         display: flex;
-        align-items: flex-start;
-        gap: 15px;
-        padding: 24px;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+        margin: 27px 0 15px;
     }
 
-    .payroll-page .setup-icon {
+    .payroll-section-heading h2 {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 850;
+        letter-spacing: -.3px;
+    }
+
+    .payroll-section-heading p {
+        margin: 5px 0 0;
+        color: var(--payroll-muted);
+        font-size: 12px;
+    }
+
+    .payroll-period {
+        padding: 8px 12px;
+        border: 1px solid var(--payroll-border);
+        border-radius: 10px;
+        background: #fff;
+        color: #475467;
+        font-size: 12px;
+        font-weight: 750;
+        white-space: nowrap;
+    }
+
+    .payroll-stats {
         display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .payroll-stat {
+        min-width: 0;
+        padding: 21px;
+        border: 1px solid var(--payroll-border);
+        border-radius: 17px;
+        background: #fff;
+        box-shadow: 0 3px 12px rgba(16,24,40,.025);
+        transition: transform .2s ease, box-shadow .2s ease;
+    }
+
+    .payroll-stat:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 28px rgba(16,24,40,.06);
+    }
+
+    .payroll-stat-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+
+    .payroll-stat-icon {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 43px;
+        height: 43px;
         flex-shrink: 0;
-        place-items: center;
-        width: 44px;
-        height: 44px;
-        border-radius: 11px;
-        background: #eff6ff;
-        color: #2563eb;
+        border-radius: 13px;
         font-size: 20px;
     }
 
-    .payroll-page .setup-copy {
-        flex: 1;
-        min-width: 0;
+    .payroll-icon-purple {
+        background: #eeebff;
+        color: #5b4bdb;
     }
 
-    .payroll-page .setup-copy h3 {
-        margin: 1px 0 7px;
-        font-size: 14px;
+    .payroll-icon-green {
+        background: #e3f8ee;
+        color: #168653;
     }
 
-    .payroll-page .setup-copy p {
+    .payroll-icon-blue {
+        background: #e4f2ff;
+        color: #1671c5;
+    }
+
+    .payroll-icon-orange {
+        background: #fff0df;
+        color: #b96912;
+    }
+
+    .payroll-stat-label {
+        color: var(--payroll-muted);
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .payroll-stat-value {
         margin: 0;
-        color: #6b7280;
+        overflow-wrap: anywhere;
+        font-size: clamp(21px, 2vw, 27px);
+        font-weight: 850;
+        letter-spacing: -.7px;
+        line-height: 1.3;
+    }
+
+    .payroll-stat-note {
+        display: block;
+        margin-top: 8px;
+        color: var(--payroll-muted);
+        font-size: 11px;
+    }
+
+    .payroll-main-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.65fr) minmax(280px, .85fr);
+        gap: 20px;
+        align-items: start;
+        margin-top: 23px;
+    }
+
+    .payroll-panel {
+        min-width: 0;
+        overflow: hidden;
+        border: 1px solid var(--payroll-border);
+        border-radius: 17px;
+        background: #fff;
+        box-shadow: 0 3px 12px rgba(16,24,40,.025);
+    }
+
+    .payroll-panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 21px 22px;
+        border-bottom: 1px solid var(--payroll-border);
+    }
+
+    .payroll-panel-header h2 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 850;
+    }
+
+    .payroll-panel-header p {
+        margin: 5px 0 0;
+        color: var(--payroll-muted);
+        font-size: 12px;
+    }
+
+    .payroll-text-link {
+        color: var(--payroll-primary);
+        font-size: 12px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .payroll-table-wrap {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .payroll-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        white-space: nowrap;
+    }
+
+    .payroll-table th {
+        padding: 13px 18px;
+        background: #fafbfe;
+        color: #667085;
+        font-size: 10px;
+        font-weight: 850;
+        letter-spacing: .6px;
+        text-transform: uppercase;
+    }
+
+    .payroll-table td {
+        padding: 15px 18px;
+        border-top: 1px solid #f0f2f6;
+        font-size: 12px;
+        vertical-align: middle;
+    }
+
+    .payroll-table tbody tr:hover {
+        background: #fbfcff;
+    }
+
+    .payroll-employee {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        min-width: 190px;
+    }
+
+    .payroll-avatar {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 38px;
+        height: 38px;
+        flex-shrink: 0;
+        border-radius: 12px;
+        background: #eeebff;
+        color: #5145cd;
+        font-size: 12px;
+        font-weight: 850;
+    }
+
+    .payroll-employee-name {
+        color: #202939;
+        font-size: 12px;
+        font-weight: 800;
+    }
+
+    .payroll-employee-code {
+        margin-top: 4px;
+        color: #8490a3;
+        font-size: 10px;
+    }
+
+    .payroll-amount {
+        font-weight: 800;
+        color: #253047;
+    }
+
+    .payroll-net-amount {
+        font-weight: 850;
+        color: #138253;
+    }
+
+    .payroll-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 9px;
+        border-radius: 30px;
+        font-size: 10px;
+        font-weight: 850;
+    }
+
+    .payroll-status-active {
+        background: #e6f8ee;
+        color: #157347;
+    }
+
+    .payroll-status-future {
+        background: #fff3d8;
+        color: #946200;
+    }
+
+    .payroll-status-inactive {
+        background: #eef1f6;
+        color: #5b6472;
+    }
+
+    .payroll-empty {
+        padding: 38px 20px;
+        text-align: center;
+    }
+
+    .payroll-empty-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 55px;
+        height: 55px;
+        margin: 0 auto 13px;
+        border-radius: 17px;
+        background: #f0efff;
+        font-size: 24px;
+    }
+
+    .payroll-empty h3 {
+        margin: 0 0 7px;
+        font-size: 14px;
+        font-weight: 850;
+    }
+
+    .payroll-empty p {
+        margin: 0 auto 17px;
+        max-width: 330px;
+        color: var(--payroll-muted);
         font-size: 12px;
         line-height: 1.7;
     }
 
-    .payroll-page .setup-copy .setup-note {
-        margin-top: 10px;
-        color: #9ca3af;
-        font-size: 11px;
+    .payroll-side-content {
+        padding: 21px;
     }
 
-    .payroll-page .setup-status {
-        display: inline-flex;
+    .payroll-process-banner {
+        padding: 17px;
+        border: 1px solid #e5e4ff;
+        border-radius: 14px;
+        background: linear-gradient(145deg, #f7f6ff, #fff);
+    }
+
+    .payroll-process-banner h3 {
+        margin: 0 0 8px;
+        font-size: 14px;
+        font-weight: 850;
+    }
+
+    .payroll-process-banner p {
+        margin: 0 0 15px;
+        color: #667085;
+        font-size: 12px;
+        line-height: 1.7;
+    }
+
+    .payroll-process-banner .payroll-btn {
+        width: 100%;
+    }
+
+    .payroll-checklist {
+        display: grid;
+        gap: 0;
+        margin-top: 20px;
+    }
+
+    .payroll-checklist-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 15px 0;
+        border-bottom: 1px solid #f0f2f6;
+    }
+
+    .payroll-checklist-item:last-child {
+        border-bottom: 0;
+    }
+
+    .payroll-check-icon {
+        display: flex;
         align-items: center;
-        gap: 6px;
-        margin-top: 12px;
-        padding: 6px 9px;
-        border-radius: 6px;
-        background: #fffbeb;
-        color: #92400e;
-        font-size: 11px;
-        font-weight: 600;
+        justify-content: center;
+        width: 31px;
+        height: 31px;
+        flex-shrink: 0;
+        border-radius: 10px;
+        background: #f0efff;
+        color: #5145cd;
+        font-size: 14px;
     }
 
-    @media (max-width: 1100px) {
-        .payroll-page .summary-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+    .payroll-checklist-item strong {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 12px;
+        font-weight: 800;
+    }
+
+    .payroll-checklist-item span {
+        display: block;
+        color: var(--payroll-muted);
+        font-size: 11px;
+        line-height: 1.6;
+    }
+
+    .payroll-note {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-top: 18px;
+        padding: 13px;
+        border: 1px solid #f5e5bd;
+        border-radius: 12px;
+        background: #fffbef;
+        color: #805b14;
+        font-size: 11px;
+        line-height: 1.7;
+    }
+
+    .payroll-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+        background: rgba(15,23,42,.60);
+        backdrop-filter: blur(5px);
+    }
+
+    .payroll-modal.is-open {
+        display: flex;
+    }
+
+    .payroll-modal-card {
+        width: 100%;
+        max-width: 520px;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 25px;
+        border-radius: 20px;
+        background: #fff;
+        box-shadow: 0 25px 80px rgba(0,0,0,.2);
+    }
+
+    .payroll-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 15px;
+        margin-bottom: 21px;
+    }
+
+    .payroll-modal-header h2 {
+        margin: 0 0 6px;
+        font-size: 20px;
+        font-weight: 850;
+    }
+
+    .payroll-modal-header p {
+        margin: 0;
+        color: var(--payroll-muted);
+        font-size: 12px;
+        line-height: 1.6;
+    }
+
+    .payroll-modal-close {
+        width: 35px;
+        height: 35px;
+        border: 1px solid var(--payroll-border);
+        border-radius: 10px;
+        background: #fff;
+        cursor: pointer;
+    }
+
+    .payroll-form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0,1fr));
+        gap: 16px;
+    }
+
+    .payroll-form-field {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        min-width: 0;
+    }
+
+    .payroll-form-field.full {
+        grid-column: 1 / -1;
+    }
+
+    .payroll-form-field label {
+        color: #344054;
+        font-size: 12px;
+        font-weight: 800;
+    }
+
+    .payroll-form-field input,
+    .payroll-form-field select,
+    .payroll-form-field textarea {
+        width: 100%;
+        min-height: 44px;
+        padding: 11px 12px;
+        border: 1px solid #dce2eb;
+        border-radius: 10px;
+        outline: none;
+        background: #fff;
+        color: #253047;
+        font-size: 13px;
+    }
+
+    .payroll-form-field textarea {
+        min-height: 82px;
+        resize: vertical;
+    }
+
+    .payroll-form-field input:focus,
+    .payroll-form-field select:focus,
+    .payroll-form-field textarea:focus {
+        border-color: #7c73ee;
+        box-shadow: 0 0 0 3px rgba(79,70,229,.10);
+    }
+
+    .payroll-modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 23px;
+    }
+
+    .payroll-confirmation {
+        padding: 12px;
+        margin-top: 15px;
+        border: 1px solid #f4d7a3;
+        border-radius: 10px;
+        background: #fff8e8;
+        color: #805b14;
+        font-size: 11px;
+        line-height: 1.7;
+    }
+
+    @media (max-width: 1150px) {
+        .payroll-stats {
+            grid-template-columns: repeat(2, minmax(0,1fr));
         }
 
-        .payroll-page .payroll-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+        .payroll-main-grid {
+            grid-template-columns: minmax(0,1fr);
         }
     }
 
     @media (max-width: 700px) {
         .payroll-page {
-            padding: 20px;
+            padding-top: 0;
         }
 
-        .payroll-page .page-heading {
-            align-items: stretch;
+        .payroll-hero {
+            align-items: flex-start;
             flex-direction: column;
+            padding: 23px 19px;
+            border-radius: 17px;
         }
 
-        .payroll-page .heading-actions {
+        .payroll-hero-actions {
             width: 100%;
         }
 
-        .payroll-page .heading-actions .button {
+        .payroll-hero-actions .payroll-btn {
             flex: 1;
         }
 
-        .payroll-page .payroll-grid {
+        .payroll-stats {
+            gap: 10px;
+        }
+
+        .payroll-stat {
             padding: 15px;
-            gap: 12px;
         }
 
-        .payroll-page .card-header {
-            padding: 17px;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .payroll-page {
-            padding: 14px;
+        .payroll-stat-top {
+            align-items: flex-start;
+            flex-direction: column;
+            margin-bottom: 13px;
         }
 
-        .payroll-page .heading-copy h1 {
-            font-size: 21px;
+        .payroll-stat-value {
+            font-size: 20px;
         }
 
-        .payroll-page .summary-grid,
-        .payroll-page .payroll-grid {
-            grid-template-columns: 1fr;
+        .payroll-section-heading {
+            align-items: flex-start;
         }
 
-        .payroll-page .summary-card {
+        .payroll-panel-header {
             padding: 17px;
         }
 
-        .payroll-page .payroll-card {
-            min-height: 160px;
+        .payroll-side-content {
+            padding: 16px;
         }
 
-        .payroll-page .setup-panel {
-            padding: 17px;
+        .payroll-form-grid {
+            grid-template-columns: minmax(0,1fr);
         }
 
-        .payroll-page .section-tag {
-            display: none;
+        .payroll-form-field.full {
+            grid-column: auto;
+        }
+
+        .payroll-modal-card {
+            padding: 19px;
         }
     }
 
@@ -378,287 +782,562 @@
         .payroll-page *::before,
         .payroll-page *::after {
             transition: none !important;
-            transform: none !important;
-            scroll-behavior: auto !important;
         }
     }
 </style>
 
-<%
-    const safeEmployeeCount = Math.max(
-        0,
-        Number(employeeCount) || 0
-    );
+<div class="payroll-page">
 
-    const safeGrossSalary = Math.max(
-        0,
-        Number(grossSalary) || 0
-    );
+    <!-- PAGE HEADER -->
+    <section class="payroll-hero">
+        <div class="payroll-hero-content">
+            <div class="payroll-eyebrow">
+                <span aria-hidden="true">✦</span>
+                GYANSIFY HRMS · FINANCE
+            </div>
 
-    const safeDeductions = Math.max(
-        0,
-        Number(deductions) || 0
-    );
-
-    const safeNetPayroll = Math.max(
-        0,
-        Number(netPayroll) || 0
-    );
-
-    const formatMoney = (amount) =>
-        Number(amount).toLocaleString("en-IN", {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 2
-        });
-
-    const formatCount = (count) =>
-        Number(count).toLocaleString("en-IN");
-%>
-
-<%- include('../partials/navbar') %>
-
-<section class="payroll-page">
-
-    <header class="page-heading">
-        <div class="heading-copy">
             <h1>Payroll Management</h1>
+
             <p>
-                Manage employee compensation, salary structures,
-                deductions and payroll records.
+                Manage employee salary structures, review compensation,
+                and prepare monthly payroll from one centralized workspace.
             </p>
         </div>
 
-        <div class="heading-actions">
-            <a href="/reports/payroll" class="button button-secondary">
-                Payroll Reports
+        <div class="payroll-hero-actions">
+            <a href="/payroll/salary-structures"
+               class="payroll-btn payroll-btn-light">
+                <span aria-hidden="true">＋</span>
+                Salary Structures
             </a>
 
-            <a href="/payroll/process" class="button button-primary">
-                <span aria-hidden="true">＋</span>
-                Run Payroll
+            <a href="/payroll/history"
+               class="payroll-btn payroll-btn-outline">
+                <span aria-hidden="true">◷</span>
+                Payroll History
             </a>
         </div>
-    </header>
+    </section>
 
-    <!-- CURRENT SALARY SUMMARY -->
+    <!-- SUMMARY -->
+    <div class="payroll-section-heading">
+        <div>
+            <h2>Payroll Overview</h2>
+            <p>Current active salary structures and compensation totals.</p>
+        </div>
 
-    <div class="summary-grid">
-
-        <article class="summary-card">
-            <div class="summary-top">
-                <div class="summary-label">Active Employees</div>
-                <div class="summary-icon" aria-hidden="true">♙</div>
-            </div>
-
-            <div class="summary-value">
-                <%= formatCount(safeEmployeeCount) %>
-            </div>
-
-            <div class="summary-description">
-                Active employees in your organization
-            </div>
-        </article>
-
-        <article class="summary-card">
-            <div class="summary-top">
-                <div class="summary-label">Current Gross Salary</div>
-                <div class="summary-icon" aria-hidden="true">₹</div>
-            </div>
-
-            <div class="summary-value">
-                ₹<%= formatMoney(safeGrossSalary) %>
-            </div>
-
-            <div class="summary-description">
-                Combined gross amount from current effective salary structures
-            </div>
-        </article>
-
-        <article class="summary-card">
-            <div class="summary-top">
-                <div class="summary-label">Current Deductions</div>
-                <div class="summary-icon" aria-hidden="true">−</div>
-            </div>
-
-            <div class="summary-value">
-                ₹<%= formatMoney(safeDeductions) %>
-            </div>
-
-            <div class="summary-description">
-                Combined deductions configured in current salary structures
-            </div>
-        </article>
-
-        <article class="summary-card">
-            <div class="summary-top">
-                <div class="summary-label">Estimated Monthly Net</div>
-                <div class="summary-icon" aria-hidden="true">✓</div>
-            </div>
-
-            <div class="summary-value">
-                ₹<%= formatMoney(safeNetPayroll) %>
-            </div>
-
-            <div class="summary-description">
-                Estimated net amount based on configured salary structures
-            </div>
-        </article>
-
+        <div class="payroll-period">
+            <span aria-hidden="true">▦</span>
+            <%= monthNames[currentMonth - 1] %> <%= currentYear %>
+        </div>
     </div>
 
-    <!-- PAYROLL MODULES -->
+    <section class="payroll-stats">
 
-    <section class="content-card">
-        <header class="card-header">
-            <div>
-                <h2>Payroll Operations</h2>
-                <p>
-                    Access salary configuration, payroll processing
-                    and compensation records.
-                </p>
+        <article class="payroll-stat">
+            <div class="payroll-stat-top">
+                <div class="payroll-stat-icon payroll-icon-purple"
+                     aria-hidden="true">♙</div>
+                <span class="payroll-stat-label">Total Employees</span>
             </div>
 
-            <span class="section-tag">PAYROLL WORKSPACE</span>
-        </header>
+            <h3 class="payroll-stat-value">
+                <%= totalEmployees.toLocaleString("en-IN") %>
+            </h3>
 
-        <div class="payroll-grid">
+            <span class="payroll-stat-note">
+                Employees excluding exited staff
+            </span>
+        </article>
 
-            <article class="payroll-card">
-                <div class="module-icon" aria-hidden="true">▤</div>
+        <article class="payroll-stat">
+            <div class="payroll-stat-top">
+                <div class="payroll-stat-icon payroll-icon-blue"
+                     aria-hidden="true">▤</div>
+                <span class="payroll-stat-label">Gross Salary</span>
+            </div>
 
-                <h3>Salary Structure</h3>
+            <h3 class="payroll-stat-value">
+                <%= formatMoney(grossSalary) %>
+            </h3>
 
-                <p>
-                    Manage basic salary, allowances, deductions
-                    and employee compensation components.
-                </p>
+            <span class="payroll-stat-note">
+                Total salary before deductions
+            </span>
+        </article>
 
-                <a class="module-link" href="/payroll/salary-structures">
-                    Manage salary
-                    <span aria-hidden="true">→</span>
-                </a>
-            </article>
+        <article class="payroll-stat">
+            <div class="payroll-stat-top">
+                <div class="payroll-stat-icon payroll-icon-orange"
+                     aria-hidden="true">↘</div>
+                <span class="payroll-stat-label">Total Deductions</span>
+            </div>
 
-            <article class="payroll-card">
-                <div class="module-icon" aria-hidden="true">₹</div>
+            <h3 class="payroll-stat-value">
+                <%= formatMoney(deductions) %>
+            </h3>
 
-                <h3>Payroll Processing</h3>
+            <span class="payroll-stat-note">
+                PF, tax and other deductions
+            </span>
+        </article>
 
-                <p>
-                    Access the payroll processing page to review
-                    the monthly payroll workflow.
-                </p>
+        <article class="payroll-stat">
+            <div class="payroll-stat-top">
+                <div class="payroll-stat-icon payroll-icon-green"
+                     aria-hidden="true">₹</div>
+                <span class="payroll-stat-label">Net Salary</span>
+            </div>
 
-                <a class="module-link" href="/payroll/process">
-                    Open processing
-                    <span aria-hidden="true">→</span>
-                </a>
-            </article>
+            <h3 class="payroll-stat-value">
+                <%= formatMoney(netPayroll) %>
+            </h3>
 
-            <article class="payroll-card">
-                <div class="module-icon" aria-hidden="true">▧</div>
+            <span class="payroll-stat-note">
+                Salary after configured deductions
+            </span>
+        </article>
 
-                <h3>Payslips</h3>
-
-                <p>
-                    Access the payslips area for available
-                    employee payroll records.
-                </p>
-
-                <a class="module-link" href="/payroll/payslips">
-                    View payslips
-                    <span aria-hidden="true">→</span>
-                </a>
-            </article>
-
-            <article class="payroll-card">
-                <div class="module-icon" aria-hidden="true">◷</div>
-
-                <h3>Payroll History</h3>
-
-                <p>
-                    Open the payroll history page to review
-                    payroll cycle records.
-                </p>
-
-                <a class="module-link" href="/payroll/history">
-                    View history
-                    <span aria-hidden="true">→</span>
-                </a>
-            </article>
-
-            <article class="payroll-card">
-                <div class="module-icon" aria-hidden="true">≡</div>
-
-                <h3>Deductions</h3>
-
-                <p>
-                    Review configured provident fund, professional tax,
-                    TDS and other deductions.
-                </p>
-
-                <a class="module-link" href="/payroll/deductions">
-                    Review deductions
-                    <span aria-hidden="true">→</span>
-                </a>
-            </article>
-
-            <article class="payroll-card">
-                <div class="module-icon" aria-hidden="true">▥</div>
-
-                <h3>Payroll Reports</h3>
-
-                <p>
-                    Access the payroll reporting page for available
-                    compensation and payroll summaries.
-                </p>
-
-                <a class="module-link" href="/reports/payroll">
-                    View reports
-                    <span aria-hidden="true">→</span>
-                </a>
-            </article>
-
-        </div>
     </section>
 
-    <!-- PAYROLL SETUP -->
+    <!-- MAIN CONTENT -->
+    <section class="payroll-main-grid">
 
-    <section class="content-card">
-        <header class="card-header">
-            <div>
-                <h2>Payroll Setup &amp; Status</h2>
-                <p>
-                    Verify configuration before running a payroll cycle.
-                </p>
+        <!-- SALARY STRUCTURES -->
+        <div class="payroll-panel">
+
+            <div class="payroll-panel-header">
+                <div>
+                    <h2>Current Salary Structures</h2>
+                    <p>
+                        Latest effective compensation by employee.
+                    </p>
+                </div>
+
+                <a href="/payroll/salary-structures"
+                   class="payroll-text-link">
+                    View all →
+                </a>
             </div>
 
-            <span class="section-tag">SETUP</span>
-        </header>
+            <% if (structures.length > 0) { %>
 
-        <div class="setup-panel">
-            <div class="setup-icon" aria-hidden="true">⚙</div>
+                <div class="payroll-table-wrap">
+                    <table class="payroll-table">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Effective From</th>
+                                <th>Gross Salary</th>
+                                <th>Deductions</th>
+                                <th>Net Salary</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
 
-            <div class="setup-copy">
-                <h3>Verify payroll configuration</h3>
+                        <tbody>
+                            <% structures.slice(0, 10).forEach((item) => {
+                                const employee = item.employee || {};
+                                const employeeName = employeeLabel(employee);
+                                const initials = employeeName
+                                    .split(/\s+/)
+                                    .filter(Boolean)
+                                    .slice(0, 2)
+                                    .map(part => part.charAt(0).toUpperCase())
+                                    .join("");
 
-                <p>
-                    Ensure employees have valid salary structures and
-                    verify payroll periods, attendance inputs, allowances,
-                    deductions and applicable statutory rules.
-                </p>
+                                const statusClass = item.isFutureEffective
+                                    ? "payroll-status-future"
+                                    : item.isCurrent
+                                        ? "payroll-status-active"
+                                        : "payroll-status-inactive";
 
-                <p class="setup-note">
-                    The figures above represent configured salary amounts.
-                    They are not confirmation of a processed or paid payroll.
-                </p>
+                                const statusLabel = item.isFutureEffective
+                                    ? "Scheduled"
+                                    : item.isCurrent
+                                        ? "Current"
+                                        : "Previous";
+                            %>
 
-                <div class="setup-status">
-                    <span aria-hidden="true">●</span>
-                    Salary summary only — payroll processing status not confirmed
+                                <tr>
+                                    <td>
+                                        <div class="payroll-employee">
+                                            <div class="payroll-avatar">
+                                                <%= initials || "E" %>
+                                            </div>
+
+                                            <div>
+                                                <div class="payroll-employee-name">
+                                                    <%= employeeName %>
+                                                </div>
+
+                                                <div class="payroll-employee-code">
+                                                    <%= employee.employeeId || "No employee code" %>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <%= formatDate(item.effectiveFrom) %>
+                                    </td>
+
+                                    <td class="payroll-amount">
+                                        <%= formatMoney(item.grossSalary) %>
+                                    </td>
+
+                                    <td>
+                                        <%= formatMoney(item.totalDeductions) %>
+                                    </td>
+
+                                    <td class="payroll-net-amount">
+                                        <%= formatMoney(item.netSalary) %>
+                                    </td>
+
+                                    <td>
+                                        <span class="payroll-status <%= statusClass %>">
+                                            <%= statusLabel %>
+                                        </span>
+                                    </td>
+                                </tr>
+
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+
+                <% if (structures.length > 10) { %>
+                    <div style="padding:14px 20px;border-top:1px solid #f0f2f6;color:#718096;font-size:12px;">
+                        Showing 10 of <%= structures.length %> salary structures.
+                        <a href="/payroll/salary-structures"
+                           class="payroll-text-link">View all structures</a>
+                    </div>
+                <% } %>
+
+            <% } else { %>
+
+                <div class="payroll-empty">
+                    <div class="payroll-empty-icon" aria-hidden="true">
+                        ₹
+                    </div>
+
+                    <h3>No salary structures found</h3>
+
+                    <p>
+                        Create an employee salary structure to start
+                        managing compensation and preparing payroll.
+                    </p>
+
+                    <a href="/payroll/salary-structures"
+                       class="payroll-btn payroll-btn-primary">
+                        ＋ Create Salary Structure
+                    </a>
+                </div>
+
+            <% } %>
+
+        </div>
+
+        <!-- QUICK ACTIONS -->
+        <aside class="payroll-panel">
+
+            <div class="payroll-panel-header">
+                <div>
+                    <h2>Quick Actions</h2>
+                    <p>Common payroll operations.</p>
                 </div>
             </div>
-        </div>
+
+            <div class="payroll-side-content">
+
+                <div class="payroll-process-banner">
+                    <h3>Process Monthly Payroll</h3>
+
+                    <p>
+                        Generate a payroll batch for a selected month
+                        and year using available salary structures.
+                    </p>
+
+                    <button type="button"
+                            class="payroll-btn payroll-btn-primary"
+                            id="openPayrollModal">
+                        Process Payroll →
+                    </button>
+                </div>
+
+                <div class="payroll-checklist">
+
+                    <a href="/payroll/salary-structures"
+                       class="payroll-checklist-item">
+                        <div class="payroll-check-icon"
+                             aria-hidden="true">₹</div>
+
+                        <div>
+                            <strong>Manage Salary Structures</strong>
+                            <span>
+                                Create and review employee compensation.
+                            </span>
+                        </div>
+                    </a>
+
+                    <a href="/payroll/history"
+                       class="payroll-checklist-item">
+                        <div class="payroll-check-icon"
+                             aria-hidden="true">◷</div>
+
+                        <div>
+                            <strong>Payroll History</strong>
+                            <span>
+                                Review previously generated payroll batches.
+                            </span>
+                        </div>
+                    </a>
+
+                    <a href="/payroll/payslips"
+                       class="payroll-checklist-item">
+                        <div class="payroll-check-icon"
+                             aria-hidden="true">▤</div>
+
+                        <div>
+                            <strong>Employee Payslips</strong>
+                            <span>
+                                View payslip records available to your account.
+                            </span>
+                        </div>
+                    </a>
+
+                </div>
+
+                <% if (missingStructures > 0) { %>
+                    <div class="payroll-note">
+                        <span aria-hidden="true">⚠</span>
+                        <span>
+                            <strong><%= missingStructures %> employee(s)</strong>
+                            do not have a current salary structure according
+                            to the dashboard counts. Review salary records
+                            before processing payroll.
+                        </span>
+                    </div>
+                <% } else { %>
+                    <div class="payroll-note">
+                        <span aria-hidden="true">ⓘ</span>
+                        <span>
+                            Verify salary components, eligibility and
+                            deductions before processing a payroll batch.
+                        </span>
+                    </div>
+                <% } %>
+
+            </div>
+        </aside>
+
     </section>
 
-</section>
+</div>
+
+<!-- PROCESS PAYROLL MODAL -->
+<div class="payroll-modal"
+     id="payrollModal"
+     aria-hidden="true">
+
+    <div class="payroll-modal-card"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="payrollModalTitle">
+
+        <div class="payroll-modal-header">
+            <div>
+                <h2 id="payrollModalTitle">Process Monthly Payroll</h2>
+                <p>
+                    Select the payroll period and review your selection
+                    before submitting.
+                </p>
+            </div>
+
+            <button type="button"
+                    class="payroll-modal-close"
+                    id="closePayrollModal"
+                    aria-label="Close dialog">
+                ✕
+            </button>
+        </div>
+
+        <form action="/payroll/process"
+              method="POST"
+              id="payrollProcessForm">
+
+            <div class="payroll-form-grid">
+
+                <div class="payroll-form-field">
+                    <label for="payrollMonth">Payroll Month *</label>
+
+                    <select id="payrollMonth"
+                            name="payrollMonth"
+                            required>
+                        <% monthNames.forEach((monthName, index) => { %>
+                            <option value="<%= index + 1 %>"
+                                <%= currentMonth === index + 1 ? "selected" : "" %>>
+                                <%= monthName %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+
+                <div class="payroll-form-field">
+                    <label for="payrollYear">Payroll Year *</label>
+
+                    <select id="payrollYear"
+                            name="payrollYear"
+                            required>
+                        <% for (let year = currentYear - 2; year <= currentYear + 1; year++) { %>
+                            <option value="<%= year %>"
+                                <%= year === currentYear ? "selected" : "" %>>
+                                <%= year %>
+                            </option>
+                        <% } %>
+                    </select>
+                </div>
+
+                <div class="payroll-form-field full">
+                    <label for="payrollNotes">Internal Notes (Optional)</label>
+
+                    <textarea id="payrollNotes"
+                              name="notes"
+                              maxlength="2000"
+                              placeholder="Add payroll processing notes..."></textarea>
+                </div>
+
+            </div>
+
+            <div class="payroll-confirmation">
+                Processing creates a payroll batch and employee salary
+                snapshots. Verify the month, employee eligibility and
+                salary structures before continuing.
+            </div>
+
+            <div class="payroll-modal-footer">
+                <button type="button"
+                        class="payroll-btn payroll-btn-secondary"
+                        id="cancelPayrollModal">
+                    Cancel
+                </button>
+
+                <button type="submit"
+                        class="payroll-btn payroll-btn-primary"
+                        id="submitPayrollButton">
+                    Confirm & Process
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<script>
+(function () {
+    const modal = document.getElementById("payrollModal");
+    const openButton = document.getElementById("openPayrollModal");
+    const closeButton = document.getElementById("closePayrollModal");
+    const cancelButton = document.getElementById("cancelPayrollModal");
+    const form = document.getElementById("payrollProcessForm");
+    const submitButton = document.getElementById("submitPayrollButton");
+
+    if (!modal || !openButton || !form) return;
+
+    let previousFocus = null;
+    let submitting = false;
+
+    function openModal() {
+        previousFocus = document.activeElement;
+        modal.classList.add("is-open");
+        modal.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+
+        const month = document.getElementById("payrollMonth");
+        if (month) month.focus();
+    }
+
+    function closeModal() {
+        if (submitting) return;
+
+        modal.classList.remove("is-open");
+        modal.setAttribute("aria-hidden", "true");
+        document.body.style.overflow = "";
+
+        if (previousFocus && typeof previousFocus.focus === "function") {
+            previousFocus.focus();
+        }
+    }
+
+    openButton.addEventListener("click", openModal);
+
+    if (closeButton) {
+        closeButton.addEventListener("click", closeModal);
+    }
+
+    if (cancelButton) {
+        cancelButton.addEventListener("click", closeModal);
+    }
+
+    modal.addEventListener("click", function (event) {
+        if (event.target === modal) closeModal();
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (
+            event.key === "Escape" &&
+            modal.classList.contains("is-open")
+        ) {
+            closeModal();
+        }
+    });
+
+    form.addEventListener("submit", function (event) {
+        if (submitting) {
+            event.preventDefault();
+            return;
+        }
+
+        const month = Number(
+            document.getElementById("payrollMonth").value
+        );
+
+        const year = Number(
+            document.getElementById("payrollYear").value
+        );
+
+        if (
+            !Number.isInteger(month) ||
+            month < 1 ||
+            month > 12 ||
+            !Number.isInteger(year) ||
+            year < 2000 ||
+            year > 2100
+        ) {
+            event.preventDefault();
+            window.alert("Please select a valid payroll month and year.");
+            return;
+        }
+
+        const confirmed = window.confirm(
+            "Process payroll for " +
+            document.getElementById("payrollMonth")
+                .selectedOptions[0].text +
+            " " + year + "?\n\n" +
+            "Please ensure all eligible employees have valid salary structures."
+        );
+
+        if (!confirmed) {
+            event.preventDefault();
+            return;
+        }
+
+        submitting = true;
+
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.textContent = "Processing...";
+        }
+    });
+})();
+</script>

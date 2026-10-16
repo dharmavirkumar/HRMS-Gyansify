@@ -18,14 +18,8 @@ const User = require("../models/User");
 const { sendEmail } = require("../config/mailer");
 
 // =====================================================
-// CONSTANTS
+// GYANSIFY HRMS - EMPLOYEE CONTROLLER
 // =====================================================
-
-const HR_ROLES = [
-    "SUPER_ADMIN",
-    "HR_ADMIN",
-    "HR_EXECUTIVE"
-];
 
 const EMPLOYMENT_TYPES = [
     "Permanent",
@@ -43,34 +37,41 @@ const EMPLOYEE_STATUSES = [
     "Exited"
 ];
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const OBJECT_ID_PATTERN = /^[a-fA-F0-9]{24}$/;
+const USER_ROLES = [
+    "SUPER_ADMIN",
+    "HR_ADMIN",
+    "HR_EXECUTIVE",
+    "MANAGER",
+    "EMPLOYEE"
+];
 
-const INVITATION_TTL_MS = 24 * 60 * 60 * 1000;
+const HR_ROLES = [
+    "SUPER_ADMIN",
+    "HR_ADMIN",
+    "HR_EXECUTIVE"
+];
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMPLOYEE_ID_REGEX = /^[A-Za-z0-9_-]+$/;
 
 // =====================================================
-// COMMON HELPERS
+// GENERAL HELPERS
 // =====================================================
+
+const asyncHandler = (fn) => (req, res, next) =>
+    Promise.resolve(fn(req, res, next)).catch(next);
 
 const isValidObjectId = (value) =>
-    typeof value === "string" &&
-    OBJECT_ID_PATTERN.test(value);
-
-const normalizeId = (value) => {
-    if (!value) return "";
-
-    if (typeof value === "object" && value._id) {
-        return String(value._id);
-    }
-
-    return String(value);
-};
+    mongoose.isValidObjectId(String(value || ""));
 
 const normalizeEmail = (value) =>
     String(value || "").trim().toLowerCase();
 
 const normalizeEmployeeId = (value) =>
     String(value || "").trim().toUpperCase();
+
+const cleanString = (value) =>
+    typeof value === "string" ? value.trim() : "";
 
 const escapeHtml = (value) =>
     String(value ?? "").replace(/[&<>"']/g, (character) => ({
@@ -81,431 +82,457 @@ const escapeHtml = (value) =>
         "'": "&#39;"
     })[character]);
 
-const getSessionUser = (req) =>
-    req.session?.user || null;
+const getSessionUser = (req) => req.session?.user || {};
 
 const getSessionUserId = (req) => {
     const user = getSessionUser(req);
-
-    return normalizeId(user?._id || user?.id);
-};
-
-const hasPath = (Model, path) =>
-    Boolean(Model?.schema?.path(path));
-
-const firstPath = (Model, paths) =>
-    paths.find((path) => hasPath(Model, path)) || null;
-
-const getOrganizationField = (Model) =>
-    firstPath(Model, [
-        "organization",
-        "organizationId",
-        "organizationID"
-    ]);
-
-const getEmployeeReferenceField = (Model) =>
-    firstPath(Model, [
-        "employee",
-        "employeeId"
-    ]);
-
-const getDbUser = async (req) => {
-    const userId = getSessionUserId(req);
-
-    if (!isValidObjectId(userId)) {
-        return null;
-    }
-
-    return User.findById(userId).exec();
-};
-
-const getDbUserOrganizationId = (dbUser) => {
-    if (!dbUser) return "";
-
-    const field = getOrganizationField(User);
-
-    return field
-        ? normalizeId(dbUser[field])
-        : "";
-};
-
-const isHrUser = (user) => {
-    const role = String(
-        user?.role || ""
-    ).toUpperCase();
-
-    return HR_ROLES.includes(role);
+    return user._id || user.id || user.userId || null;
 };
 
 const getSessionRole = (req) =>
-    String(
-        getSessionUser(req)?.role || "EMPLOYEE"
-    ).toUpperCase();
+    String(getSessionUser(req).role || "").toUpperCase();
 
-const escapeRegex = (value) =>
-    String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const isHrUser = (req, dbUser = null) => {
+    const role = String(dbUser?.role || getSessionRole(req)).toUpperCase();
+    return HR_ROLES.includes(role);
+};
 
-const asyncHandler = (handler) =>
-    async (req, res, next) => {
-        try {
-            await handler(req, res, next);
-        } catch (error) {
-            next(error);
+const getOrgIdFromSession = (req) => {
+    const user = getSessionUser(req);
+
+    return (
+        user.organization?._id ||
+        user.organization ||
+        user.organizationId?._id ||
+        user.organizationId ||
+        user.organizationID?._id ||
+        user.organizationID ||
+        null
+    );
+};
+
+const getEmployeeIdFromSession = (req) => {
+    const user = getSessionUser(req);
+
+    return (
+        user.employee?._id ||
+        user.employee ||
+        user.employeeId?._id ||
+        user.employeeId ||
+        null
+    );
+};
+
+const parseDate = (value) => {
+    if (!value) return null;
+
+    const input = String(value).trim();
+
+    // Accept date-only form values such as 2026-10-16.
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(input)) {
+        return null;
+    }
+
+    const date = new Date(`${input}T00:00:00.000Z`);
+
+    if (
+        Number.isNaN(date.getTime()) ||
+        date.toISOString().slice(0, 10) !== input
+    ) {
+        return null;
+    }
+
+    return date;
+};
+
+const dateToInput = (value) => {
+    if (!value) return "";
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) return "";
+
+    return date.toISOString().slice(0, 10);
+};
+
+const getFormValue = (body, ...keys) => {
+    for (const key of keys) {
+        if (
+            body[key] !== undefined &&
+            body[key] !== null &&
+            body[key] !== ""
+        ) {
+            return body[key];
         }
-    };
+    }
+
+    return "";
+};
+
+const getEmployeePayload = (body = {}) => ({
+    employeeId: normalizeEmployeeId(body.employeeId),
+    firstName: cleanString(body.firstName),
+    lastName: cleanString(body.lastName),
+    email: normalizeEmail(body.email),
+    phone: cleanString(body.phone),
+    gender: cleanString(body.gender),
+    dateOfBirth: parseDate(body.dateOfBirth),
+
+    department: getFormValue(body, "departmentId", "department"),
+    designation: getFormValue(body, "designationId", "designation"),
+    branch: getFormValue(body, "branchId", "branch"),
+    location: getFormValue(body, "locationId", "location"),
+
+    joiningDate: parseDate(body.joiningDate),
+    employmentType: cleanString(body.employmentType) || "Permanent",
+    reportingManager: cleanString(body.reportingManager),
+    status: cleanString(body.status) || "Active",
+    address: cleanString(body.address)
+});
+
+const getEmployeeFormValues = (employee = {}) => ({
+    ...employee,
+    employeeId: employee.employeeId || "",
+    firstName: employee.firstName || "",
+    lastName: employee.lastName || "",
+    email: employee.email || "",
+    phone: employee.phone || "",
+    gender: employee.gender || "",
+    dateOfBirth: dateToInput(employee.dateOfBirth),
+    department: employee.department?._id || employee.department || "",
+    designation: employee.designation?._id || employee.designation || "",
+    branch: employee.branch?._id || employee.branch || "",
+    location: employee.location?._id || employee.location || "",
+    joiningDate: dateToInput(employee.joiningDate),
+    employmentType: employee.employmentType || "Permanent",
+    reportingManager: employee.reportingManager || "",
+    status: employee.status || "Active",
+    address: employee.address || ""
+});
 
 // =====================================================
-// ORGANIZATION
+// DATABASE USER / ORGANIZATION
 // =====================================================
+
+const getDatabaseUser = async (req) => {
+    const userId = getSessionUserId(req);
+
+    if (!userId || !isValidObjectId(userId)) {
+        return null;
+    }
+
+    return User.findById(userId)
+        .select("_id name email organization employee role status")
+        .lean();
+};
 
 const getCurrentOrganization = async (req) => {
-    const dbUser = await getDbUser(req);
+    const dbUser = await getDatabaseUser(req);
 
-    const dbOrganizationId =
-        getDbUserOrganizationId(dbUser);
-
-    const sessionUser = getSessionUser(req);
-
-    const sessionOrganizationId = normalizeId(
-        sessionUser?.organizationId ||
-        sessionUser?.organization?._id ||
-        sessionUser?.organization ||
-        sessionUser?.organizationID ||
-        req.session?.organizationId
-    );
-
-    // Prefer the organization stored in the database.
-    // Never use a different session organization when
-    // the database account already has an organization.
+    // Prefer the organization linked to the authenticated DB user.
     const organizationId =
-        dbOrganizationId || sessionOrganizationId;
+        dbUser?.organization || getOrgIdFromSession(req);
 
-    if (!isValidObjectId(organizationId)) {
+    if (!organizationId || !isValidObjectId(organizationId)) {
         return null;
     }
 
     return Organization.findById(organizationId);
 };
 
-const getOrganizationOrRespond = async (req, res) => {
-    const organization = await getCurrentOrganization(req);
+const getOrganizationId = (organization) =>
+    organization?._id || organization || null;
 
-    if (!organization) {
-        res.status(401).send(
-            "Organization not found. Please log in again."
-        );
+// =====================================================
+// EMPLOYEE FORM VALIDATION
+// =====================================================
 
-        return null;
+const validateEmployeeFields = (data, { isUpdate = false } = {}) => {
+    const errors = [];
+
+    if (!isUpdate || data.employeeId !== "") {
+        if (!data.employeeId) {
+            errors.push("Employee ID is required.");
+        } else if (
+            data.employeeId.length > 50 ||
+            !EMPLOYEE_ID_REGEX.test(data.employeeId)
+        ) {
+            errors.push(
+                "Employee ID may contain letters, numbers, hyphens and underscores only (maximum 50 characters)."
+            );
+        }
     }
 
-    return organization;
+    if (!data.firstName) {
+        errors.push("First name is required.");
+    }
+
+    if (data.firstName.length > 100) {
+        errors.push("First name cannot exceed 100 characters.");
+    }
+
+    if (data.lastName.length > 100) {
+        errors.push("Last name cannot exceed 100 characters.");
+    }
+
+    if (!data.email || !EMAIL_REGEX.test(data.email)) {
+        errors.push("Enter a valid email address.");
+    }
+
+    if (data.email.length > 254) {
+        errors.push("Email address is too long.");
+    }
+
+    if (data.phone.length > 30) {
+        errors.push("Phone number cannot exceed 30 characters.");
+    }
+
+    if (
+        data.gender &&
+        !["Male", "Female", "Other"].includes(data.gender)
+    ) {
+        errors.push("Select a valid gender.");
+    }
+
+    if (data.dateOfBirth) {
+        if (!parseDate(cleanString(data.dateOfBirth) || dateToInput(data.dateOfBirth))) {
+            // The parsed payload normally contains a Date object.
+            if (!(data.dateOfBirth instanceof Date)) {
+                errors.push("Enter a valid date of birth.");
+            }
+        }
+
+        if (new Date(data.dateOfBirth).getTime() > Date.now()) {
+            errors.push("Date of birth cannot be in the future.");
+        }
+    }
+
+    if (
+        data.joiningDate &&
+        !(data.joiningDate instanceof Date) &&
+        !parseDate(data.joiningDate)
+    ) {
+        errors.push("Enter a valid joining date.");
+    }
+
+    if (!EMPLOYMENT_TYPES.includes(data.employmentType)) {
+        errors.push("Select a valid employment type.");
+    }
+
+    if (!EMPLOYEE_STATUSES.includes(data.status)) {
+        errors.push("Select a valid employee status.");
+    }
+
+    if (data.address.length > 2000) {
+        errors.push("Address cannot exceed 2000 characters.");
+    }
+
+    return errors;
 };
 
 // =====================================================
-// REFERENCE HELPERS
+// DEPARTMENT / DESIGNATION / BRANCH / LOCATION
 // =====================================================
 
-const getReferenceFilter = (Model, organizationId) => {
-    const filter = {};
+const validateEmployeeReferences = async (data, organizationId) => {
+    const errors = [];
 
-    if (hasPath(Model, "status")) {
-        filter.status = {
-            $in: ["Active", "ACTIVE", "active"]
-        };
-    } else if (hasPath(Model, "isActive")) {
-        filter.isActive = true;
-    }
-
-    const organizationField =
-        getOrganizationField(Model);
-
-    if (organizationField) {
-        filter[organizationField] = organizationId;
-    }
-
-    return filter;
-};
-
-const getActiveReferenceOptions = async (
-    Model,
-    organizationId
-) => {
-    const filter = getReferenceFilter(
+    const validateScopedReference = async ({
+        value,
         Model,
-        organizationId
-    );
+        label
+    }) => {
+        if (!value) return null;
 
-    return Model.find(filter)
-        .sort({ name: 1, _id: 1 })
-        .lean();
-};
+        if (!isValidObjectId(value)) {
+            errors.push(`Select a valid ${label.toLowerCase()}.`);
+            return null;
+        }
 
-const validateReference = async (
-    Model,
-    value,
-    organizationId,
-    fieldName
-) => {
-    if (!value) return null;
+        // Department and Designation use organizationId in their schemas.
+        const record = await Model.findOne({
+            _id: value,
+            organizationId,
+            status: "Active"
+        }).select("_id name");
 
-    const id = String(value);
+        if (!record) {
+            errors.push(
+                `Selected ${label.toLowerCase()} was not found, is inactive, or belongs to another organization.`
+            );
+        }
 
-    if (!isValidObjectId(id)) {
-        throw new Error(
-            `Invalid ${fieldName} selection.`
-        );
-    }
-
-    const filter = {
-        _id: id
+        return record;
     };
 
-    if (hasPath(Model, "status")) {
-        filter.status = {
-            $in: ["Active", "ACTIVE", "active"]
-        };
-    } else if (hasPath(Model, "isActive")) {
-        filter.isActive = true;
-    }
+    const validateGlobalReference = async ({
+        value,
+        Model,
+        label
+    }) => {
+        if (!value) return null;
 
-    const organizationField =
-        getOrganizationField(Model);
+        if (!isValidObjectId(value)) {
+            errors.push(`Select a valid ${label.toLowerCase()}.`);
+            return null;
+        }
 
-    if (organizationField) {
-        filter[organizationField] = organizationId;
-    }
+        // Branch and Location schemas do not contain an organization field.
+        const record = await Model.findOne({
+            _id: value,
+            status: "Active"
+        }).select("_id name");
 
-    const document = await Model.findOne(filter).lean();
+        if (!record) {
+            errors.push(
+                `Selected ${label.toLowerCase()} was not found or is inactive.`
+            );
+        }
 
-    if (!document) {
-        throw new Error(
-            `Selected ${fieldName} was not found or is inactive.`
-        );
-    }
+        return record;
+    };
 
-    return document._id;
+    await validateScopedReference({
+        value: data.department,
+        Model: Department,
+        label: "Department"
+    });
+
+    await validateScopedReference({
+        value: data.designation,
+        Model: Designation,
+        label: "Designation"
+    });
+
+    await validateGlobalReference({
+        value: data.branch,
+        Model: Branch,
+        label: "Branch"
+    });
+
+    await validateGlobalReference({
+        value: data.location,
+        Model: Location,
+        label: "Location"
+    });
+
+    return errors;
 };
 
-const validateEmployeeReferences = async (
-    body,
-    organization
-) => {
-    const [
-        department,
-        designation,
-        branch,
-        location
-    ] = await Promise.all([
-        validateReference(
-            Department,
-            body.department,
-            organization._id,
-            "department"
-        ),
-        validateReference(
-            Designation,
-            body.designation,
-            organization._id,
-            "designation"
-        ),
-        validateReference(
-            Branch,
-            body.branch,
-            organization._id,
-            "branch"
-        ),
-        validateReference(
-            Location,
-            body.location,
-            organization._id,
-            "location"
-        )
-    ]);
+const getEmployeeFormOptions = async (organizationId) => {
+    const [departments, designations, branches, locations] =
+        await Promise.all([
+            Department.find({
+                organizationId,
+                status: "Active"
+            })
+                .select("_id name code")
+                .sort({ name: 1 })
+                .lean(),
+
+            Designation.find({
+                organizationId,
+                status: "Active"
+            })
+                .select("_id name code level")
+                .sort({ name: 1 })
+                .lean(),
+
+            Branch.find({ status: "Active" })
+                .select("_id name code city state")
+                .sort({ name: 1 })
+                .lean(),
+
+            Location.find({ status: "Active" })
+                .select("_id name city address")
+                .sort({ name: 1 })
+                .lean()
+        ]);
 
     return {
-        department,
-        designation,
-        branch,
-        location
-    };
-};
-
-// =====================================================
-// FORM RENDERING
-// =====================================================
-
-const renderEmployeeForm = async (
-    res,
-    req,
-    organization,
-    options = {}
-) => {
-    const [
         departments,
         designations,
         branches,
-        locations
-    ] = await Promise.all([
-        getActiveReferenceOptions(
-            Department,
-            organization._id
-        ),
-        getActiveReferenceOptions(
-            Designation,
-            organization._id
-        ),
-        getActiveReferenceOptions(
-            Branch,
-            organization._id
-        ),
-        getActiveReferenceOptions(
-            Location,
-            organization._id
-        )
-    ]);
-
-    return res.status(options.statusCode || 200).render(
-        options.view || "employees/create",
-        {
-            title: options.title || "Add Employee",
-            user: getSessionUser(req) || {},
-            organization,
-            organizationId: String(organization._id),
-            departments,
-            designations,
-            branches,
-            locations,
-            formData: options.formData || {},
-            employee: options.employee || null,
-            error: options.error || null,
-            success: options.success || null
-        }
-    );
+        locations,
+        employmentTypes: EMPLOYMENT_TYPES,
+        employeeStatuses: EMPLOYEE_STATUSES
+    };
 };
 
-// =====================================================
-// DATE HELPERS
-// =====================================================
+const renderEmployeeForm = async ({
+    req,
+    res,
+    organization,
+    view,
+    title,
+    employee = {},
+    errors = [],
+    formData = {}
+}) => {
+    try {
+        const organizationId = getOrganizationId(organization);
 
-const parseOptionalDate = (value, label) => {
-    if (value === undefined || value === null || value === "") {
-        return null;
-    }
+        const options = await getEmployeeFormOptions(organizationId);
 
-    const stringValue = String(value);
+        return res.status(errors.length ? 400 : 200).render(view, {
+            title,
+            employee: getEmployeeFormValues(employee),
+            formData,
+            errors,
+            error: errors[0] || null,
+            ...options
+        });
+    } catch (error) {
+        console.error("Employee form loading error:", error);
 
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(stringValue)) {
-        throw new Error(`Invalid ${label}.`);
-    }
-
-    const [year, month, day] = stringValue
-        .split("-")
-        .map(Number);
-
-    const date = new Date(
-        Date.UTC(year, month - 1, day)
-    );
-
-    if (
-        date.getUTCFullYear() !== year ||
-        date.getUTCMonth() !== month - 1 ||
-        date.getUTCDate() !== day
-    ) {
-        throw new Error(`Invalid ${label}.`);
-    }
-
-    return date;
-};
-
-const getIndiaYear = () =>
-    Number(
-        new Intl.DateTimeFormat("en", {
-            timeZone: "Asia/Kolkata",
-            year: "numeric"
-        }).format(new Date())
-    );
-
-// =====================================================
-// LEAVE BALANCES
-// =====================================================
-
-const createEmployeeLeaveBalances = async (
-    employee,
-    organization
-) => {
-    if (!employee || !organization) {
-        return;
-    }
-
-    const organizationField =
-        getOrganizationField(LeaveType);
-
-    if (!organizationField) {
-        throw new Error(
-            "LeaveType schema has no organization field."
+        return res.status(500).send(
+            "Unable to load the employee form. Please check the server logs."
         );
     }
+};
+
+// =====================================================
+// LEAVE BALANCE INITIALIZATION
+// =====================================================
+
+const getCurrentYear = () => new Date().getFullYear();
+
+const initializeLeaveBalances = async (employee, organizationId) => {
+    const year = getCurrentYear();
 
     const leaveTypes = await LeaveType.find({
-        [organizationField]: organization._id,
-        ...getReferenceFilter(
-            LeaveType,
-            organization._id
-        )
-    }).lean();
-
-    const balanceOrganizationField =
-        getOrganizationField(LeaveBalance);
-
-    const balanceEmployeeField =
-        getEmployeeReferenceField(LeaveBalance);
-
-    if (
-        !balanceOrganizationField ||
-        !balanceEmployeeField ||
-        !hasPath(LeaveBalance, "leaveType") ||
-        !hasPath(LeaveBalance, "year")
-    ) {
-        throw new Error(
-            "LeaveBalance schema does not contain the required reference fields."
-        );
-    }
-
-    const year = getIndiaYear();
+        organization: organizationId,
+        status: "Active"
+    }).select("_id annualLimit");
 
     for (const leaveType of leaveTypes) {
-        const filter = {
-            [balanceOrganizationField]: organization._id,
-            [balanceEmployeeField]: employee._id,
-            leaveType: leaveType._id,
-            year
-        };
-
-        const update = {
-            $setOnInsert: {
-                ...filter,
-                allocated: Number(
-                    leaveType.annualLimit || 0
-                ),
-                carriedForward: 0,
-                used: 0,
-                adjustment: 0
-            }
-        };
-
         await LeaveBalance.updateOne(
-            filter,
-            update,
             {
-                upsert: true,
-                runValidators: true
-            }
+                organization: organizationId,
+                employee: employee._id,
+                leaveType: leaveType._id,
+                year
+            },
+            {
+                $setOnInsert: {
+                    organization: organizationId,
+                    employee: employee._id,
+                    leaveType: leaveType._id,
+                    year,
+                    allocated: Number(leaveType.annualLimit || 0),
+                    carriedForward: 0,
+                    used: 0,
+                    adjustment: 0,
+                    status: "Active"
+                }
+            },
+            { upsert: true }
         );
     }
 };
 
 // =====================================================
-// EMPLOYEE POPULATION
+// POPULATE EMPLOYEE
 // =====================================================
 
 const populateEmployee = (query) =>
@@ -513,1276 +540,766 @@ const populateEmployee = (query) =>
         .populate("department", "name code")
         .populate("designation", "name code level")
         .populate("branch", "name code city state")
-        .populate("location", "name city");
+        .populate("location", "name city address");
 
 // =====================================================
-// GET ALL EMPLOYEES
+// EMPLOYEE ACCESS CONTROL
+// =====================================================
+
+const canViewEmployee = async (req, employee, dbUser) => {
+    if (isHrUser(req, dbUser)) return true;
+
+    const linkedEmployeeId =
+        dbUser?.employee || getEmployeeIdFromSession(req);
+
+    if (
+        linkedEmployeeId &&
+        isValidObjectId(linkedEmployeeId) &&
+        String(linkedEmployeeId) === String(employee._id)
+    ) {
+        return true;
+    }
+
+    // Fallback for older sessions/accounts without a linked employee ref.
+    const sessionEmail = normalizeEmail(getSessionUser(req).email);
+
+    return Boolean(
+        sessionEmail &&
+        sessionEmail === normalizeEmail(employee.email)
+    );
+};
+
+// =====================================================
+// 1. GET EMPLOYEE DIRECTORY
 // GET /employees
 // =====================================================
 
-exports.getEmployees = asyncHandler(
-    async (req, res) => {
-        const organization =
-            await getOrganizationOrRespond(req, res);
+exports.getEmployees = asyncHandler(async (req, res) => {
+    const organization = await getCurrentOrganization(req);
 
-        if (!organization) return;
+    if (!organization) {
+        return res.status(400).send(
+            "Your account is not linked to a valid organization."
+        );
+    }
 
-        const search = String(
-            req.query.search || ""
-        ).trim();
+    const organizationId = getOrganizationId(organization);
 
-        const status = String(
-            req.query.status || ""
-        ).trim();
+    const search = cleanString(req.query.search);
+    const status = cleanString(req.query.status);
+    const departmentId = cleanString(req.query.department);
 
-        const department = String(
-            req.query.department || ""
-        ).trim();
+    const page = Math.max(
+        1,
+        parseInt(req.query.page, 10) || 1
+    );
 
-        const designation = String(
-            req.query.designation || ""
-        ).trim();
+    const limit = 20;
 
-        const allowedLimits = [10, 25, 50, 100];
+    const filter = { organization: organizationId };
 
-        const parsedPage = Number.parseInt(
-            req.query.page,
-            10
+    if (status && EMPLOYEE_STATUSES.includes(status)) {
+        filter.status = status;
+    }
+
+    if (departmentId && isValidObjectId(departmentId)) {
+        filter.department = departmentId;
+    }
+
+    if (search) {
+        const escapedSearch = search.replace(
+            /[.*+?^${}()|[\]\\]/g,
+            "\\$&"
         );
 
-        const parsedLimit = Number.parseInt(
-            req.query.limit,
-            10
-        );
+        const regex = new RegExp(escapedSearch, "i");
 
-        const page =
-            Number.isInteger(parsedPage) && parsedPage > 0
-                ? parsedPage
-                : 1;
+        filter.$or = [
+            { employeeId: regex },
+            { firstName: regex },
+            { lastName: regex },
+            { email: regex },
+            { phone: regex }
+        ];
+    }
 
-        const limit = allowedLimits.includes(parsedLimit)
-            ? parsedLimit
-            : 25;
-
-        const baseFilter = {
-            organization: organization._id
-        };
-
-        const filter = {
-            ...baseFilter
-        };
-
-        if (search) {
-            const regex = new RegExp(
-                escapeRegex(search),
-                "i"
-            );
-
-            filter.$or = [
-                { employeeId: regex },
-                { firstName: regex },
-                { lastName: regex },
-                { email: regex }
-            ];
-        }
-
-        if (
-            status &&
-            EMPLOYEE_STATUSES.includes(status)
-        ) {
-            filter.status = status;
-        }
-
-        if (department) {
-            if (!isValidObjectId(department)) {
-                return res.status(400).send(
-                    "Invalid department filter."
-                );
-            }
-
-            filter.department = department;
-        }
-
-        if (designation) {
-            if (!isValidObjectId(designation)) {
-                return res.status(400).send(
-                    "Invalid designation filter."
-                );
-            }
-
-            filter.designation = designation;
-        }
-
-        const skip = (page - 1) * limit;
-
-        const [
-            employees,
-            totalFiltered,
-            total,
-            active,
-            onLeave,
-            noticePeriod,
-            suspended,
-            exited,
-            departments,
-            designations
-        ] = await Promise.all([
+    const [employees, total, active, onLeave, exited, options] =
+        await Promise.all([
             populateEmployee(
                 Employee.find(filter)
-            )
-                .sort({ createdAt: -1, _id: -1 })
-                .skip(skip)
-                .limit(limit)
-                .lean(),
+                    .sort({ createdAt: -1 })
+                    .skip((page - 1) * limit)
+                    .limit(limit)
+            ).lean(),
 
-            Employee.countDocuments(filter),
-
-            Employee.countDocuments(baseFilter),
+            Employee.countDocuments({ organization: organizationId }),
 
             Employee.countDocuments({
-                ...baseFilter,
+                organization: organizationId,
                 status: "Active"
             }),
 
             Employee.countDocuments({
-                ...baseFilter,
+                organization: organizationId,
                 status: "On Leave"
             }),
 
             Employee.countDocuments({
-                ...baseFilter,
-                status: "Notice Period"
-            }),
-
-            Employee.countDocuments({
-                ...baseFilter,
-                status: "Suspended"
-            }),
-
-            Employee.countDocuments({
-                ...baseFilter,
+                organization: organizationId,
                 status: "Exited"
             }),
 
-            getActiveReferenceOptions(
-                Department,
-                organization._id
-            ),
-
-            getActiveReferenceOptions(
-                Designation,
-                organization._id
-            )
+            getEmployeeFormOptions(organizationId)
         ]);
 
-        const totalPages = Math.max(
-            1,
-            Math.ceil(totalFiltered / limit)
-        );
-
-        const currentPage = Math.min(
+    return res.render("employees/index", {
+        title: "Employee Directory",
+        employees,
+        search,
+        status,
+        department: departmentId,
+        departments: options.departments,
+        stats: {
+            total,
+            active,
+            onLeave,
+            exited
+        },
+        pagination: {
             page,
-            totalPages
-        );
-
-        const buildPageUrl = (targetPage) => {
-            const params = new URLSearchParams();
-
-            if (search) params.set("search", search);
-            if (status) params.set("status", status);
-            if (department) params.set("department", department);
-            if (designation) params.set("designation", designation);
-
-            params.set("page", String(targetPage));
-            params.set("limit", String(limit));
-
-            return `/employees?${params.toString()}`;
-        };
-
-        const pagination = {
-            page: currentPage,
             limit,
-            total: totalFiltered,
-            totalPages,
-            hasPreviousPage: currentPage > 1,
-            hasNextPage: currentPage < totalPages,
-
-            previousUrl:
-                currentPage > 1
-                    ? buildPageUrl(currentPage - 1)
-                    : null,
-
-            nextUrl:
-                currentPage < totalPages
-                    ? buildPageUrl(currentPage + 1)
-                    : null,
-
-            start:
-                totalFiltered === 0
-                    ? 0
-                    : (currentPage - 1) * limit + 1,
-
-            end: Math.min(
-                currentPage * limit,
-                totalFiltered
-            )
-        };
-
-        return res.render("employees/index", {
-            title: "Employees",
-            user: getSessionUser(req) || {},
-            organization,
-            employees,
-            departments,
-            designations,
-
-            stats: {
-                total,
-                active,
-                onLeave,
-                noticePeriod,
-                suspended,
-                exited
-            },
-
-            filters: {
-                search,
-                status,
-                department,
-                designation,
-                limit
-            },
-
-            pagination
-        });
-    }
-);
+            total,
+            totalPages: Math.max(1, Math.ceil(
+                (await Employee.countDocuments(filter)) / limit
+            ))
+        }
+    });
+});
 
 // =====================================================
-// GET CREATE EMPLOYEE
+// 2. GET CREATE EMPLOYEE FORM
 // GET /employees/create
 // =====================================================
 
-exports.getCreateEmployee = asyncHandler(
-    async (req, res) => {
-        const organization =
-            await getOrganizationOrRespond(req, res);
+exports.getCreateEmployee = asyncHandler(async (req, res) => {
+    const organization = await getCurrentOrganization(req);
 
-        if (!organization) return;
-
-        return renderEmployeeForm(
-            res,
-            req,
-            organization
+    if (!organization) {
+        return res.status(400).send(
+            "Your account is not linked to a valid organization."
         );
     }
-);
+
+    return renderEmployeeForm({
+        req,
+        res,
+        organization,
+        view: "employees/create",
+        title: "Add New Employee",
+        employee: {
+            status: "Active",
+            employmentType: "Permanent"
+        }
+    });
+});
 
 // =====================================================
-// CREATE EMPLOYEE
+// 3. CREATE EMPLOYEE
 // POST /employees/create
 // =====================================================
 
-exports.createEmployee = asyncHandler(
-    async (req, res) => {
-        const organization =
-            await getOrganizationOrRespond(req, res);
+exports.createEmployee = asyncHandler(async (req, res) => {
+    const organization = await getCurrentOrganization(req);
 
-        if (!organization) return;
-
-        const body = req.body || {};
-
-        const employeeId = normalizeEmployeeId(
-            body.employeeId
+    if (!organization) {
+        return res.status(400).send(
+            "Your account is not linked to a valid organization."
         );
+    }
 
-        const firstName = String(
-            body.firstName || ""
-        ).trim();
+    const organizationId = getOrganizationId(organization);
+    const data = getEmployeePayload(req.body);
 
-        const lastName = String(
-            body.lastName || ""
-        ).trim();
+    let errors = validateEmployeeFields(data);
 
-        const email = normalizeEmail(body.email);
-
-        const showFormError = (
-            message,
-            statusCode = 400
-        ) => renderEmployeeForm(
-            res,
+    if (errors.length) {
+        return renderEmployeeForm({
             req,
+            res,
             organization,
-            {
-                statusCode,
-                error: message,
-                formData: body
-            }
-        );
-
-        if (!employeeId || !firstName || !email) {
-            return showFormError(
-                "Employee ID, First Name and Email are required."
-            );
-        }
-
-        if (!EMAIL_PATTERN.test(email)) {
-            return showFormError(
-                "Please enter a valid email address."
-            );
-        }
-
-        if (
-            body.gender &&
-            !["Male", "Female", "Other"].includes(body.gender)
-        ) {
-            return showFormError(
-                "Please select a valid gender."
-            );
-        }
-
-        const employmentType =
-            body.employmentType || "Permanent";
-
-        if (!EMPLOYMENT_TYPES.includes(employmentType)) {
-            return showFormError(
-                "Please select a valid employment type."
-            );
-        }
-
-        const duplicateEmployee = await Employee.findOne({
-            organization: organization._id,
-            $or: [
-                { employeeId },
-                { email }
-            ]
-        }).lean();
-
-        if (duplicateEmployee) {
-            const message =
-                duplicateEmployee.employeeId === employeeId
-                    ? "Employee ID already exists."
-                    : "An employee with this email already exists.";
-
-            return showFormError(message, 409);
-        }
-
-        // User.email may be globally unique. Do not silently
-        // attach an existing login account to another employee.
-        const duplicateUser = await User.findOne({
-            email
-        }).select("_id").lean();
-
-        if (duplicateUser) {
-            return showFormError(
-                "This email already belongs to a login account. " +
-                "Use the account-linking workflow instead.",
-                409
-            );
-        }
-
-        let references;
-
-        try {
-            references = await validateEmployeeReferences(
-                body,
-                organization
-            );
-        } catch (error) {
-            return showFormError(error.message, 400);
-        }
-
-        let dateOfBirth;
-        let joiningDate;
-
-        try {
-            dateOfBirth = parseOptionalDate(
-                body.dateOfBirth,
-                "date of birth"
-            );
-
-            joiningDate = parseOptionalDate(
-                body.joiningDate,
-                "joining date"
-            );
-        } catch (error) {
-            return showFormError(error.message, 400);
-        }
-
-        if (
-            dateOfBirth &&
-            dateOfBirth.getTime() > Date.now()
-        ) {
-            return showFormError(
-                "Date of birth cannot be in the future."
-            );
-        }
-
-        // Create the employee first. If account/invitation setup
-        // fails, retain the employee record for HR recovery.
-        const employee = await Employee.create({
-            organization: organization._id,
-            employeeId,
-            firstName,
-            lastName,
-            email,
-            phone: String(body.phone || "").trim(),
-            gender: body.gender || "",
-            dateOfBirth,
-            department: references.department,
-            designation: references.designation,
-            branch: references.branch,
-            location: references.location,
-            joiningDate,
-            employmentType,
-            reportingManager: String(
-                body.reportingManager || ""
-            ).trim(),
-            address: String(body.address || "").trim(),
-            status: "Active"
+            view: "employees/create",
+            title: "Add New Employee",
+            employee: data,
+            errors,
+            formData: req.body
         });
+    }
 
-        let invitationSent = false;
+    const referenceErrors = await validateEmployeeReferences(
+        data,
+        organizationId
+    );
 
+    if (referenceErrors.length) {
+        return renderEmployeeForm({
+            req,
+            res,
+            organization,
+            view: "employees/create",
+            title: "Add New Employee",
+            employee: data,
+            errors: referenceErrors,
+            formData: req.body
+        });
+    }
+
+    const duplicateEmployeeId = await Employee.findOne({
+        organization: organizationId,
+        employeeId: data.employeeId
+    }).select("_id");
+
+    if (duplicateEmployeeId) {
+        return renderEmployeeForm({
+            req,
+            res,
+            organization,
+            view: "employees/create",
+            title: "Add New Employee",
+            employee: data,
+            errors: ["This Employee ID is already in use."],
+            formData: req.body
+        });
+    }
+
+    const duplicateEmployeeEmail = await Employee.findOne({
+        organization: organizationId,
+        email: data.email
+    }).select("_id");
+
+    if (duplicateEmployeeEmail) {
+        return renderEmployeeForm({
+            req,
+            res,
+            organization,
+            view: "employees/create",
+            title: "Add New Employee",
+            employee: data,
+            errors: ["An employee with this email already exists in your organization."],
+            formData: req.body
+        });
+    }
+
+    // User.email is globally unique in the supplied User schema.
+    // Never attach an existing account to another employee automatically.
+    const duplicateUser = await User.findOne({
+        email: data.email
+    }).select("_id");
+
+    if (duplicateUser) {
+        return renderEmployeeForm({
+            req,
+            res,
+            organization,
+            view: "employees/create",
+            title: "Add New Employee",
+            employee: data,
+            errors: [
+                "A login account already uses this email address. Use a different email or resolve the existing account first."
+            ],
+            formData: req.body
+        });
+    }
+
+    const employeeData = {
+        organization: organizationId,
+        employeeId: data.employeeId,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        phone: data.phone,
+        gender: data.gender || "",
+        department: data.department || null,
+        designation: data.designation || null,
+        branch: data.branch || null,
+        location: data.location || null,
+        joiningDate: data.joiningDate || undefined,
+        employmentType: data.employmentType,
+        reportingManager: data.reportingManager,
+        status: data.status,
+        address: data.address
+    };
+
+    if (data.dateOfBirth) {
+        employeeData.dateOfBirth = data.dateOfBirth;
+    }
+
+    const employee = await Employee.create(employeeData);
+
+    // Leave balance setup must not depend on whether email delivery works.
+    try {
+        await initializeLeaveBalances(employee, organizationId);
+    } catch (error) {
+        console.error(
+            `Leave balance initialization failed for employee ${employee._id}:`,
+            error
+        );
+    }
+
+    // Create an invitation account if a base URL is configured.
+    // If email delivery fails, preserve the employee and report the issue.
+    const baseUrl = String(process.env.APP_BASE_URL || "").replace(/\/+$/, "");
+    let setupWarning = null;
+    let invitationSent = false;
+
+    if (!baseUrl) {
+        setupWarning =
+            "Employee created, but the login invitation was not created because APP_BASE_URL is missing.";
+    } else {
         try {
-            // The existing User schema must support these fields.
-            // Do not invent a login role or token field here:
-            // the exact field names depend on User.js and the
-            // existing password-setup controller.
-            const userOrganizationField =
-                getOrganizationField(User);
-
-            const userEmployeeField =
-                getEmployeeReferenceField(User);
-
-            const passwordField = firstPath(User, [
-                "passwordHash",
-                "password"
-            ]);
-
-            if (
-                !userOrganizationField ||
-                !userEmployeeField ||
-                !passwordField
-            ) {
-                throw new Error(
-                    "User schema does not expose the expected organization, " +
-                    "employee and password fields. Employee was saved, " +
-                    "but the login invitation was not created."
-                );
-            }
-
-            const token = crypto
-                .randomBytes(32)
-                .toString("hex");
-
+            const rawToken = crypto.randomBytes(32).toString("hex");
             const tokenHash = crypto
                 .createHash("sha256")
-                .update(token)
+                .update(rawToken)
                 .digest("hex");
 
-            const temporaryPassword = crypto
-                .randomBytes(48)
-                .toString("hex");
+            const temporaryPassword = crypto.randomBytes(32).toString("hex");
+            const passwordHash = await bcrypt.hash(temporaryPassword, 12);
 
-            const passwordHash = await bcrypt.hash(
-                temporaryPassword,
-                12
-            );
+            const user = await User.create({
+                name: `${data.firstName} ${data.lastName}`.trim(),
+                email: data.email,
+                password: passwordHash,
+                organization: organizationId,
+                employee: employee._id,
+                role: "EMPLOYEE",
+                status: "INACTIVE",
+                invitationTokenHash: tokenHash,
+                invitationExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
+            });
 
-            const userData = {
-                [userOrganizationField]: organization._id,
-                [userEmployeeField]: employee._id,
-                [passwordField]: passwordHash
-            };
-
-            if (hasPath(User, "name")) {
-                userData.name = [
-                    firstName,
-                    lastName
-                ].filter(Boolean).join(" ");
-            }
-
-            if (hasPath(User, "email")) {
-                userData.email = email;
-            }
-
-            // Only set a role field if the schema supports a
-            // string role. Role-reference arrays need the actual
-            // Role model and its organization-specific role ID.
-            if (
-                hasPath(User, "role") &&
-                User.schema.path("role").instance === "String"
-            ) {
-                userData.role = "EMPLOYEE";
-            }
-
-            if (hasPath(User, "status")) {
-                const statusPath = User.schema.path("status");
-
-                const allowedStatusValues =
-                    statusPath.enumValues || [];
-
-                userData.status =
-                    allowedStatusValues.includes("INACTIVE")
-                        ? "INACTIVE"
-                        : allowedStatusValues.includes("Inactive")
-                            ? "Inactive"
-                            : "INACTIVE";
-            }
-
-            // Support common invitation field names only when
-            // they actually exist in the User schema.
-            const tokenField = firstPath(User, [
-                "invitationTokenHash",
-                "setPasswordTokenHash",
-                "passwordSetupTokenHash",
-                "resetPasswordTokenHash"
-            ]);
-
-            const expiryField = firstPath(User, [
-                "invitationExpiresAt",
-                "setPasswordExpiresAt",
-                "passwordSetupExpiresAt",
-                "resetPasswordExpiresAt"
-            ]);
-
-            if (!tokenField || !expiryField) {
-                throw new Error(
-                    "User schema does not define a supported password-setup " +
-                    "token and expiry pair. Employee was saved, but no " +
-                    "login invitation was sent."
-                );
-            }
-
-            userData[tokenField] = tokenHash;
-
-            userData[expiryField] = new Date(
-                Date.now() + INVITATION_TTL_MS
-            );
-
-            // Only create a login when the required role field
-            // can be set safely. A Role-reference schema must be
-            // wired to the actual Role model before account creation.
-            const rolePath = User.schema.path("role");
-            const rolesPath = User.schema.path("roles");
-
-            if (
-                rolesPath &&
-                (!rolePath ||
-                    rolePath.instance !== "String")
-            ) {
-                throw new Error(
-                    "User uses a role reference/roles array. " +
-                    "Assign the actual EMPLOYEE Role document before " +
-                    "enabling account invitations."
-                );
-            }
-
-            const userAccount = await User.create(userData);
-
-            const baseUrl = String(
-                process.env.APP_BASE_URL || ""
-            ).replace(/\/+$/, "");
-
-            if (!baseUrl) {
-                throw new Error(
-                    "APP_BASE_URL is missing from the environment. " +
-                    "Employee and login records exist, but the invitation " +
-                    "email was not sent."
-                );
-            }
-
+            // Change this path if your invitation acceptance route differs.
             const invitationUrl =
-                `${baseUrl}/auth/set-password` +
-                `?token=${encodeURIComponent(token)}` +
-                `&email=${encodeURIComponent(email)}`;
+                `${baseUrl}/accept-invitation?token=${encodeURIComponent(rawToken)}`;
 
-            await sendEmail({
-                to: email,
-                subject:
-                    "Welcome to Gyansify HRMS — Set Up Your Account",
+            const employeeName = escapeHtml(
+                `${data.firstName} ${data.lastName}`.trim()
+            );
 
-                text:
-                    `Hello ${firstName},\n\n` +
-                    "Your Gyansify HRMS employee record has been created.\n" +
-                    `Employee ID: ${employeeId}\n\n` +
-                    "Set up your password using this link:\n" +
-                    `${invitationUrl}\n\n` +
-                    "This invitation expires in 24 hours.\n" +
-                    "If you were not expecting this invitation, contact HR.",
+            const subject = "Your Gyansify HRMS account invitation";
 
-                html: `
-                    <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#1f2937;line-height:1.6">
-                        <h2 style="color:#2563eb">Welcome to Gyansify HRMS</h2>
-                        <p>Hello ${escapeHtml(firstName)},</p>
-                        <p>Your employee record has been created.</p>
-                        <p><strong>Employee ID:</strong> ${escapeHtml(employeeId)}</p>
-                        <p>Use the button below to set up your password.</p>
-                        <p style="margin:28px 0">
-                            <a href="${escapeHtml(invitationUrl)}"
-                               style="background:#2563eb;color:#fff;padding:12px 22px;text-decoration:none;border-radius:6px;display:inline-block">
-                                Set Up My Password
-                            </a>
-                        </p>
-                        <p>This invitation expires in 24 hours.</p>
-                        <p>If you were not expecting this invitation, contact HR.</p>
-                        <p>Regards,<br>Gyansify HRMS</p>
-                    </div>
-                `
-            });
+            const text = [
+                `Hello ${data.firstName},`,
+                "",
+                "Your employee profile has been created in Gyansify HRMS.",
+                "Use the following link to accept your invitation and set up your account:",
+                invitationUrl,
+                "",
+                "This invitation link expires in 24 hours.",
+                "",
+                "Regards,",
+                "Gyansify HRMS"
+            ].join("\n");
 
-            invitationSent = true;
+            const html = `
+                <div style="font-family:Arial,sans-serif;line-height:1.6;color:#1f2937">
+                    <h2>Welcome to Gyansify HRMS</h2>
+                    <p>Hello ${employeeName},</p>
+                    <p>Your employee profile has been created.</p>
+                    <p>Use the button below to accept your invitation and set up your account.</p>
+                    <p>
+                        <a href="${escapeHtml(invitationUrl)}"
+                           style="display:inline-block;padding:12px 20px;background:#2563eb;color:#ffffff;text-decoration:none;border-radius:6px">
+                           Accept Invitation
+                        </a>
+                    </p>
+                    <p>This invitation link expires in 24 hours.</p>
+                    <p>Regards,<br>Gyansify HRMS</p>
+                </div>
+            `;
 
-            // Keep the created login available for HR recovery.
-            // A failure here must not delete the employee or login.
             try {
-                await createEmployeeLeaveBalances(
-                    employee,
-                    organization
-                );
-            } catch (balanceError) {
+                await sendEmail({
+                    to: data.email,
+                    subject,
+                    text,
+                    html
+                });
+
+                invitationSent = true;
+            } catch (emailError) {
                 console.error(
-                    "Leave balance setup requires attention:",
-                    balanceError
-                );
-            }
-
-            console.log(
-                `Employee created and invitation sent: ${employee.employeeId}`,
-                { userId: String(userAccount._id) }
-            );
-
-        } catch (setupError) {
-            console.error(
-                "Employee created, but account/invitation setup failed:",
-                setupError
-            );
-
-            return res.status(500).render(
-                "employees/profile",
-                {
-                    title: "Employee Created",
-                    user: getSessionUser(req) || {},
-                    organization,
-                    employee,
-                    setupWarning:
-                        "The employee record was created, but account setup " +
-                        "or invitation delivery needs administrator attention. " +
-                        "Check the server logs before retrying."
-                }
-            );
-        }
-
-        if (invitationSent) {
-            return res.redirect(
-                `/employees/${employee._id}`
-            );
-        }
-
-        return res.redirect("/employees");
-    }
-);
-
-// =====================================================
-// GET EMPLOYEE PROFILE
-// GET /employees/:id
-// GET /employees/me
-// =====================================================
-
-exports.getEmployee = asyncHandler(
-    async (req, res) => {
-        const sessionUser = getSessionUser(req);
-
-        if (!sessionUser) {
-            return res.redirect("/login");
-        }
-
-        const dbUser = await getDbUser(req);
-
-        if (!dbUser) {
-            return res.status(401).send(
-                "Login account not found. Please log in again."
-            );
-        }
-
-        const organization =
-            await getOrganizationOrRespond(req, res);
-
-        if (!organization) return;
-
-        const organizationId = String(
-            organization._id
-        );
-
-        const userOrganizationId =
-            getDbUserOrganizationId(dbUser);
-
-        if (
-            userOrganizationId &&
-            userOrganizationId !== organizationId
-        ) {
-            return res.status(403).send(
-                "You are not authorized to access this organization."
-            );
-        }
-
-        const requestedId = String(
-            req.params.id || ""
-        );
-
-        const isMyProfile =
-            requestedId === "me" ||
-            req.path.replace(/\/+$/, "").endsWith("/me");
-
-        let employee = null;
-
-        if (isMyProfile) {
-            const userEmployeeField =
-                getEmployeeReferenceField(User);
-
-            const linkedEmployeeId = userEmployeeField
-                ? normalizeId(dbUser[userEmployeeField])
-                : "";
-
-            if (isValidObjectId(linkedEmployeeId)) {
-                employee = await Employee.findOne({
-                    _id: linkedEmployeeId,
-                    organization: organization._id
-                });
-            }
-
-            // Employee schema supplied earlier does not have a
-            // user reference. Email matching is the fallback.
-            if (!employee && dbUser.email) {
-                employee = await Employee.findOne({
-                    organization: organization._id,
-                    email: normalizeEmail(dbUser.email)
-                }).collation({
-                    locale: "en",
-                    strength: 2
-                });
-            }
-
-            if (!employee) {
-                return res.status(404).send(
-                    "Employee profile not found. Please contact HR."
-                );
-            }
-
-        } else {
-            if (!isValidObjectId(requestedId)) {
-                return res.status(400).send(
-                    "Invalid employee ID."
-                );
-            }
-
-            const hrUser = isHrUser(sessionUser);
-
-            if (!hrUser) {
-                const userEmployeeField =
-                    getEmployeeReferenceField(User);
-
-                const linkedEmployeeId = userEmployeeField
-                    ? normalizeId(dbUser[userEmployeeField])
-                    : "";
-
-                const emailMatches = normalizeEmail(
-                    dbUser.email
+                    `Invitation email failed for user ${user._id}:`,
+                    emailError.message
                 );
 
-                const ownEmployee = await Employee.findOne({
-                    organization: organization._id,
-                    $or: [
-                        ...(isValidObjectId(linkedEmployeeId)
-                            ? [{ _id: linkedEmployeeId }]
-                            : []),
-                        ...(emailMatches
-                            ? [{ email: emailMatches }]
-                            : [])
-                    ]
-                }).select("_id").lean();
-
-                if (
-                    !ownEmployee ||
-                    String(ownEmployee._id) !== requestedId
-                ) {
-                    return res.status(403).send(
-                        "You are not authorized to view this employee profile."
-                    );
-                }
-            }
-
-            employee = await Employee.findOne({
-                _id: requestedId,
-                organization: organization._id
-            });
-        }
-
-        if (!employee) {
-            return res.status(404).send(
-                "Employee not found."
-            );
-        }
-
-        await employee.populate([
-            { path: "department", select: "name code" },
-            { path: "designation", select: "name code level" },
-            { path: "branch", select: "name code city state" },
-            { path: "location", select: "name city" }
-        ]);
-
-        return res.render("employees/profile", {
-            title: "Employee Profile",
-            user: sessionUser,
-            organization,
-            employee
-        });
-    }
-);
-
-// =====================================================
-// GET EDIT EMPLOYEE
-// GET /employees/:id/edit
-// =====================================================
-
-exports.getEditEmployee = asyncHandler(
-    async (req, res) => {
-        const organization =
-            await getOrganizationOrRespond(req, res);
-
-        if (!organization) return;
-
-        const id = String(req.params.id || "");
-
-        if (!isValidObjectId(id)) {
-            return res.status(400).send(
-                "Invalid employee ID."
-            );
-        }
-
-        const employee = await Employee.findOne({
-            _id: id,
-            organization: organization._id
-        });
-
-        if (!employee) {
-            return res.status(404).send(
-                "Employee not found."
-            );
-        }
-
-        const [
-            departments,
-            designations,
-            branches,
-            locations
-        ] = await Promise.all([
-            getActiveReferenceOptions(
-                Department,
-                organization._id
-            ),
-            getActiveReferenceOptions(
-                Designation,
-                organization._id
-            ),
-            getActiveReferenceOptions(
-                Branch,
-                organization._id
-            ),
-            getActiveReferenceOptions(
-                Location,
-                organization._id
-            )
-        ]);
-
-        return res.render("employees/edit", {
-            title: "Edit Employee",
-            user: getSessionUser(req) || {},
-            organization,
-            employee,
-            departments,
-            designations,
-            branches,
-            locations,
-            error: null
-        });
-    }
-);
-
-// =====================================================
-// UPDATE EMPLOYEE
-// PUT/PATCH /employees/:id
-// =====================================================
-
-exports.updateEmployee = asyncHandler(
-    async (req, res) => {
-        const organization =
-            await getOrganizationOrRespond(req, res);
-
-        if (!organization) return;
-
-        const id = String(req.params.id || "");
-
-        if (!isValidObjectId(id)) {
-            return res.status(400).send(
-                "Invalid employee ID."
-            );
-        }
-
-        const employee = await Employee.findOne({
-            _id: id,
-            organization: organization._id
-        });
-
-        if (!employee) {
-            return res.status(404).send(
-                "Employee not found."
-            );
-        }
-
-        const body = req.body || {};
-
-        const employeeId = normalizeEmployeeId(
-            body.employeeId
-        );
-
-        const firstName = String(
-            body.firstName || ""
-        ).trim();
-
-        const lastName = String(
-            body.lastName || ""
-        ).trim();
-
-        const email = normalizeEmail(body.email);
-
-        if (!employeeId || !firstName || !email) {
-            return res.status(400).send(
-                "Employee ID, First Name and Email are required."
-            );
-        }
-
-        if (!EMAIL_PATTERN.test(email)) {
-            return res.status(400).send(
-                "Please enter a valid email address."
-            );
-        }
-
-        if (
-            body.gender &&
-            !["Male", "Female", "Other"].includes(body.gender)
-        ) {
-            return res.status(400).send(
-                "Invalid gender."
-            );
-        }
-
-        const employmentType =
-            body.employmentType || "Permanent";
-
-        if (!EMPLOYMENT_TYPES.includes(employmentType)) {
-            return res.status(400).send(
-                "Invalid employment type."
-            );
-        }
-
-        const status = body.status || employee.status;
-
-        if (!EMPLOYEE_STATUSES.includes(status)) {
-            return res.status(400).send(
-                "Invalid employee status."
-            );
-        }
-
-        const duplicate = await Employee.findOne({
-            organization: organization._id,
-            _id: { $ne: employee._id },
-            $or: [
-                { employeeId },
-                { email }
-            ]
-        }).lean();
-
-        if (duplicate) {
-            return res.status(409).send(
-                duplicate.employeeId === employeeId
-                    ? "Another employee already uses this Employee ID."
-                    : "Another employee already uses this email."
-            );
-        }
-
-        let references;
-
-        try {
-            references = await validateEmployeeReferences(
-                body,
-                organization
-            );
-        } catch (error) {
-            return res.status(400).send(error.message);
-        }
-
-        let dateOfBirth;
-        let joiningDate;
-
-        try {
-            dateOfBirth = parseOptionalDate(
-                body.dateOfBirth,
-                "date of birth"
-            );
-
-            joiningDate = parseOptionalDate(
-                body.joiningDate,
-                "joining date"
-            );
-        } catch (error) {
-            return res.status(400).send(error.message);
-        }
-
-        if (
-            dateOfBirth &&
-            dateOfBirth.getTime() > Date.now()
-        ) {
-            return res.status(400).send(
-                "Date of birth cannot be in the future."
-            );
-        }
-
-        // If the employee email changes, check any linked User
-        // account before updating either document.
-        const userEmployeeField =
-            getEmployeeReferenceField(User);
-
-        const userOrganizationField =
-            getOrganizationField(User);
-
-        let linkedUser = null;
-
-        if (userEmployeeField) {
-            const userFilter = {
-                [userEmployeeField]: employee._id
-            };
-
-            if (userOrganizationField) {
-                userFilter[userOrganizationField] =
-                    organization._id;
-            }
-
-            linkedUser = await User.findOne(userFilter);
-        }
-
-        const emailOwner = await User.findOne({
-            email,
-            ...(linkedUser
-                ? { _id: { $ne: linkedUser._id } }
-                : {})
-        }).select("_id").lean();
-
-        if (emailOwner) {
-            return res.status(409).send(
-                "This email belongs to another login account."
-            );
-        }
-
-        // Store original values for compensation if the linked
-        // account update fails. Transactions are preferable when
-        // the MongoDB deployment supports them.
-        const original = employee.toObject();
-
-        employee.employeeId = employeeId;
-        employee.firstName = firstName;
-        employee.lastName = lastName;
-        employee.email = email;
-        employee.phone = String(body.phone || "").trim();
-        employee.gender = body.gender || "";
-        employee.dateOfBirth = dateOfBirth;
-        employee.department = references.department;
-        employee.designation = references.designation;
-        employee.branch = references.branch;
-        employee.location = references.location;
-        employee.joiningDate = joiningDate;
-        employee.employmentType = employmentType;
-        employee.reportingManager = String(
-            body.reportingManager || ""
-        ).trim();
-        employee.address = String(body.address || "").trim();
-        employee.status = status;
-
-        // Organization is always taken from the authenticated
-        // user's organization, never from the submitted form.
-        employee.organization = organization._id;
-
-        await employee.save();
-
-        try {
-            if (linkedUser) {
-                if (hasPath(User, "email")) {
-                    linkedUser.email = email;
-                }
-
-                if (hasPath(User, "name")) {
-                    linkedUser.name = [
-                        firstName,
-                        lastName
-                    ].filter(Boolean).join(" ");
-                }
-
-                await linkedUser.save();
+                setupWarning =
+                    "Employee and login account created, but the invitation email could not be sent. Check EMAIL_* settings and SMTP logs, then resend the invitation.";
             }
         } catch (accountError) {
             console.error(
-                "Linked user update failed:",
+                `Employee login account setup failed for ${employee._id}:`,
                 accountError
             );
 
-            // Restore the original employee data.
-            await Employee.updateOne(
-                {
-                    _id: employee._id,
-                    organization: organization._id
-                },
-                {
-                    $set: {
-                        employeeId: original.employeeId,
-                        firstName: original.firstName,
-                        lastName: original.lastName,
-                        email: original.email,
-                        phone: original.phone,
-                        gender: original.gender,
-                        dateOfBirth: original.dateOfBirth,
-                        department: original.department,
-                        designation: original.designation,
-                        branch: original.branch,
-                        location: original.location,
-                        joiningDate: original.joiningDate,
-                        employmentType: original.employmentType,
-                        reportingManager: original.reportingManager,
-                        address: original.address,
-                        status: original.status
-                    }
-                }
-            );
-
-            return res.status(500).send(
-                "Employee update could not be completed because the linked account update failed."
-            );
+            setupWarning =
+                "Employee profile created, but the login account could not be created. Check the server logs before retrying.";
         }
+    }
 
-        try {
-            await createEmployeeLeaveBalances(
-                employee,
-                organization
-            );
-        } catch (balanceError) {
-            console.error(
-                "Leave balance setup warning:",
-                balanceError
-            );
-        }
+    req.session.flash = {
+        type: setupWarning ? "warning" : "success",
+        message: setupWarning ||
+            (invitationSent
+                ? "Employee created successfully. The login invitation has been sent."
+                : "Employee created successfully.")
+    };
 
-        return res.redirect(
-            `/employees/${employee._id}`
+    return res.redirect(`/employees/${employee._id}`);
+});
+
+// =====================================================
+// 4. GET EMPLOYEE PROFILE
+// GET /employees/:id OR /employees/me
+// =====================================================
+
+exports.getEmployee = asyncHandler(async (req, res) => {
+    const organization = await getCurrentOrganization(req);
+
+    if (!organization) {
+        return res.status(400).send(
+            "Your account is not linked to a valid organization."
         );
     }
-);
 
-// =====================================================
-// EXIT EMPLOYEE — SOFT DELETE
-// DELETE /employees/:id
-// =====================================================
+    const organizationId = getOrganizationId(organization);
+    const dbUser = await getDatabaseUser(req);
 
-exports.deleteEmployee = asyncHandler(
-    async (req, res) => {
-        const organization =
-            await getOrganizationOrRespond(req, res);
+    let employee;
 
-        if (!organization) return;
+    if (req.params.id === undefined || req.params.id === "me") {
+        const linkedEmployeeId =
+            dbUser?.employee || getEmployeeIdFromSession(req);
 
-        const id = String(req.params.id || "");
-
-        if (!isValidObjectId(id)) {
-            return res.status(400).send(
-                "Invalid employee ID."
-            );
+        if (linkedEmployeeId && isValidObjectId(linkedEmployeeId)) {
+            employee = await populateEmployee(
+                Employee.findOne({
+                    _id: linkedEmployeeId,
+                    organization: organizationId
+                })
+            ).lean();
         }
-
-        const employee = await Employee.findOne({
-            _id: id,
-            organization: organization._id
-        });
 
         if (!employee) {
-            return res.status(404).send(
-                "Employee not found."
+            const email = normalizeEmail(
+                dbUser?.email || getSessionUser(req).email
             );
-        }
 
-        if (employee.status === "Exited") {
-            return res.redirect("/employees");
-        }
-
-        employee.status = "Exited";
-
-        await employee.save();
-
-        const userEmployeeField =
-            getEmployeeReferenceField(User);
-
-        const userOrganizationField =
-            getOrganizationField(User);
-
-        if (userEmployeeField) {
-            const userFilter = {
-                [userEmployeeField]: employee._id
-            };
-
-            if (userOrganizationField) {
-                userFilter[userOrganizationField] =
-                    organization._id;
-            }
-
-            const update = {};
-
-            if (hasPath(User, "status")) {
-                const allowedValues =
-                    User.schema.path("status").enumValues || [];
-
-                update.status =
-                    allowedValues.includes("INACTIVE")
-                        ? "INACTIVE"
-                        : allowedValues.includes("Inactive")
-                            ? "Inactive"
-                            : "INACTIVE";
-            }
-
-            for (const field of [
-                "invitationTokenHash",
-                "setPasswordTokenHash",
-                "passwordSetupTokenHash",
-                "resetPasswordTokenHash",
-                "invitationExpiresAt",
-                "setPasswordExpiresAt",
-                "passwordSetupExpiresAt",
-                "resetPasswordExpiresAt"
-            ]) {
-                if (hasPath(User, field)) {
-                    update[field] = null;
-                }
-            }
-
-            if (Object.keys(update).length > 0) {
-                await User.updateOne(
-                    userFilter,
-                    { $set: update }
-                );
+            if (email) {
+                employee = await populateEmployee(
+                    Employee.findOne({
+                        organization: organizationId,
+                        email
+                    })
+                ).lean();
             }
         }
+    } else {
+        if (!isValidObjectId(req.params.id)) {
+            return res.status(400).send("Invalid employee ID.");
+        }
 
-        console.log(
-            `Employee exited: ${employee.employeeId}`
-        );
-
-        return res.redirect("/employees");
+        employee = await populateEmployee(
+            Employee.findOne({
+                _id: req.params.id,
+                organization: organizationId
+            })
+        ).lean();
     }
-);
+
+    if (!employee) {
+        return res.status(404).send("Employee not found.");
+    }
+
+    if (!(await canViewEmployee(req, employee, dbUser))) {
+        return res.status(403).send(
+            "You are not authorized to view this employee."
+        );
+    }
+
+    const linkedUser = await User.findOne({
+        employee: employee._id,
+        organization: organizationId
+    })
+        .select("_id name email role status createdAt")
+        .lean();
+
+    return res.render("employees/profile", {
+        title: "Employee Profile",
+        employee,
+        linkedUser,
+        currentUser: getSessionUser(req),
+        setupWarning: req.query.warning || null,
+        flash: req.session.flash || null
+    });
+});
+
+// =====================================================
+// 5. GET EDIT EMPLOYEE FORM
+// GET /employees/:id/edit
+// =====================================================
+
+exports.getEditEmployee = asyncHandler(async (req, res) => {
+    const organization = await getCurrentOrganization(req);
+
+    if (!organization) {
+        return res.status(400).send(
+            "Your account is not linked to a valid organization."
+        );
+    }
+
+    const organizationId = getOrganizationId(organization);
+
+    const employee = await Employee.findOne({
+        _id: req.params.id,
+        organization: organizationId
+    }).lean();
+
+    if (!employee) {
+        return res.status(404).send("Employee not found.");
+    }
+
+    return renderEmployeeForm({
+        req,
+        res,
+        organization,
+        view: "employees/edit",
+        title: "Edit Employee",
+        employee
+    });
+});
+
+// =====================================================
+// 6. UPDATE EMPLOYEE
+// POST /employees/:id/edit
+// =====================================================
+
+exports.updateEmployee = asyncHandler(async (req, res) => {
+    const organization = await getCurrentOrganization(req);
+
+    if (!organization) {
+        return res.status(400).send(
+            "Your account is not linked to a valid organization."
+        );
+    }
+
+    const organizationId = getOrganizationId(organization);
+
+    const employee = await Employee.findOne({
+        _id: req.params.id,
+        organization: organizationId
+    });
+
+    if (!employee) {
+        return res.status(404).send("Employee not found.");
+    }
+
+    const data = getEmployeePayload(req.body);
+
+    // Employee ID is required by the schema; preserve it if the edit form
+    // does not submit the field.
+    if (!data.employeeId) {
+        data.employeeId = employee.employeeId;
+    }
+
+    const errors = validateEmployeeFields(data, { isUpdate: true });
+
+    if (errors.length) {
+        return renderEmployeeForm({
+            req,
+            res,
+            organization,
+            view: "employees/edit",
+            title: "Edit Employee",
+            employee: { ...employee.toObject(), ...data },
+            errors,
+            formData: req.body
+        });
+    }
+
+    const referenceErrors = await validateEmployeeReferences(
+        data,
+        organizationId
+    );
+
+    if (referenceErrors.length) {
+        return renderEmployeeForm({
+            req,
+            res,
+            organization,
+            view: "employees/edit",
+            title: "Edit Employee",
+            employee: { ...employee.toObject(), ...data },
+            errors: referenceErrors,
+            formData: req.body
+        });
+    }
+
+    const duplicateEmployeeId = await Employee.findOne({
+        organization: organizationId,
+        employeeId: data.employeeId,
+        _id: { $ne: employee._id }
+    }).select("_id");
+
+    if (duplicateEmployeeId) {
+        return renderEmployeeForm({
+            req,
+            res,
+            organization,
+            view: "employees/edit",
+            title: "Edit Employee",
+            employee: { ...employee.toObject(), ...data },
+            errors: ["This Employee ID is already in use."],
+            formData: req.body
+        });
+    }
+
+    const duplicateEmployeeEmail = await Employee.findOne({
+        organization: organizationId,
+        email: data.email,
+        _id: { $ne: employee._id }
+    }).select("_id");
+
+    if (duplicateEmployeeEmail) {
+        return renderEmployeeForm({
+            req,
+            res,
+            organization,
+            view: "employees/edit",
+            title: "Edit Employee",
+            employee: { ...employee.toObject(), ...data },
+            errors: ["Another employee already uses this email address."],
+            formData: req.body
+        });
+    }
+
+    const linkedUser = await User.findOne({
+        employee: employee._id,
+        organization: organizationId
+    });
+
+    if (linkedUser) {
+        const duplicateUser = await User.findOne({
+            email: data.email,
+            _id: { $ne: linkedUser._id }
+        }).select("_id");
+
+        if (duplicateUser) {
+            return renderEmployeeForm({
+                req,
+                res,
+                organization,
+                view: "employees/edit",
+                title: "Edit Employee",
+                employee: { ...employee.toObject(), ...data },
+                errors: [
+                    "This email address is already assigned to another login account."
+                ],
+                formData: req.body
+            });
+        }
+
+        linkedUser.name =
+            `${data.firstName} ${data.lastName}`.trim();
+        linkedUser.email = data.email;
+
+        await linkedUser.save();
+    }
+
+    employee.employeeId = data.employeeId;
+    employee.firstName = data.firstName;
+    employee.lastName = data.lastName;
+    employee.email = data.email;
+    employee.phone = data.phone;
+    employee.gender = data.gender || "";
+    employee.dateOfBirth = data.dateOfBirth || undefined;
+    employee.department = data.department || null;
+    employee.designation = data.designation || null;
+    employee.branch = data.branch || null;
+    employee.location = data.location || null;
+    employee.joiningDate = data.joiningDate || undefined;
+    employee.employmentType = data.employmentType;
+    employee.reportingManager = data.reportingManager;
+    employee.status = data.status;
+    employee.address = data.address;
+
+    await employee.save();
+
+    if (linkedUser && data.status === "Exited") {
+        linkedUser.status = "INACTIVE";
+        await linkedUser.save();
+    }
+
+    req.session.flash = {
+        type: "success",
+        message: "Employee details updated successfully."
+    };
+
+    return res.redirect(`/employees/${employee._id}`);
+});
+
+// =====================================================
+// 7. DELETE / EXIT EMPLOYEE
+// POST /employees/:id/delete
+// =====================================================
+
+exports.deleteEmployee = asyncHandler(async (req, res) => {
+    const organization = await getCurrentOrganization(req);
+
+    if (!organization) {
+        return res.status(400).send(
+            "Your account is not linked to a valid organization."
+        );
+    }
+
+    const organizationId = getOrganizationId(organization);
+
+    const employee = await Employee.findOne({
+        _id: req.params.id,
+        organization: organizationId
+    });
+
+    if (!employee) {
+        return res.status(404).send("Employee not found.");
+    }
+
+    // Preserve employee and payroll/history references instead of hard deleting.
+    employee.status = "Exited";
+    await employee.save();
+
+    await User.updateOne(
+        {
+            employee: employee._id,
+            organization: organizationId
+        },
+        {
+            $set: {
+                status: "INACTIVE"
+            }
+        }
+    );
+
+    req.session.flash = {
+        type: "success",
+        message: "Employee marked as Exited and linked login account deactivated."
+    };
+
+    return res.redirect("/employees");
+});
+
+// =====================================================
+// OPTIONAL EXPORTS FOR TESTING
+// =====================================================
+
+exports.validateEmployeeFields = validateEmployeeFields;
+exports.validateEmployeeReferences = validateEmployeeReferences;
+exports.initializeLeaveBalances = initializeLeaveBalances;

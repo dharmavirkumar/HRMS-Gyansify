@@ -1,1124 +1,1206 @@
-<%
-    /*
-    ============================================================
-    GYANSIFY HRMS - ASSETS
-    views/assets/index.ejs
-    ============================================================
-    */
 
-    const currentUser =
-        typeof user !== "undefined" && user
-            ? user
-            : {};
+<%
+    // =========================================================
+    // GYANSIFY HRMS — ASSET MANAGEMENT DASHBOARD
+    // views/assets/index.ejs
+    // =========================================================
 
     const assetStats =
         typeof stats !== "undefined" && stats
             ? stats
-            : {
-                totalAssets: 0,
-                availableAssets: 0,
-                assignedAssets: 0,
-                maintenanceAssets: 0
-            };
+            : {};
 
     const assetList =
         typeof assets !== "undefined" && Array.isArray(assets)
             ? assets
             : [];
+
+    const assetSearch =
+        typeof search !== "undefined" && search
+            ? String(search)
+            : "";
+
+    const assetStatus =
+        typeof selectedStatus !== "undefined" && selectedStatus
+            ? String(selectedStatus)
+            : "";
+
+    const assetCategory =
+        typeof selectedCategory !== "undefined" && selectedCategory
+            ? String(selectedCategory)
+            : "";
+
+    const assetTotal = Number(assetStats.totalAssets) || 0;
+    const assetAvailable = Number(assetStats.availableAssets) || 0;
+    const assetAssigned = Number(assetStats.assignedAssets) || 0;
+    const assetMaintenance = Number(assetStats.maintenanceAssets) || 0;
+
+    const assetFlashSuccess =
+        typeof success !== "undefined" ? success : null;
+
+    const assetFlashError =
+        typeof error !== "undefined" ? error : null;
+
+    const assetStatusLabels = {
+        AVAILABLE: "Available",
+        ASSIGNED: "Assigned",
+        MAINTENANCE: "Maintenance",
+        LOST: "Lost",
+        RETIRED: "Retired"
+    };
+
+    const assetConditionLabels = {
+        NEW: "New",
+        GOOD: "Good",
+        FAIR: "Fair",
+        DAMAGED: "Damaged"
+    };
 %>
 
-
-<!-- ============================================================
-     PAGE HEADER
-============================================================ -->
-
-<div class="page-container">
-
-    <div class="page-header">
-
-        <div>
-            <h1>Assets</h1>
-
-            <p>
-                Manage company assets, inventory and employee assignments.
-            </p>
-        </div>
-
-
-        <div class="page-header-actions">
-
-            <a
-                href="/assets/create"
-                class="btn-primary"
-            >
-                + Add Asset
-            </a>
-
-        </div>
-
-    </div>
-
-
-    <!-- ========================================================
-         STATISTICS
-    ========================================================= -->
-
-    <div class="stats-grid">
-
-
-        <!-- TOTAL ASSETS -->
-
-        <div class="stat-card">
-
-            <div class="stat-title">
-                Total Assets
-            </div>
-
-            <div class="stat-value">
-
-                <%= assetStats.totalAssets || 0 %>
-
-            </div>
-
-            <div class="stat-description">
-                All company assets
-            </div>
-
-        </div>
-
-
-        <!-- AVAILABLE -->
-
-        <div class="stat-card">
-
-            <div class="stat-title">
-                Available
-            </div>
-
-            <div class="stat-value">
-
-                <%= assetStats.availableAssets || 0 %>
-
-            </div>
-
-            <div class="stat-description">
-                Ready for assignment
-            </div>
-
-        </div>
-
-
-        <!-- ASSIGNED -->
-
-        <div class="stat-card">
-
-            <div class="stat-title">
-                Assigned
-            </div>
-
-            <div class="stat-value">
-
-                <%= assetStats.assignedAssets || 0 %>
-
-            </div>
-
-            <div class="stat-description">
-                Currently assigned
-            </div>
-
-        </div>
-
-
-        <!-- MAINTENANCE -->
-
-        <div class="stat-card">
-
-            <div class="stat-title">
-                Maintenance
-            </div>
-
-            <div class="stat-value">
-
-                <%= assetStats.maintenanceAssets || 0 %>
-
-            </div>
-
-            <div class="stat-description">
-                Under maintenance
-            </div>
-
-        </div>
-
-    </div>
-
-
-
-    <!-- ========================================================
-         ASSET INVENTORY
-    ========================================================= -->
-
-    <div class="card">
-
-
-        <!-- CARD HEADER -->
-
-        <div class="card-header">
-
-            <div>
-
-                <h2>
-                    Asset Inventory
-                </h2>
-
-                <p>
-                    View and manage all company assets.
-                </p>
-
-            </div>
-
-
-            <div>
-
-                <a
-                    href="/assets/create"
-                    class="btn-primary"
-                >
-                    + Add Asset
-                </a>
-
-            </div>
-
-        </div>
-
-
-
-        <!-- ====================================================
-             SEARCH / FILTER BAR
-        ==================================================== -->
-
-        <div class="asset-filter-bar">
-
-            <form
-                method="GET"
-                action="/assets"
-                class="asset-filter-form"
-            >
-
-                <!-- SEARCH -->
-
-                <div class="form-group">
-
-                    <label for="search">
-                        Search
-                    </label>
-
-                    <input
-                        type="text"
-                        id="search"
-                        name="search"
-                        value="<%= typeof search !== 'undefined' ? search : '' %>"
-                        placeholder="Search asset..."
-                    >
-
-                </div>
-
-
-                <!-- STATUS -->
-
-                <div class="form-group">
-
-                    <label for="status">
-                        Status
-                    </label>
-
-                    <select
-                        id="status"
-                        name="status"
-                    >
-
-                        <option value="">
-                            All Status
-                        </option>
-
-                        <option
-                            value="AVAILABLE"
-                            <%= typeof selectedStatus !== "undefined" && selectedStatus === "AVAILABLE" ? "selected" : "" %>
-                        >
-                            Available
-                        </option>
-
-                        <option
-                            value="ASSIGNED"
-                            <%= typeof selectedStatus !== "undefined" && selectedStatus === "ASSIGNED" ? "selected" : "" %>
-                        >
-                            Assigned
-                        </option>
-
-                        <option
-                            value="MAINTENANCE"
-                            <%= typeof selectedStatus !== "undefined" && selectedStatus === "MAINTENANCE" ? "selected" : "" %>
-                        >
-                            Maintenance
-                        </option>
-
-                        <option
-                            value="LOST"
-                            <%= typeof selectedStatus !== "undefined" && selectedStatus === "LOST" ? "selected" : "" %>
-                        >
-                            Lost
-                        </option>
-
-                        <option
-                            value="RETIRED"
-                            <%= typeof selectedStatus !== "undefined" && selectedStatus === "RETIRED" ? "selected" : "" %>
-                        >
-                            Retired
-                        </option>
-
-                    </select>
-
-                </div>
-
-
-                <!-- CATEGORY -->
-
-                <div class="form-group">
-
-                    <label for="category">
-                        Category
-                    </label>
-
-                    <select
-                        id="category"
-                        name="category"
-                    >
-
-                        <option value="">
-                            All Categories
-                        </option>
-
-                        <option
-                            value="Laptop"
-                            <%= typeof selectedCategory !== "undefined" && selectedCategory === "Laptop" ? "selected" : "" %>
-                        >
-                            Laptop
-                        </option>
-
-                        <option
-                            value="Desktop"
-                            <%= typeof selectedCategory !== "undefined" && selectedCategory === "Desktop" ? "selected" : "" %>
-                        >
-                            Desktop
-                        </option>
-
-                        <option
-                            value="Monitor"
-                            <%= typeof selectedCategory !== "undefined" && selectedCategory === "Monitor" ? "selected" : "" %>
-                        >
-                            Monitor
-                        </option>
-
-                        <option
-                            value="Mobile"
-                            <%= typeof selectedCategory !== "undefined" && selectedCategory === "Mobile" ? "selected" : "" %>
-                        >
-                            Mobile
-                        </option>
-
-                        <option
-                            value="Tablet"
-                            <%= typeof selectedCategory !== "undefined" && selectedCategory === "Tablet" ? "selected" : "" %>
-                        >
-                            Tablet
-                        </option>
-
-                        <option
-                            value="Other"
-                            <%= typeof selectedCategory !== "undefined" && selectedCategory === "Other" ? "selected" : "" %>
-                        >
-                            Other
-                        </option>
-
-                    </select>
-
-                </div>
-
-
-                <!-- SEARCH BUTTON -->
-
-                <div class="form-group filter-button-group">
-
-                    <button
-                        type="submit"
-                        class="btn-primary"
-                    >
-                        Search
-                    </button>
-
-                </div>
-
-
-                <!-- RESET -->
-
-                <div class="form-group filter-button-group">
-
-                    <a
-                        href="/assets"
-                        class="btn-secondary"
-                    >
-                        Reset
-                    </a>
-
-                </div>
-
-            </form>
-
-        </div>
-
-
-
-        <!-- ====================================================
-             TABLE
-        ==================================================== -->
-
-        <div class="table-responsive">
-
-            <table class="data-table">
-
-
-                <!-- TABLE HEAD -->
-
-                <thead>
-
-                    <tr>
-
-                        <th>
-                            Asset ID
-                        </th>
-
-                        <th>
-                            Asset Name
-                        </th>
-
-                        <th>
-                            Category
-                        </th>
-
-                        <th>
-                            Brand / Model
-                        </th>
-
-                        <th>
-                            Assigned To
-                        </th>
-
-                        <th>
-                            Status
-                        </th>
-
-                        <th>
-                            Condition
-                        </th>
-
-                        <th>
-                            Location
-                        </th>
-
-                        <th>
-                            Actions
-                        </th>
-
-                    </tr>
-
-                </thead>
-
-
-
-                <!-- TABLE BODY -->
-
-                <tbody>
-
-
-                    <% if (assetList.length === 0) { %>
-
-
-                        <!-- EMPTY STATE -->
-
-                        <tr>
-
-                            <td
-                                colspan="9"
-                                class="text-center"
-                            >
-
-                                <div class="empty-state">
-
-                                    <div class="empty-state-icon">
-                                        📦
-                                    </div>
-
-                                    <h3>
-                                        No Assets Found
-                                    </h3>
-
-                                    <p>
-                                        No company assets are available yet.
-                                    </p>
-
-                                    <a
-                                        href="/assets/create"
-                                        class="btn-primary"
-                                    >
-                                        + Add First Asset
-                                    </a>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-                    <% } else { %>
-
-
-                        <% assetList.forEach(asset => { %>
-
-
-                            <tr>
-
-
-                                <!-- ASSET ID -->
-
-                                <td>
-
-                                    <strong>
-                                        <%= asset.assetId || "-" %>
-                                    </strong>
-
-                                </td>
-
-
-
-                                <!-- NAME -->
-
-                                <td>
-
-                                    <div class="asset-name">
-
-                                        <strong>
-                                            <%= asset.name || "-" %>
-                                        </strong>
-
-                                    </div>
-
-                                </td>
-
-
-
-                                <!-- CATEGORY -->
-
-                                <td>
-
-                                    <%= asset.category || "-" %>
-
-                                </td>
-
-
-
-                                <!-- BRAND / MODEL -->
-
-                                <td>
-
-                                    <% if (asset.brand) { %>
-
-                                        <%= asset.brand %>
-
-                                    <% } else { %>
-
-                                        -
-
-                                    <% } %>
-
-
-                                    <% if (asset.model) { %>
-
-                                        <div class="text-muted">
-
-                                            <%= asset.model %>
-
-                                        </div>
-
-                                    <% } %>
-
-                                </td>
-
-
-
-                                <!-- ASSIGNED TO -->
-
-                                <td>
-
-
-                                    <% if (asset.assignedTo) { %>
-
-
-                                        <div>
-
-                                            <strong>
-
-                                                <%= asset.assignedTo.firstName || "" %>
-
-                                                <%= asset.assignedTo.lastName || "" %>
-
-                                            </strong>
-
-                                        </div>
-
-
-                                        <% if (asset.assignedTo.employeeId) { %>
-
-                                            <div class="text-muted">
-
-                                                <%= asset.assignedTo.employeeId %>
-
-                                            </div>
-
-                                        <% } %>
-
-
-                                    <% } else { %>
-
-
-                                        <span class="text-muted">
-
-                                            Unassigned
-
-                                        </span>
-
-
-                                    <% } %>
-
-
-                                </td>
-
-
-
-                                <!-- STATUS -->
-
-                                <td>
-
-
-                                    <% if (asset.status === "AVAILABLE") { %>
-
-                                        <span class="status-badge status-available">
-                                            Available
-                                        </span>
-
-
-                                    <% } else if (asset.status === "ASSIGNED") { %>
-
-                                        <span class="status-badge status-assigned">
-                                            Assigned
-                                        </span>
-
-
-                                    <% } else if (asset.status === "MAINTENANCE") { %>
-
-                                        <span class="status-badge status-maintenance">
-                                            Maintenance
-                                        </span>
-
-
-                                    <% } else if (asset.status === "LOST") { %>
-
-                                        <span class="status-badge status-lost">
-                                            Lost
-                                        </span>
-
-
-                                    <% } else if (asset.status === "RETIRED") { %>
-
-                                        <span class="status-badge status-retired">
-                                            Retired
-                                        </span>
-
-
-                                    <% } else { %>
-
-                                        <span class="status-badge">
-
-                                            <%= asset.status || "-" %>
-
-                                        </span>
-
-                                    <% } %>
-
-
-                                </td>
-
-
-
-                                <!-- CONDITION -->
-
-                                <td>
-
-                                    <% if (asset.condition === "NEW") { %>
-
-                                        New
-
-                                    <% } else if (asset.condition === "GOOD") { %>
-
-                                        Good
-
-                                    <% } else if (asset.condition === "FAIR") { %>
-
-                                        Fair
-
-                                    <% } else if (asset.condition === "DAMAGED") { %>
-
-                                        Damaged
-
-                                    <% } else { %>
-
-                                        <%= asset.condition || "-" %>
-
-                                    <% } %>
-
-                                </td>
-
-
-
-                                <!-- LOCATION -->
-
-                                <td>
-
-                                    <%= asset.location || "-" %>
-
-                                </td>
-
-
-
-                                <!-- ACTIONS -->
-
-                                <td>
-
-                                    <div class="table-actions">
-
-
-                                        <a
-                                            href="/assets/<%= asset._id %>"
-                                            class="btn-small"
-                                        >
-                                            View
-                                        </a>
-
-
-                                        <a
-                                            href="/assets/<%= asset._id %>/edit"
-                                            class="btn-small"
-                                        >
-                                            Edit
-                                        </a>
-
-
-                                    </div>
-
-                                </td>
-
-
-                            </tr>
-
-
-                        <% }) %>
-
-
-                    <% } %>
-
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-
-
-        <!-- ====================================================
-             FOOTER
-        ==================================================== -->
-
-        <div class="card-footer">
-
-            <div class="asset-count">
-
-                Showing
-                <strong>
-                    <%= assetList.length %>
-                </strong>
-                asset(s)
-
-            </div>
-
-        </div>
-
-
-    </div>
-
-</div>
-
-
-
-<!-- ============================================================
-     PAGE-SPECIFIC CSS
-============================================================ -->
-
 <style>
+    /* =========================================================
+       ASSET MANAGEMENT — PAGE DESIGN
+    ========================================================= */
 
-    .page-container {
+    .assets-page {
+        --asset-primary: #175cd3;
+        --asset-primary-dark: #1249a8;
+        --asset-text: #172b4d;
+        --asset-muted: #66758a;
+        --asset-border: #e5eaf1;
+        --asset-surface: #ffffff;
+        --asset-background: #f6f8fc;
+
         width: 100%;
+        min-width: 0;
+        color: var(--asset-text);
+        font-family: Inter, -apple-system, BlinkMacSystemFont,
+            "Segoe UI", sans-serif;
     }
 
+    .assets-page *,
+    .assets-page *::before,
+    .assets-page *::after {
+        box-sizing: border-box;
+    }
 
-    .page-header {
+    .assets-page a {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .assets-page a:focus-visible,
+    .assets-page button:focus-visible,
+    .assets-page input:focus-visible,
+    .assets-page select:focus-visible {
+        outline: 3px solid rgba(23, 92, 211, .22);
+        outline-offset: 2px;
+    }
+
+    /* PAGE HEADER */
+
+    .assets-page .assets-header {
         display: flex;
-        justify-content: space-between;
         align-items: center;
+        justify-content: space-between;
         gap: 20px;
         margin-bottom: 25px;
     }
 
-
-    .page-header h1 {
-        margin: 0 0 6px;
+    .assets-page .assets-heading {
+        min-width: 0;
     }
 
-
-    .page-header p {
-        margin: 0;
-        opacity: 0.7;
-    }
-
-
-    .page-header-actions {
+    .assets-page .assets-eyebrow {
         display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: 8px;
+        color: var(--asset-primary);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: .09em;
+        text-transform: uppercase;
+    }
+
+    .assets-page .assets-heading h1 {
+        margin: 0;
+        color: var(--asset-text);
+        font-size: clamp(25px, 3vw, 32px);
+        font-weight: 800;
+        line-height: 1.2;
+        letter-spacing: -.8px;
+    }
+
+    .assets-page .assets-heading p {
+        margin: 8px 0 0;
+        color: var(--asset-muted);
+        font-size: 13px;
+        line-height: 1.65;
+    }
+
+    .assets-page .assets-header-actions {
+        display: flex;
+        align-items: center;
         gap: 10px;
+        flex-shrink: 0;
     }
 
+    /* BUTTONS */
 
-    .stats-grid {
+    .assets-page .asset-btn {
+        min-height: 41px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 15px;
+        border: 1px solid transparent;
+        border-radius: 9px;
+        font: inherit;
+        font-size: 12px;
+        font-weight: 750;
+        line-height: 1.2;
+        text-decoration: none;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: background .18s ease, border-color .18s ease,
+            color .18s ease, transform .18s ease;
+    }
+
+    .assets-page .asset-btn-primary {
+        background: var(--asset-primary);
+        border-color: var(--asset-primary);
+        color: #ffffff;
+        box-shadow: 0 3px 8px rgba(23, 92, 211, .12);
+    }
+
+    .assets-page .asset-btn-primary:hover {
+        background: var(--asset-primary-dark);
+        border-color: var(--asset-primary-dark);
+        color: #ffffff;
+        transform: translateY(-1px);
+    }
+
+    .assets-page .asset-btn-secondary {
+        background: #ffffff;
+        border-color: var(--asset-border);
+        color: #34445b;
+    }
+
+    .assets-page .asset-btn-secondary:hover {
+        background: #f7f9fc;
+        border-color: #c8d3e1;
+    }
+
+    .assets-page .asset-btn svg {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    /* STATISTICS */
+
+    .assets-page .assets-stats {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 20px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 17px;
         margin-bottom: 25px;
     }
 
-
-    .stat-card {
-        padding: 22px;
-        border-radius: 12px;
-        background: var(--card-bg, #ffffff);
-        border: 1px solid var(--border-color, #e5e7eb);
-    }
-
-
-    .stat-title {
-        font-size: 14px;
-        opacity: 0.7;
-        margin-bottom: 10px;
-    }
-
-
-    .stat-value {
-        font-size: 30px;
-        font-weight: 700;
-        margin-bottom: 5px;
-    }
-
-
-    .stat-description {
-        font-size: 12px;
-        opacity: 0.6;
-    }
-
-
-    .card {
-        background: var(--card-bg, #ffffff);
-        border: 1px solid var(--border-color, #e5e7eb);
-        border-radius: 12px;
+    .assets-page .assets-stat-card {
+        position: relative;
+        min-width: 0;
+        padding: 19px;
         overflow: hidden;
+        background: var(--asset-surface);
+        border: 1px solid var(--asset-border);
+        border-radius: 13px;
+        box-shadow: 0 2px 5px rgba(20, 38, 70, .025);
     }
 
-
-    .card-header {
-        padding: 20px;
+    .assets-page .assets-stat-top {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        gap: 20px;
-        border-bottom: 1px solid var(--border-color, #e5e7eb);
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 18px;
     }
 
-
-    .card-header h2 {
-        margin: 0 0 5px;
+    .assets-page .assets-stat-label {
+        color: var(--asset-muted);
+        font-size: 12px;
+        font-weight: 700;
     }
 
+    .assets-page .assets-stat-icon {
+        width: 39px;
+        height: 39px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        border-radius: 11px;
+        font-size: 19px;
+    }
 
-    .card-header p {
+    .assets-page .assets-stat-icon-blue {
+        background: #eaf2ff;
+    }
+
+    .assets-page .assets-stat-icon-green {
+        background: #e7f8ef;
+    }
+
+    .assets-page .assets-stat-icon-purple {
+        background: #f1eaff;
+    }
+
+    .assets-page .assets-stat-icon-amber {
+        background: #fff3d8;
+    }
+
+    .assets-page .assets-stat-value {
+        color: var(--asset-text);
+        font-size: 30px;
+        font-weight: 850;
+        line-height: 1;
+        letter-spacing: -.8px;
+        overflow-wrap: anywhere;
+    }
+
+    .assets-page .assets-stat-description {
+        margin-top: 10px;
+        color: #8490a2;
+        font-size: 11px;
+        line-height: 1.5;
+    }
+
+    /* INVENTORY CARD */
+
+    .assets-page .assets-panel {
+        min-width: 0;
+        overflow: hidden;
+        background: var(--asset-surface);
+        border: 1px solid var(--asset-border);
+        border-radius: 13px;
+        box-shadow: 0 3px 10px rgba(20, 38, 70, .025);
+    }
+
+    .assets-page .assets-panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 21px 22px;
+        border-bottom: 1px solid var(--asset-border);
+    }
+
+    .assets-page .assets-panel-title {
         margin: 0;
-        opacity: 0.65;
-        font-size: 14px;
+        color: var(--asset-text);
+        font-size: 16px;
+        font-weight: 800;
     }
 
-
-    .asset-filter-bar {
-        padding: 20px;
-        border-bottom: 1px solid var(--border-color, #e5e7eb);
+    .assets-page .assets-panel-subtitle {
+        margin: 6px 0 0;
+        color: var(--asset-muted);
+        font-size: 12px;
+        line-height: 1.5;
     }
 
+    .assets-page .assets-result-count {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 10px;
+        border: 1px solid var(--asset-border);
+        border-radius: 8px;
+        background: #fafbfd;
+        color: #53637a;
+        font-size: 11px;
+        font-weight: 750;
+        white-space: nowrap;
+    }
 
-    .asset-filter-form {
+    /* FILTERS */
+
+    .assets-page .assets-filter-area {
+        padding: 18px 22px;
+        background: #fcfdff;
+        border-bottom: 1px solid var(--asset-border);
+    }
+
+    .assets-page .assets-filter-form {
         display: grid;
-        grid-template-columns: 2fr 1fr 1fr auto auto;
-        gap: 15px;
+        grid-template-columns: minmax(180px, 2fr) repeat(2, minmax(130px, 1fr)) auto auto;
         align-items: end;
+        gap: 12px;
     }
 
-
-    .form-group {
+    .assets-page .assets-field {
+        min-width: 0;
         display: flex;
         flex-direction: column;
         gap: 7px;
     }
 
-
-    .form-group label {
-        font-size: 13px;
-        font-weight: 600;
+    .assets-page .assets-field label {
+        color: #43536b;
+        font-size: 11px;
+        font-weight: 750;
     }
 
-
-    .form-group input,
-    .form-group select {
+    .assets-page .assets-control {
         width: 100%;
-        min-height: 42px;
-        padding: 9px 12px;
-        border: 1px solid var(--border-color, #d1d5db);
+        min-width: 0;
+        min-height: 41px;
+        padding: 9px 11px;
+        border: 1px solid #dce3ed;
         border-radius: 8px;
-        background: var(--input-bg, #ffffff);
-        font-size: 14px;
-        box-sizing: border-box;
+        background: #ffffff;
+        color: #28384f;
+        font: inherit;
+        font-size: 12px;
     }
 
-
-    .filter-button-group {
-        justify-content: flex-end;
+    .assets-page .assets-control::placeholder {
+        color: #9aa6b6;
     }
 
-
-    .btn-primary {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 42px;
-        padding: 9px 16px;
-        border-radius: 8px;
-        text-decoration: none;
-        border: none;
-        cursor: pointer;
-        font-weight: 600;
-        font-size: 14px;
+    .assets-page .assets-search-wrap {
+        position: relative;
     }
 
-
-    .btn-secondary {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 42px;
-        padding: 9px 16px;
-        border-radius: 8px;
-        text-decoration: none;
-        border: 1px solid var(--border-color, #d1d5db);
-        cursor: pointer;
-        font-weight: 600;
-        font-size: 14px;
+    .assets-page .assets-search-wrap svg {
+        position: absolute;
+        top: 50%;
+        left: 12px;
+        width: 16px;
+        height: 16px;
+        transform: translateY(-50%);
+        fill: none;
+        stroke: #8593a7;
+        stroke-width: 1.8;
+        stroke-linecap: round;
     }
 
+    .assets-page .assets-search-wrap input {
+        padding-left: 36px;
+    }
 
-    .table-responsive {
+    .assets-page .assets-filter-actions {
+        display: flex;
+        align-items: end;
+        gap: 8px;
+    }
+
+    /* TABLE */
+
+    .assets-page .assets-table-wrap {
         width: 100%;
         overflow-x: auto;
+        overscroll-behavior-x: contain;
     }
 
-
-    .data-table {
+    .assets-page .assets-table {
         width: 100%;
-        border-collapse: collapse;
-        min-width: 1000px;
-    }
-
-
-    .data-table th {
+        min-width: 1080px;
+        border-collapse: separate;
+        border-spacing: 0;
         text-align: left;
-        padding: 14px 16px;
-        font-size: 13px;
-        font-weight: 700;
-        white-space: nowrap;
-        border-bottom: 1px solid var(--border-color, #e5e7eb);
     }
 
+    .assets-page .assets-table thead th {
+        padding: 13px 15px;
+        background: #f8fafd;
+        border-bottom: 1px solid var(--asset-border);
+        color: #6c7a90;
+        font-size: 10px;
+        font-weight: 850;
+        letter-spacing: .045em;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
 
-    .data-table td {
-        padding: 15px 16px;
-        font-size: 14px;
-        border-bottom: 1px solid var(--border-color, #e5e7eb);
+    .assets-page .assets-table tbody td {
+        padding: 15px;
+        border-bottom: 1px solid #edf0f5;
+        color: #34445b;
+        font-size: 12px;
         vertical-align: middle;
     }
 
-
-    .data-table tbody tr:last-child td {
-        border-bottom: none;
+    .assets-page .assets-table tbody tr:last-child td {
+        border-bottom: 0;
     }
 
-
-    .text-muted {
-        font-size: 12px;
-        opacity: 0.6;
-        margin-top: 3px;
+    .assets-page .assets-table tbody tr {
+        transition: background .15s ease;
     }
 
-
-    .text-center {
-        text-align: center;
+    .assets-page .assets-table tbody tr:hover {
+        background: #fafcff;
     }
 
-
-    .status-badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 5px 9px;
-        border-radius: 999px;
-        font-size: 12px;
-        font-weight: 600;
-        background: #f3f4f6;
-    }
-
-
-    .status-available {
-        background: #dcfce7;
-    }
-
-
-    .status-assigned {
-        background: #dbeafe;
-    }
-
-
-    .status-maintenance {
-        background: #fef3c7;
-    }
-
-
-    .status-lost {
-        background: #fee2e2;
-    }
-
-
-    .status-retired {
-        background: #e5e7eb;
-    }
-
-
-    .table-actions {
-        display: flex;
-        gap: 7px;
+    .assets-page .assets-id {
+        color: var(--asset-primary);
+        font-size: 11px;
+        font-weight: 800;
         white-space: nowrap;
     }
 
+    .assets-page .assets-name {
+        display: block;
+        max-width: 220px;
+        color: #23344d;
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+    }
 
-    .btn-small {
+    .assets-page .assets-subtext {
+        display: block;
+        margin-top: 4px;
+        color: #8591a3;
+        font-size: 10px;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+    }
+
+    .assets-page .assets-category {
+        display: inline-flex;
+        align-items: center;
+        padding: 5px 8px;
+        border: 1px solid #e6ebf2;
+        border-radius: 6px;
+        background: #f8fafc;
+        color: #526178;
+        font-size: 10px;
+        font-weight: 750;
+        white-space: nowrap;
+    }
+
+    .assets-page .assets-employee {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        min-width: 145px;
+    }
+
+    .assets-page .assets-employee-avatar {
+        width: 32px;
+        height: 32px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9px;
+        background: #edf3ff;
+        color: #2457a7;
+        font-size: 11px;
+        font-weight: 850;
+    }
+
+    .assets-page .assets-employee-name {
+        display: block;
+        color: #33435a;
+        font-size: 11px;
+        font-weight: 750;
+        line-height: 1.45;
+    }
+
+    .assets-page .assets-unassigned {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #8994a4;
+        font-size: 11px;
+        font-weight: 650;
+    }
+
+    .assets-page .assets-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 9px;
+        border: 1px solid transparent;
+        border-radius: 999px;
+        font-size: 10px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .assets-page .assets-status-dot {
+        width: 6px;
+        height: 6px;
+        flex-shrink: 0;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+    .assets-page .assets-status-available {
+        background: #eaf8ef;
+        border-color: #d4f0df;
+        color: #187647;
+    }
+
+    .assets-page .assets-status-assigned {
+        background: #eaf2ff;
+        border-color: #d8e6ff;
+        color: #2459b3;
+    }
+
+    .assets-page .assets-status-maintenance {
+        background: #fff5df;
+        border-color: #f9e8bb;
+        color: #946200;
+    }
+
+    .assets-page .assets-status-lost {
+        background: #fff0f0;
+        border-color: #fbdada;
+        color: #b42318;
+    }
+
+    .assets-page .assets-status-retired {
+        background: #f0f1f4;
+        border-color: #e1e4ea;
+        color: #606b7c;
+    }
+
+    .assets-page .assets-status-default {
+        background: #f1f4f8;
+        border-color: #e1e7ef;
+        color: #5a687b;
+    }
+
+    .assets-page .assets-condition {
+        color: #596980;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .assets-page .assets-condition-damaged {
+        color: #b42318;
+    }
+
+    .assets-page .assets-location {
+        max-width: 140px;
+        color: #596980;
+        font-size: 11px;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+    }
+
+    /* ROW ACTIONS */
+
+    .assets-page .assets-row-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .assets-page .assets-row-action {
+        min-height: 31px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        padding: 6px 10px;
-        border: 1px solid var(--border-color, #d1d5db);
-        border-radius: 6px;
+        padding: 6px 9px;
+        border: 1px solid #dfe6ef;
+        border-radius: 7px;
+        background: #ffffff;
+        color: #465770;
+        font-size: 10px;
+        font-weight: 800;
         text-decoration: none;
-        font-size: 12px;
-        font-weight: 600;
+        transition: background .15s ease, border-color .15s ease,
+            color .15s ease;
     }
 
+    .assets-page .assets-row-action:hover {
+        background: #edf4ff;
+        border-color: #cbdcff;
+        color: var(--asset-primary);
+    }
 
-    .empty-state {
-        padding: 50px 20px;
+    /* EMPTY STATE */
+
+    .assets-page .assets-empty {
+        padding: 55px 20px;
         text-align: center;
     }
 
-
-    .empty-state-icon {
-        font-size: 40px;
-        margin-bottom: 10px;
+    .assets-page .assets-empty-icon {
+        width: 66px;
+        height: 66px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 17px;
+        border: 1px solid #e2eafa;
+        border-radius: 20px;
+        background: #f0f5ff;
+        font-size: 29px;
     }
 
-
-    .empty-state h3 {
-        margin: 0 0 8px;
+    .assets-page .assets-empty h3 {
+        margin: 0;
+        color: #26364e;
+        font-size: 16px;
+        font-weight: 800;
     }
 
-
-    .empty-state p {
-        margin: 0 0 20px;
-        opacity: 0.65;
+    .assets-page .assets-empty p {
+        max-width: 390px;
+        margin: 9px auto 20px;
+        color: #78869a;
+        font-size: 12px;
+        line-height: 1.7;
     }
 
+    /* FOOTER */
 
-    .card-footer {
-        padding: 15px 20px;
-        border-top: 1px solid var(--border-color, #e5e7eb);
+    .assets-page .assets-panel-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 15px 22px;
+        background: #fcfdff;
+        border-top: 1px solid var(--asset-border);
     }
 
-
-    .asset-count {
-        font-size: 13px;
-        opacity: 0.7;
+    .assets-page .assets-footer-text {
+        color: #748197;
+        font-size: 11px;
     }
 
+    .assets-page .assets-footer-text strong {
+        color: #34445b;
+        font-weight: 850;
+    }
 
-    @media (max-width: 1100px) {
+    /* FLASH MESSAGES */
 
-        .stats-grid {
-            grid-template-columns: repeat(2, 1fr);
+    .assets-page .assets-alert {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 18px;
+        padding: 13px 15px;
+        border: 1px solid transparent;
+        border-radius: 9px;
+        font-size: 12px;
+        font-weight: 650;
+        line-height: 1.6;
+        overflow-wrap: anywhere;
+    }
+
+    .assets-page .assets-alert-success {
+        background: #edf9f1;
+        border-color: #cdeed8;
+        color: #176b3a;
+    }
+
+    .assets-page .assets-alert-error {
+        background: #fff1f1;
+        border-color: #f6d3d3;
+        color: #a32121;
+    }
+
+    .assets-page .assets-alert-icon {
+        flex-shrink: 0;
+        font-size: 15px;
+    }
+
+    /* RESPONSIVE */
+
+    @media (max-width: 1200px) {
+        .assets-page .assets-stats {
+            gap: 12px;
         }
 
-        .asset-filter-form {
-            grid-template-columns: 1fr 1fr;
+        .assets-page .assets-stat-card {
+            padding: 16px;
         }
 
+        .assets-page .assets-filter-form {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .assets-page .assets-filter-actions {
+            grid-column: 1 / -1;
+        }
     }
 
-
-    @media (max-width: 700px) {
-
-        .page-header {
-            flex-direction: column;
+    @media (max-width: 760px) {
+        .assets-page .assets-header {
             align-items: flex-start;
-        }
-
-        .stats-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .asset-filter-form {
-            grid-template-columns: 1fr;
-        }
-
-        .card-header {
             flex-direction: column;
-            align-items: flex-start;
         }
 
+        .assets-page .assets-header-actions {
+            width: 100%;
+        }
+
+        .assets-page .assets-header-actions .asset-btn {
+            flex: 1;
+        }
+
+        .assets-page .assets-stats {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .assets-page .assets-stat-card {
+            padding: 15px;
+        }
+
+        .assets-page .assets-stat-top {
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .assets-page .assets-stat-value {
+            font-size: 26px;
+        }
+
+        .assets-page .assets-panel-header {
+            align-items: flex-start;
+            flex-direction: column;
+            padding: 17px;
+        }
+
+        .assets-page .assets-filter-area {
+            padding: 16px;
+        }
+
+        .assets-page .assets-panel-footer {
+            align-items: flex-start;
+            flex-direction: column;
+            padding: 15px 17px;
+        }
     }
 
+    @media (max-width: 420px) {
+        .assets-page .assets-stats {
+            gap: 9px;
+        }
+
+        .assets-page .assets-stat-card {
+            padding: 12px;
+        }
+
+        .assets-page .assets-stat-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 9px;
+            font-size: 16px;
+        }
+
+        .assets-page .assets-stat-label {
+            font-size: 11px;
+        }
+
+        .assets-page .assets-stat-value {
+            font-size: 23px;
+        }
+
+        .assets-page .assets-filter-form {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .assets-page .assets-filter-actions {
+            grid-column: auto;
+        }
+
+        .assets-page .assets-filter-actions .asset-btn {
+            flex: 1;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .assets-page *,
+        .assets-page *::before,
+        .assets-page *::after {
+            transition-duration: .01ms !important;
+        }
+    }
 </style>
+<%- include('../partials/navbar') %>
+<div class="assets-page">
+
+    <!-- PAGE HEADER -->
+    <header class="assets-header">
+        <div class="assets-heading">
+            <div class="assets-eyebrow">
+                <span aria-hidden="true">▦</span>
+                Organization Management
+            </div>
+
+            <h1>Asset Management</h1>
+
+            <p>
+                Track company inventory, manage employee assignments
+                and monitor asset availability.
+            </p>
+        </div>
+
+        <div class="assets-header-actions">
+            <a href="/assets/create" class="asset-btn asset-btn-primary">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 5v14"></path>
+                    <path d="M5 12h14"></path>
+                </svg>
+                Add New Asset
+            </a>
+        </div>
+    </header>
+
+    <!-- FLASH MESSAGES -->
+    <% if (assetFlashSuccess) { %>
+        <div class="assets-alert assets-alert-success" role="status">
+            <span class="assets-alert-icon" aria-hidden="true">✓</span>
+            <span><%= assetFlashSuccess %></span>
+        </div>
+    <% } %>
+
+    <% if (assetFlashError) { %>
+        <div class="assets-alert assets-alert-error" role="alert">
+            <span class="assets-alert-icon" aria-hidden="true">!</span>
+            <span><%= assetFlashError %></span>
+        </div>
+    <% } %>
+
+    <!-- STATISTICS -->
+    <section class="assets-stats" aria-label="Asset statistics">
+
+        <article class="assets-stat-card">
+            <div class="assets-stat-top">
+                <span class="assets-stat-label">Total Assets</span>
+                <span class="assets-stat-icon assets-stat-icon-blue" aria-hidden="true">📦</span>
+            </div>
+            <div class="assets-stat-value"><%= assetTotal.toLocaleString("en-IN") %></div>
+            <div class="assets-stat-description">All registered company assets</div>
+        </article>
+
+        <article class="assets-stat-card">
+            <div class="assets-stat-top">
+                <span class="assets-stat-label">Available</span>
+                <span class="assets-stat-icon assets-stat-icon-green" aria-hidden="true">✓</span>
+            </div>
+            <div class="assets-stat-value"><%= assetAvailable.toLocaleString("en-IN") %></div>
+            <div class="assets-stat-description">Ready to be assigned</div>
+        </article>
+
+        <article class="assets-stat-card">
+            <div class="assets-stat-top">
+                <span class="assets-stat-label">Assigned</span>
+                <span class="assets-stat-icon assets-stat-icon-purple" aria-hidden="true">👤</span>
+            </div>
+            <div class="assets-stat-value"><%= assetAssigned.toLocaleString("en-IN") %></div>
+            <div class="assets-stat-description">Currently assigned to employees</div>
+        </article>
+
+        <article class="assets-stat-card">
+            <div class="assets-stat-top">
+                <span class="assets-stat-label">Maintenance</span>
+                <span class="assets-stat-icon assets-stat-icon-amber" aria-hidden="true">🔧</span>
+            </div>
+            <div class="assets-stat-value"><%= assetMaintenance.toLocaleString("en-IN") %></div>
+            <div class="assets-stat-description">Assets under maintenance</div>
+        </article>
+
+    </section>
+
+    <!-- INVENTORY -->
+    <section class="assets-panel" aria-labelledby="assetsInventoryTitle">
+
+        <div class="assets-panel-header">
+            <div>
+                <h2 class="assets-panel-title" id="assetsInventoryTitle">
+                    Asset Inventory
+                </h2>
+                <p class="assets-panel-subtitle">
+                    Search, filter and manage your organization's assets.
+                </p>
+            </div>
+
+            <div class="assets-result-count">
+                <span aria-hidden="true">▤</span>
+                <%= assetList.length %> displayed
+            </div>
+        </div>
+
+        <!-- FILTERS -->
+        <div class="assets-filter-area">
+            <form
+                method="GET"
+                action="/assets"
+                class="assets-filter-form"
+                role="search"
+            >
+                <div class="assets-field">
+                    <label for="assetSearch">Search inventory</label>
+                    <div class="assets-search-wrap">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="11" cy="11" r="7"></circle>
+                            <path d="m16 16 4 4"></path>
+                        </svg>
+                        <input
+                            class="assets-control"
+                            type="search"
+                            id="assetSearch"
+                            name="search"
+                            value="<%= assetSearch %>"
+                            placeholder="Asset name, ID, brand..."
+                            maxlength="100"
+                        >
+                    </div>
+                </div>
+
+                <div class="assets-field">
+                    <label for="assetStatus">Asset status</label>
+                    <select class="assets-control" id="assetStatus" name="status">
+                        <option value="">All statuses</option>
+                        <option value="AVAILABLE" <%= assetStatus === "AVAILABLE" ? "selected" : "" %>>Available</option>
+                        <option value="ASSIGNED" <%= assetStatus === "ASSIGNED" ? "selected" : "" %>>Assigned</option>
+                        <option value="MAINTENANCE" <%= assetStatus === "MAINTENANCE" ? "selected" : "" %>>Maintenance</option>
+                        <option value="LOST" <%= assetStatus === "LOST" ? "selected" : "" %>>Lost</option>
+                        <option value="RETIRED" <%= assetStatus === "RETIRED" ? "selected" : "" %>>Retired</option>
+                    </select>
+                </div>
+
+                <div class="assets-field">
+                    <label for="assetCategory">Category</label>
+                    <select class="assets-control" id="assetCategory" name="category">
+                        <option value="">All categories</option>
+                        <option value="Laptop" <%= assetCategory === "Laptop" ? "selected" : "" %>>Laptop</option>
+                        <option value="Desktop" <%= assetCategory === "Desktop" ? "selected" : "" %>>Desktop</option>
+                        <option value="Monitor" <%= assetCategory === "Monitor" ? "selected" : "" %>>Monitor</option>
+                        <option value="Mobile" <%= assetCategory === "Mobile" ? "selected" : "" %>>Mobile</option>
+                        <option value="Tablet" <%= assetCategory === "Tablet" ? "selected" : "" %>>Tablet</option>
+                        <option value="Other" <%= assetCategory === "Other" ? "selected" : "" %>>Other</option>
+                    </select>
+                </div>
+
+                <div class="assets-filter-actions">
+                    <button type="submit" class="asset-btn asset-btn-primary">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="11" cy="11" r="7"></circle>
+                            <path d="m16 16 4 4"></path>
+                        </svg>
+                        Apply Filters
+                    </button>
+
+                    <a href="/assets" class="asset-btn asset-btn-secondary">
+                        Reset
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- TABLE -->
+        <div class="assets-table-wrap">
+            <table class="assets-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Asset ID</th>
+                        <th scope="col">Asset Details</th>
+                        <th scope="col">Category</th>
+                        <th scope="col">Assigned To</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Condition</th>
+                        <th scope="col">Location</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <% if (assetList.length === 0) { %>
+                        <tr>
+                            <td colspan="8">
+                                <div class="assets-empty">
+                                    <div class="assets-empty-icon" aria-hidden="true">📦</div>
+                                    <h3>No assets found</h3>
+                                    <p>
+                                        There are no assets matching your current filters.
+                                        Add a new asset or reset the filters to view the inventory.
+                                    </p>
+
+                                    <a href="/assets/create" class="asset-btn asset-btn-primary">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                                            <path d="M12 5v14"></path>
+                                            <path d="M5 12h14"></path>
+                                        </svg>
+                                        Add First Asset
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    <% } else { %>
+
+                        <% assetList.forEach(function(asset) {
+                            const rowStatus = String(asset.status || "").toUpperCase();
+                            const rowCondition = String(asset.condition || "").toUpperCase();
+
+                            const rowStatusClass = {
+                                AVAILABLE: "assets-status-available",
+                                ASSIGNED: "assets-status-assigned",
+                                MAINTENANCE: "assets-status-maintenance",
+                                LOST: "assets-status-lost",
+                                RETIRED: "assets-status-retired"
+                            }[rowStatus] || "assets-status-default";
+
+                            const rowStatusLabel =
+                                assetStatusLabels[rowStatus] || asset.status || "Unknown";
+
+                            const rowConditionLabel =
+                                assetConditionLabels[rowCondition] || asset.condition || "Not specified";
+
+                            const assignedEmployee =
+                                asset.assignedTo &&
+                                typeof asset.assignedTo === "object"
+                                    ? asset.assignedTo
+                                    : null;
+
+                            const employeeName = assignedEmployee
+                                ? [
+                                    assignedEmployee.firstName,
+                                    assignedEmployee.lastName
+                                ].filter(Boolean).join(" ") ||
+                                  assignedEmployee.name ||
+                                  "Employee"
+                                : "";
+
+                            const employeeInitials = employeeName
+                                ? employeeName.trim().split(/\s+/).slice(0, 2)
+                                    .map(function(part) {
+                                        return part.charAt(0).toUpperCase();
+                                    }).join("")
+                                : "";
+                        %>
+
+                            <tr>
+                                <!-- ASSET ID -->
+                                <td>
+                                    <span class="assets-id">
+                                        <%= asset.assetId || "-" %>
+                                    </span>
+                                </td>
+
+                                <!-- ASSET DETAILS -->
+                                <td>
+                                    <span class="assets-name">
+                                        <%= asset.name || "Unnamed asset" %>
+                                    </span>
+
+                                    <% if (asset.brand || asset.model) { %>
+                                        <span class="assets-subtext">
+                                            <%= [asset.brand, asset.model].filter(Boolean).join(" · ") %>
+                                        </span>
+                                    <% } %>
+                                </td>
+
+                                <!-- CATEGORY -->
+                                <td>
+                                    <span class="assets-category">
+                                        <%= asset.category || "Other" %>
+                                    </span>
+                                </td>
+
+                                <!-- ASSIGNED EMPLOYEE -->
+                                <td>
+                                    <% if (assignedEmployee && employeeName) { %>
+                                        <div class="assets-employee">
+                                            <span class="assets-employee-avatar" aria-hidden="true">
+                                                <%= employeeInitials || "E" %>
+                                            </span>
+                                            <span>
+                                                <span class="assets-employee-name">
+                                                    <%= employeeName %>
+                                                </span>
+
+                                                <% if (assignedEmployee.employeeId) { %>
+                                                    <span class="assets-subtext">
+                                                        ID: <%= assignedEmployee.employeeId %>
+                                                    </span>
+                                                <% } %>
+                                            </span>
+                                        </div>
+                                    <% } else { %>
+                                        <span class="assets-unassigned">
+                                            <span aria-hidden="true">○</span>
+                                            Unassigned
+                                        </span>
+                                    <% } %>
+                                </td>
+
+                                <!-- STATUS -->
+                                <td>
+                                    <span class="assets-status <%= rowStatusClass %>">
+                                        <span class="assets-status-dot" aria-hidden="true"></span>
+                                        <%= rowStatusLabel %>
+                                    </span>
+                                </td>
+
+                                <!-- CONDITION -->
+                                <td>
+                                    <span class="assets-condition <%= rowCondition === 'DAMAGED' ? 'assets-condition-damaged' : '' %>">
+                                        <%= rowConditionLabel %>
+                                    </span>
+                                </td>
+
+                                <!-- LOCATION -->
+                                <td>
+                                    <span class="assets-location">
+                                        <%= asset.location || "Not specified" %>
+                                    </span>
+                                </td>
+
+                                <!-- ACTIONS -->
+                                <td>
+                                    <div class="assets-row-actions">
+                                        <a
+                                            href="/assets/<%= encodeURIComponent(String(asset._id)) %>"
+                                            class="assets-row-action"
+                                            aria-label="View asset <%= asset.assetId || asset.name || '' %>"
+                                        >View</a>
+
+                                        <a
+                                            href="/assets/<%= encodeURIComponent(String(asset._id)) %>/edit"
+                                            class="assets-row-action"
+                                            aria-label="Edit asset <%= asset.assetId || asset.name || '' %>"
+                                        >Edit</a>
+                                    </div>
+                                </td>
+                            </tr>
+
+                        <% }); %>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- FOOTER -->
+        <footer class="assets-panel-footer">
+            <div class="assets-footer-text">
+                Displaying <strong><%= assetList.length %></strong>
+                asset(s) returned by the current query.
+            </div>
+
+            <div class="assets-footer-text">
+                <span aria-hidden="true">🔒</span>
+                Company asset inventory
+            </div>
+        </footer>
+
+    </section>
+
+</div>

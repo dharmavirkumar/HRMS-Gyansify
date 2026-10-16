@@ -1,646 +1,32 @@
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#f8fafc">
-
-    <title><%= typeof title !== "undefined" && title ? title : "Reports & Analytics" %> | Gyansify HRMS</title>
-
-    <meta name="description" content="Manage workforce reports, attendance analytics, leave, payroll and recruitment reporting in Gyansify HRMS.">
-
-    <link rel="stylesheet" href="/css/dashboard.css">
-
-    <style>
-        :root {
-            --rp-primary: #4f46e5;
-            --rp-primary-dark: #4338ca;
-            --rp-primary-soft: #eef2ff;
-            --rp-text: #111827;
-            --rp-muted: #64748b;
-            --rp-subtle: #94a3b8;
-            --rp-border: #e5e7eb;
-            --rp-bg: #f8fafc;
-            --rp-white: #ffffff;
-            --rp-green: #059669;
-            --rp-orange: #ea580c;
-            --rp-purple: #7c3aed;
-            --rp-rose: #e11d48;
-            --rp-radius: 15px;
-        }
-
-        .reports-page,
-        .reports-page * {
-            box-sizing: border-box;
-        }
-
-        .reports-page {
-            width: 100%;
-            max-width: 1600px;
-            margin: 0 auto;
-            padding: 28px 30px 45px;
-            color: var(--rp-text);
-        }
-
-        .reports-page button,
-        .reports-page input,
-        .reports-page select {
-            font: inherit;
-        }
-
-        .reports-heading {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 24px;
-            margin-bottom: 26px;
-        }
-
-        .rp-eyebrow {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 10px;
-            color: var(--rp-primary);
-            font-size: 10px;
-            font-weight: 800;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-        }
-
-        .rp-eyebrow-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #10b981;
-            box-shadow: 0 0 0 4px #d1fae5;
-        }
-
-        .reports-heading h1 {
-            margin: 0;
-            color: var(--rp-text);
-            font-size: clamp(25px, 3vw, 33px);
-            font-weight: 800;
-            line-height: 1.2;
-            letter-spacing: -1.1px;
-        }
-
-        .reports-heading p {
-            max-width: 680px;
-            margin: 10px 0 0;
-            color: var(--rp-muted);
-            font-size: 13px;
-            line-height: 1.8;
-        }
-
-        .rp-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .rp-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            min-height: 42px;
-            padding: 0 15px;
-            border: 1px solid var(--rp-border);
-            border-radius: 10px;
-            background: #fff;
-            color: #374151;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: .2s ease;
-        }
-
-        .rp-btn:hover {
-            border-color: #c7d2fe;
-            background: #f8faff;
-        }
-
-        .rp-btn-primary {
-            border-color: var(--rp-primary);
-            background: var(--rp-primary);
-            color: #fff;
-        }
-
-        .rp-btn-primary:hover {
-            border-color: var(--rp-primary-dark);
-            background: var(--rp-primary-dark);
-            color: #fff;
-        }
-
-        .rp-btn:focus-visible,
-        .rp-search input:focus-visible,
-        .rp-filter:focus-visible,
-        .rp-open:focus-visible {
-            outline: 3px solid #c7d2fe;
-            outline-offset: 3px;
-        }
-
-        /* KPI cards */
-
-        .rp-stats {
-            display: grid;
-            grid-template-columns: repeat(5, minmax(0, 1fr));
-            gap: 15px;
-            margin-bottom: 32px;
-        }
-
-        .rp-stat {
-            min-width: 0;
-            padding: 19px;
-            border: 1px solid var(--rp-border);
-            border-radius: var(--rp-radius);
-            background: var(--rp-white);
-            box-shadow: 0 3px 8px rgba(15, 23, 42, .025);
-            transition: transform .2s ease, box-shadow .2s ease;
-        }
-
-        .rp-stat:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 26px rgba(15, 23, 42, .06);
-        }
-
-        .rp-stat-top {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-        }
-
-        .rp-stat-label {
-            color: var(--rp-muted);
-            font-size: 10px;
-            font-weight: 800;
-            letter-spacing: .8px;
-        }
-
-        .rp-stat-icon {
-            display: grid;
-            width: 40px;
-            height: 40px;
-            flex: 0 0 40px;
-            place-items: center;
-            border-radius: 12px;
-            font-size: 19px;
-        }
-
-        .rp-blue { background: #eff6ff; }
-        .rp-green { background: #ecfdf5; }
-        .rp-orange { background: #fff7ed; }
-        .rp-purple { background: #f5f3ff; }
-        .rp-rose { background: #fff1f2; }
-        .rp-cyan { background: #ecfeff; }
-
-        .rp-stat-value {
-            margin-top: 17px;
-            overflow-wrap: anywhere;
-            color: var(--rp-text);
-            font-size: clamp(24px, 2vw, 31px);
-            font-weight: 800;
-            line-height: 1.15;
-            letter-spacing: -1px;
-        }
-
-        .rp-stat-caption {
-            margin-top: 8px;
-            color: var(--rp-subtle);
-            font-size: 11px;
-        }
-
-        /* Report library toolbar */
-
-        .rp-library-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 20px;
-            margin-bottom: 22px;
-        }
-
-        .rp-library-header h2 {
-            margin: 0;
-            font-size: 19px;
-            font-weight: 800;
-            letter-spacing: -.5px;
-        }
-
-        .rp-library-header p {
-            margin: 6px 0 0;
-            color: var(--rp-muted);
-            font-size: 12px;
-            line-height: 1.6;
-        }
-
-        .rp-tools {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .rp-search {
-            display: flex;
-            align-items: center;
-            gap: 9px;
-            width: 245px;
-            min-height: 42px;
-            padding: 0 12px;
-            border: 1px solid var(--rp-border);
-            border-radius: 10px;
-            background: #fff;
-        }
-
-        .rp-search-icon {
-            color: #94a3b8;
-            font-size: 19px;
-        }
-
-        .rp-search input {
-            width: 100%;
-            min-width: 0;
-            border: 0;
-            outline: none;
-            background: transparent;
-            color: var(--rp-text);
-            font-size: 12px;
-        }
-
-        .rp-filter {
-            width: 165px;
-            min-height: 42px;
-            padding: 0 12px;
-            border: 1px solid var(--rp-border);
-            border-radius: 10px;
-            background: #fff;
-            color: #374151;
-            font-size: 12px;
-            cursor: pointer;
-        }
-
-        .rp-results {
-            margin: 0 0 18px;
-            color: var(--rp-subtle);
-            font-size: 11px;
-        }
-
-        /* Sections and cards */
-
-        .rp-section {
-            margin-bottom: 33px;
-        }
-
-        .rp-section[hidden] {
-            display: none !important;
-        }
-
-        .rp-section-heading {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .rp-section-heading h3 {
-            margin: 0;
-            font-size: 15px;
-            font-weight: 800;
-        }
-
-        .rp-section-heading p {
-            margin: 5px 0 0;
-            color: var(--rp-subtle);
-            font-size: 11px;
-        }
-
-        .rp-count {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 30px;
-            height: 27px;
-            padding: 0 9px;
-            border-radius: 8px;
-            background: var(--rp-primary-soft);
-            color: var(--rp-primary);
-            font-size: 11px;
-            font-weight: 800;
-        }
-
-        .rp-grid {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 16px;
-        }
-
-        .rp-card {
-            display: flex;
-            min-width: 0;
-            flex-direction: column;
-            padding: 21px;
-            border: 1px solid var(--rp-border);
-            border-radius: var(--rp-radius);
-            background: #fff;
-            transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
-        }
-
-        .rp-card:hover {
-            transform: translateY(-3px);
-            border-color: #c7d2fe;
-            box-shadow: 0 12px 28px rgba(15, 23, 42, .055);
-        }
-
-        .rp-card[hidden] {
-            display: none !important;
-        }
-
-        .rp-card-top {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 12px;
-        }
-
-        .rp-card-icon {
-            display: grid;
-            width: 47px;
-            height: 47px;
-            flex: 0 0 47px;
-            place-items: center;
-            border-radius: 13px;
-            font-size: 21px;
-        }
-
-        .rp-category {
-            padding: 6px 8px;
-            border: 1px solid #e5e7eb;
-            border-radius: 7px;
-            background: #f9fafb;
-            color: #64748b;
-            font-size: 9px;
-            font-weight: 800;
-            letter-spacing: .5px;
-        }
-
-        .rp-card h4 {
-            margin: 17px 0 0;
-            color: var(--rp-text);
-            font-size: 15px;
-            font-weight: 800;
-        }
-
-        .rp-card-description {
-            flex: 1;
-            margin: 9px 0 20px;
-            color: var(--rp-muted);
-            font-size: 12px;
-            line-height: 1.8;
-        }
-
-        .rp-card-footer {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            padding-top: 14px;
-            border-top: 1px solid #f1f5f9;
-        }
-
-        .rp-card-type {
-            color: var(--rp-subtle);
-            font-size: 10px;
-        }
-
-        .rp-open {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            color: var(--rp-primary);
-            font-size: 11px;
-            font-weight: 800;
-            text-decoration: none;
-            white-space: nowrap;
-        }
-
-        .rp-open:hover {
-            color: var(--rp-primary-dark);
-        }
-
-        .rp-empty {
-            display: none;
-            padding: 48px 20px;
-            border: 1px dashed #cbd5e1;
-            border-radius: 14px;
-            background: #fff;
-            text-align: center;
-        }
-
-        .rp-empty.visible {
-            display: block;
-        }
-
-        .rp-empty-icon {
-            margin-bottom: 12px;
-            font-size: 30px;
-        }
-
-        .rp-empty h3 {
-            margin: 0;
-            font-size: 15px;
-        }
-
-        .rp-empty p {
-            margin: 8px 0 0;
-            color: var(--rp-muted);
-            font-size: 12px;
-        }
-
-        .rp-note {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            margin-top: 25px;
-            padding: 17px 19px;
-            border: 1px solid #dbeafe;
-            border-radius: 12px;
-            background: #f8fbff;
-            color: #475569;
-            font-size: 11px;
-            line-height: 1.8;
-        }
-
-        .rp-note-icon {
-            color: var(--rp-primary);
-            font-size: 18px;
-        }
-
-        .rp-note strong {
-            color: #1e40af;
-        }
-
-        @media (max-width: 1250px) {
-            .rp-stats {
-                grid-template-columns: repeat(3, minmax(0, 1fr));
-            }
-
-            .rp-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-        }
-
-        @media (max-width: 760px) {
-            .reports-page {
-                padding: 22px 17px 35px;
-            }
-
-            .reports-heading {
-                flex-direction: column;
-                gap: 17px;
-            }
-
-            .rp-actions {
-                width: 100%;
-            }
-
-            .rp-stats {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 11px;
-            }
-
-            .rp-stat {
-                padding: 15px;
-            }
-
-            .rp-library-header {
-                align-items: stretch;
-                flex-direction: column;
-            }
-
-            .rp-tools {
-                width: 100%;
-            }
-
-            .rp-search {
-                flex: 1;
-                width: auto;
-            }
-
-            .rp-filter {
-                flex: 0 0 150px;
-            }
-
-            .rp-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 440px) {
-            .rp-stats {
-                grid-template-columns: 1fr;
-            }
-
-            .rp-tools {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .rp-search,
-            .rp-filter {
-                width: 100%;
-                flex: auto;
-            }
-
-            .rp-actions .rp-btn {
-                flex: 1;
-            }
-        }
-
-        @media print {
-            .sidebar,
-            .header,
-            .rp-actions,
-            .rp-tools,
-            .rp-open,
-            .rp-note {
-                display: none !important;
-            }
-
-            .main {
-                width: 100% !important;
-                margin: 0 !important;
-            }
-
-            .reports-page {
-                max-width: none;
-                padding: 0;
-            }
-
-            .rp-stats {
-                grid-template-columns: repeat(3, minmax(0, 1fr));
-            }
-
-            .rp-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-
-            .rp-stat,
-            .rp-card {
-                break-inside: avoid;
-                box-shadow: none;
-            }
-
-            .rp-section[hidden],
-            .rp-card[hidden] {
-                display: none !important;
-            }
-
-            body {
-                background: #fff !important;
-            }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            .reports-page *,
-            .reports-page *::before,
-            .reports-page *::after {
-                transition: none !important;
-            }
-        }
-    </style>
-</head>
-
-<body>
-
 <%
     const reportStats =
-        typeof stats !== "undefined" && stats ? stats : {};
+        typeof stats !== "undefined" && stats && typeof stats === "object"
+            ? stats
+            : {};
 
     const safeNumber = (value) => {
         const number = Number(value);
-
         return Number.isFinite(number) && number >= 0
-            ? number.toLocaleString("en-IN")
-            : "0";
+            ? Math.floor(number)
+            : 0;
     };
+
+    const formatNumber = (value) =>
+        safeNumber(value).toLocaleString("en-IN");
 
     const reportGroups = [
         {
             title: "HR Operations",
-            subtitle: "Core workforce reports",
+            subtitle: "Core workforce information and daily operations",
             reports: [
                 {
                     title: "Employee Report",
                     category: "employees",
                     badge: "PEOPLE",
                     icon: "👥",
-                    color: "rp-blue",
-                    description: "Review employee profiles, departments, designations and employment status.",
+                    color: "blue",
+                    description: "Explore employee profiles, employment status, departments and designations.",
                     url: "/reports/employees",
                     type: "Workforce"
                 },
@@ -649,8 +35,8 @@
                     category: "attendance",
                     badge: "ATTENDANCE",
                     icon: "◷",
-                    color: "rp-green",
-                    description: "Analyze attendance records, late arrivals, absences and working hours.",
+                    color: "green",
+                    description: "Review attendance records, late arrivals, absences and working hours.",
                     url: "/reports/attendance",
                     type: "Time & attendance"
                 },
@@ -659,18 +45,34 @@
                     category: "leave",
                     badge: "LEAVE",
                     icon: "▣",
-                    color: "rp-orange",
-                    description: "Review leave applications, approval status and employee leave utilization.",
+                    color: "orange",
+                    description: "Analyze leave applications, approvals and employee leave utilization.",
                     url: "/reports/leave",
                     type: "Leave management"
                 },
+                {
+                    title: "Organization Report",
+                    category: "organization",
+                    badge: "STRUCTURE",
+                    icon: "⌘",
+                    color: "rose",
+                    description: "Review organizational structure, departments and workforce distribution.",
+                    url: "/reports/organization",
+                    type: "Organization"
+                }
+            ]
+        },
+        {
+            title: "Finance & Talent",
+            subtitle: "Compensation, hiring and workforce planning",
+            reports: [
                 {
                     title: "Payroll Report",
                     category: "payroll",
                     badge: "PAYROLL",
                     icon: "₹",
-                    color: "rp-purple",
-                    description: "Review payroll summaries, salary processing, earnings and deductions.",
+                    color: "purple",
+                    description: "Review salary records, earnings, deductions and payroll summaries.",
                     url: "/reports/payroll",
                     type: "Compensation"
                 },
@@ -679,44 +81,34 @@
                     category: "recruitment",
                     badge: "HIRING",
                     icon: "◫",
-                    color: "rp-cyan",
-                    description: "Track job openings, applications, interviews, offers and hiring progress.",
+                    color: "cyan",
+                    description: "Track job openings, applications, interviews and offer progress.",
                     url: "/reports/recruitment",
                     type: "Talent acquisition"
                 },
-                {
-                    title: "Organization Report",
-                    category: "organization",
-                    badge: "STRUCTURE",
-                    icon: "⚙",
-                    color: "rp-rose",
-                    description: "Review departments, designations and workforce distribution.",
-                    url: "/reports/organization",
-                    type: "Organization"
-                }
-            ]
-        },
-        {
-            title: "People Development",
-            subtitle: "Performance and workforce development insights",
-            reports: [
                 {
                     title: "Performance Report",
                     category: "performance",
                     badge: "PERFORMANCE",
                     icon: "★",
-                    color: "rp-purple",
-                    description: "Review performance reviews, ratings and employee development trends.",
+                    color: "purple",
+                    description: "Review employee evaluations, performance ratings and development trends.",
                     url: "/reports/performance",
                     type: "Performance"
-                },
+                }
+            ]
+        },
+        {
+            title: "People Development & Resources",
+            subtitle: "Learning, employee growth and company resources",
+            reports: [
                 {
                     title: "Training Report",
                     category: "training",
                     badge: "LEARNING",
                     icon: "🎓",
-                    color: "rp-green",
-                    description: "Monitor training participation, completion and development programs.",
+                    color: "green",
+                    description: "Monitor training participation, completion and learning programs.",
                     url: "/reports/training",
                     type: "Learning & development"
                 },
@@ -725,254 +117,977 @@
                     category: "assets",
                     badge: "ASSETS",
                     icon: "▣",
-                    color: "rp-orange",
-                    description: "Track company assets, assignments, availability and maintenance.",
+                    color: "orange",
+                    description: "Track company assets, employee assignments and asset availability.",
                     url: "/reports/assets",
                     type: "Asset management"
                 }
             ]
         }
     ];
+
+    const allReports = reportGroups.flatMap(group => group.reports);
+
+    const metricCards = [
+        {
+            label: "Employees",
+            key: "employees",
+            caption: "Employee records",
+            icon: "👥",
+            color: "blue"
+        },
+        {
+            label: "Attendance",
+            key: "attendance",
+            caption: "Attendance records",
+            icon: "◷",
+            color: "green"
+        },
+        {
+            label: "Leave Requests",
+            key: "leave",
+            caption: "Leave records",
+            icon: "▣",
+            color: "orange"
+        },
+        {
+            label: "Payroll",
+            key: "payroll",
+            caption: "Payroll records",
+            icon: "₹",
+            color: "purple"
+        },
+        {
+            label: "Recruitment",
+            key: "recruitment",
+            caption: "Recruitment records",
+            icon: "◫",
+            color: "rose"
+        }
+    ];
 %>
-<%- include('../partials/navbar') %>
-<div class="app">
-    <main class="main">
 
-        <header class="header">
-            <span class="page-title">Reports &amp; Analytics</span>
-        </header>
+<style>
+    .reports-page,
+    .reports-page * {
+        box-sizing: border-box;
+    }
 
-        <section class="reports-page">
+    .reports-page {
+        --rp-primary: #4f46e5;
+        --rp-primary-dark: #4338ca;
+        --rp-primary-soft: #eef2ff;
+        --rp-text: #111827;
+        --rp-muted: #64748b;
+        --rp-subtle: #94a3b8;
+        --rp-border: #e5e7eb;
+        --rp-surface: #ffffff;
+        --rp-background: #f8fafc;
 
-            <!-- Page heading -->
-            <div class="reports-heading">
-                <div>
-                    <div class="rp-eyebrow">
-                        <span class="rp-eyebrow-dot"></span>
-                        HR Intelligence
-                    </div>
+        width: 100%;
+        max-width: 1650px;
+        margin: 0 auto;
+        padding: 28px 30px 42px;
+        color: var(--rp-text);
+    }
 
-                    <h1>Reports &amp; Analytics</h1>
+    .reports-page button,
+    .reports-page input,
+    .reports-page select {
+        font: inherit;
+    }
 
-                    <p>
-                        Explore workforce information, monitor HR operations
-                        and access reports across your organization.
-                    </p>
-                </div>
+    .reports-page button {
+        -webkit-tap-highlight-color: transparent;
+    }
 
-                <div class="rp-actions">
-                    <button type="button" class="rp-btn" id="printReports">
-                        <span aria-hidden="true">⎙</span>
-                        Print page
-                    </button>
+    .rp-heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 26px;
+    }
 
-                    <button type="button" class="rp-btn rp-btn-primary" id="exportReports">
-                        <span aria-hidden="true">↓</span>
-                        Export summary CSV
-                    </button>
-                </div>
+    .rp-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        margin-bottom: 12px;
+        color: var(--rp-primary);
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+    }
+
+    .rp-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #10b981;
+        box-shadow: 0 0 0 4px #d1fae5;
+    }
+
+    .rp-heading h1 {
+        margin: 0;
+        font-size: clamp(27px, 3vw, 36px);
+        font-weight: 800;
+        line-height: 1.2;
+        letter-spacing: -1.3px;
+    }
+
+    .rp-heading p {
+        max-width: 650px;
+        margin: 11px 0 0;
+        color: var(--rp-muted);
+        font-size: 13px;
+        line-height: 1.8;
+    }
+
+    .rp-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .rp-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        min-height: 43px;
+        padding: 0 15px;
+        border: 1px solid var(--rp-border);
+        border-radius: 10px;
+        background: #fff;
+        color: #374151;
+        font-size: 12px;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background .18s, border-color .18s;
+    }
+
+    .rp-btn:hover {
+        border-color: #c7d2fe;
+        background: #f8faff;
+    }
+
+    .rp-btn-primary {
+        border-color: var(--rp-primary);
+        background: var(--rp-primary);
+        color: #fff;
+    }
+
+    .rp-btn-primary:hover {
+        border-color: var(--rp-primary-dark);
+        background: var(--rp-primary-dark);
+        color: #fff;
+    }
+
+    .rp-btn:focus-visible,
+    .rp-search input:focus-visible,
+    .rp-filter:focus-visible,
+    .rp-open:focus-visible {
+        outline: 3px solid #c7d2fe;
+        outline-offset: 3px;
+    }
+
+    .rp-stats {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 15px;
+        margin-bottom: 28px;
+    }
+
+    .rp-stat {
+        min-width: 0;
+        padding: 19px;
+        border: 1px solid var(--rp-border);
+        border-radius: 15px;
+        background: #fff;
+        box-shadow: 0 3px 12px rgb(15 23 42 / 3%);
+        transition: transform .2s, box-shadow .2s;
+    }
+
+    .rp-stat:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 25px rgb(15 23 42 / 6%);
+    }
+
+    .rp-stat-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .rp-stat-label {
+        color: var(--rp-muted);
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: .7px;
+        text-transform: uppercase;
+    }
+
+    .rp-stat-icon,
+    .rp-card-icon {
+        display: grid;
+        flex: 0 0 auto;
+        place-items: center;
+    }
+
+    .rp-stat-icon {
+        width: 39px;
+        height: 39px;
+        border-radius: 12px;
+        font-size: 18px;
+    }
+
+    .rp-stat-value {
+        margin-top: 15px;
+        font-size: clamp(25px, 2vw, 31px);
+        font-weight: 800;
+        line-height: 1.2;
+        letter-spacing: -1px;
+        overflow-wrap: anywhere;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .rp-stat-caption {
+        margin-top: 7px;
+        color: var(--rp-subtle);
+        font-size: 11px;
+        line-height: 1.6;
+    }
+
+    .rp-blue { background: #eff6ff; color: #2563eb; }
+    .rp-green { background: #ecfdf5; color: #059669; }
+    .rp-orange { background: #fff7ed; color: #ea580c; }
+    .rp-purple { background: #f5f3ff; color: #7c3aed; }
+    .rp-rose { background: #fff1f2; color: #e11d48; }
+    .rp-cyan { background: #ecfeff; color: #0891b2; }
+
+    .rp-library {
+        padding: 23px;
+        border: 1px solid var(--rp-border);
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 4px 16px rgb(15 23 42 / 2.5%);
+    }
+
+    .rp-library-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .rp-library-header h2 {
+        margin: 0;
+        font-size: 19px;
+        font-weight: 800;
+        letter-spacing: -.5px;
+    }
+
+    .rp-library-header p {
+        margin: 7px 0 0;
+        color: var(--rp-muted);
+        font-size: 12px;
+        line-height: 1.7;
+    }
+
+    .rp-tools {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .rp-search {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 250px;
+        min-height: 43px;
+        padding: 0 13px;
+        border: 1px solid var(--rp-border);
+        border-radius: 10px;
+        background: #fff;
+    }
+
+    .rp-search:focus-within {
+        border-color: #a5b4fc;
+        box-shadow: 0 0 0 3px rgb(99 102 241 / 8%);
+    }
+
+    .rp-search-icon {
+        color: var(--rp-subtle);
+        font-size: 19px;
+    }
+
+    .rp-search input {
+        width: 100%;
+        min-width: 0;
+        padding: 0;
+        border: 0;
+        outline: none;
+        background: transparent;
+        color: var(--rp-text);
+        font-size: 12px;
+    }
+
+    .rp-filter {
+        width: 170px;
+        min-height: 43px;
+        padding: 0 12px;
+        border: 1px solid var(--rp-border);
+        border-radius: 10px;
+        background: #fff;
+        color: #374151;
+        font-size: 12px;
+        cursor: pointer;
+    }
+
+    .rp-results-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .rp-results {
+        margin: 0;
+        color: var(--rp-muted);
+        font-size: 11px;
+    }
+
+    .rp-results strong {
+        color: var(--rp-text);
+    }
+
+    .rp-clear {
+        padding: 5px 0;
+        border: 0;
+        background: transparent;
+        color: var(--rp-primary);
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .rp-clear:hover {
+        color: var(--rp-primary-dark);
+        text-decoration: underline;
+    }
+
+    .rp-section {
+        margin-bottom: 30px;
+    }
+
+    .rp-section:last-child {
+        margin-bottom: 0;
+    }
+
+    .rp-section[hidden],
+    .rp-card[hidden] {
+        display: none !important;
+    }
+
+    .rp-section-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 15px;
+        margin-bottom: 14px;
+    }
+
+    .rp-section-heading h3 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 800;
+    }
+
+    .rp-section-heading p {
+        margin: 5px 0 0;
+        color: var(--rp-subtle);
+        font-size: 11px;
+        line-height: 1.6;
+    }
+
+    .rp-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 31px;
+        height: 28px;
+        padding: 0 9px;
+        border-radius: 8px;
+        background: var(--rp-primary-soft);
+        color: var(--rp-primary);
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .rp-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 15px;
+    }
+
+    .rp-card {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        padding: 21px;
+        border: 1px solid var(--rp-border);
+        border-radius: 15px;
+        background: #fff;
+        transition: transform .2s, border-color .2s, box-shadow .2s;
+    }
+
+    .rp-card:hover {
+        transform: translateY(-2px);
+        border-color: #c7d2fe;
+        box-shadow: 0 12px 26px rgb(15 23 42 / 5%);
+    }
+
+    .rp-card-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .rp-card-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 13px;
+        font-size: 21px;
+    }
+
+    .rp-category {
+        padding: 6px 8px;
+        border: 1px solid #e5e7eb;
+        border-radius: 7px;
+        background: #f9fafb;
+        color: #64748b;
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: .4px;
+    }
+
+    .rp-card h4 {
+        margin: 17px 0 0;
+        font-size: 15px;
+        font-weight: 800;
+        line-height: 1.45;
+    }
+
+    .rp-card-description {
+        flex: 1;
+        margin: 9px 0 20px;
+        color: var(--rp-muted);
+        font-size: 12px;
+        line-height: 1.8;
+    }
+
+    .rp-card-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding-top: 14px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .rp-card-type {
+        color: var(--rp-subtle);
+        font-size: 10px;
+        line-height: 1.5;
+    }
+
+    .rp-open {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--rp-primary);
+        font-size: 11px;
+        font-weight: 800;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .rp-open:hover {
+        color: var(--rp-primary-dark);
+    }
+
+    .rp-empty {
+        display: none;
+        padding: 45px 20px;
+        border: 1px dashed #cbd5e1;
+        border-radius: 14px;
+        background: #f8fafc;
+        text-align: center;
+    }
+
+    .rp-empty.visible {
+        display: block;
+    }
+
+    .rp-empty-icon {
+        display: grid;
+        width: 54px;
+        height: 54px;
+        margin: 0 auto 14px;
+        place-items: center;
+        border-radius: 16px;
+        background: #eef2ff;
+        color: var(--rp-primary);
+        font-size: 25px;
+    }
+
+    .rp-empty h3 {
+        margin: 0;
+        font-size: 15px;
+    }
+
+    .rp-empty p {
+        margin: 8px 0 0;
+        color: var(--rp-muted);
+        font-size: 12px;
+        line-height: 1.7;
+    }
+
+    .rp-empty .rp-btn {
+        margin-top: 17px;
+    }
+
+    .rp-note {
+        display: flex;
+        align-items: flex-start;
+        gap: 13px;
+        margin-top: 23px;
+        padding: 17px 19px;
+        border: 1px solid #dbeafe;
+        border-radius: 12px;
+        background: #f8fbff;
+        color: #475569;
+        font-size: 11px;
+        line-height: 1.8;
+    }
+
+    .rp-note-icon {
+        display: grid;
+        width: 30px;
+        height: 30px;
+        flex: 0 0 30px;
+        place-items: center;
+        border-radius: 9px;
+        background: #e0e7ff;
+        color: var(--rp-primary);
+        font-size: 16px;
+    }
+
+    .rp-note strong {
+        color: #1e40af;
+    }
+
+    .rp-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 15px;
+        margin-top: 25px;
+        padding-top: 18px;
+        border-top: 1px solid var(--rp-border);
+        color: var(--rp-subtle);
+        font-size: 10px;
+    }
+
+    @media (max-width: 1250px) {
+        .rp-stats {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .rp-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 900px) {
+        .reports-page {
+            padding: 22px 20px 34px;
+        }
+
+        .rp-heading {
+            flex-direction: column;
+        }
+
+        .rp-library-header {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .rp-tools {
+            width: 100%;
+        }
+
+        .rp-search {
+            flex: 1;
+            width: auto;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .reports-page {
+            padding: 18px 13px 28px;
+        }
+
+        .rp-heading h1 {
+            font-size: 27px;
+        }
+
+        .rp-actions {
+            width: 100%;
+        }
+
+        .rp-actions .rp-btn {
+            flex: 1;
+            padding: 0 9px;
+        }
+
+        .rp-stats {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 22px;
+        }
+
+        .rp-stat {
+            padding: 14px;
+        }
+
+        .rp-stat-label {
+            font-size: 9px;
+        }
+
+        .rp-stat-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        .rp-stat-value {
+            margin-top: 12px;
+            font-size: 25px;
+        }
+
+        .rp-library {
+            padding: 15px;
+        }
+
+        .rp-tools {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .rp-search,
+        .rp-filter {
+            width: 100%;
+            min-height: 43px;
+        }
+
+        .rp-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .rp-card {
+            padding: 18px;
+        }
+
+        .rp-footer {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 7px;
+        }
+    }
+
+    @media (max-width: 360px) {
+        .rp-stats {
+            grid-template-columns: 1fr;
+        }
+
+        .rp-actions {
+            flex-direction: column;
+        }
+    }
+
+    @media print {
+        .reports-page {
+            max-width: none;
+            padding: 0;
+        }
+
+        .rp-actions,
+        .rp-tools,
+        .rp-open,
+        .rp-note,
+        .rp-clear {
+            display: none !important;
+        }
+
+        .rp-library {
+            padding: 0;
+            border: 0;
+            box-shadow: none;
+        }
+
+        .rp-stats {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .rp-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .rp-stat,
+        .rp-card {
+            break-inside: avoid;
+            box-shadow: none;
+        }
+
+        .rp-card:hover,
+        .rp-stat:hover {
+            transform: none;
+        }
+
+        .rp-section[hidden],
+        .rp-card[hidden] {
+            display: none !important;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .reports-page *,
+        .reports-page *::before,
+        .reports-page *::after {
+            scroll-behavior: auto !important;
+            transition: none !important;
+            animation: none !important;
+        }
+    }
+</style>
+
+<section class="reports-page">
+
+    <header class="rp-heading">
+        <div>
+            <div class="rp-eyebrow">
+                <span class="rp-dot" aria-hidden="true"></span>
+                HR Intelligence
             </div>
 
-            <!-- Summary metrics -->
-            <section class="rp-stats" aria-label="HR report summary">
+            <h1>Reports &amp; Analytics</h1>
 
-                <article class="rp-stat">
-                    <div class="rp-stat-top">
-                        <span class="rp-stat-label">EMPLOYEES</span>
-                        <span class="rp-stat-icon rp-blue" aria-hidden="true">👥</span>
-                    </div>
-                    <div class="rp-stat-value"><%= safeNumber(reportStats.employees) %></div>
-                    <div class="rp-stat-caption">Employee records</div>
-                </article>
+            <p>
+                Explore workforce information, monitor HR operations and
+                access reports across your organization from one place.
+            </p>
+        </div>
 
-                <article class="rp-stat">
-                    <div class="rp-stat-top">
-                        <span class="rp-stat-label">ATTENDANCE</span>
-                        <span class="rp-stat-icon rp-green" aria-hidden="true">◷</span>
-                    </div>
-                    <div class="rp-stat-value"><%= safeNumber(reportStats.attendance) %></div>
-                    <div class="rp-stat-caption">Attendance records</div>
-                </article>
+        <div class="rp-actions">
+            <button type="button" class="rp-btn" id="rpPrint">
+                <span aria-hidden="true">⎙</span>
+                Print page
+            </button>
 
-                <article class="rp-stat">
-                    <div class="rp-stat-top">
-                        <span class="rp-stat-label">LEAVE</span>
-                        <span class="rp-stat-icon rp-orange" aria-hidden="true">▣</span>
-                    </div>
-                    <div class="rp-stat-value"><%= safeNumber(reportStats.leave) %></div>
-                    <div class="rp-stat-caption">Leave requests</div>
-                </article>
+            <button type="button" class="rp-btn rp-btn-primary" id="rpExport">
+                <span aria-hidden="true">↓</span>
+                Export summary
+            </button>
+        </div>
+    </header>
 
-                <article class="rp-stat">
-                    <div class="rp-stat-top">
-                        <span class="rp-stat-label">PAYROLL</span>
-                        <span class="rp-stat-icon rp-purple" aria-hidden="true">₹</span>
-                    </div>
-                    <div class="rp-stat-value"><%= safeNumber(reportStats.payroll) %></div>
-                    <div class="rp-stat-caption">Payroll records</div>
-                </article>
+    <section class="rp-stats" aria-label="HR report summary">
+        <% metricCards.forEach((metric) => { %>
+            <article class="rp-stat">
+                <div class="rp-stat-top">
+                    <span class="rp-stat-label">
+                        <%= metric.label %>
+                    </span>
 
-                <article class="rp-stat">
-                    <div class="rp-stat-top">
-                        <span class="rp-stat-label">RECRUITMENT</span>
-                        <span class="rp-stat-icon rp-rose" aria-hidden="true">◫</span>
-                    </div>
-                    <div class="rp-stat-value"><%= safeNumber(reportStats.recruitment) %></div>
-                    <div class="rp-stat-caption">Recruitment records</div>
-                </article>
-
-            </section>
-
-            <!-- Report library -->
-            <section aria-labelledby="reportLibraryTitle">
-
-                <div class="rp-library-header">
-                    <div>
-                        <h2 id="reportLibraryTitle">Report library</h2>
-                        <p>Find the information you need across HR operations.</p>
-                    </div>
-
-                    <div class="rp-tools">
-                        <label class="rp-search">
-                            <span class="rp-search-icon" aria-hidden="true">⌕</span>
-                            <input
-                                type="search"
-                                id="reportSearch"
-                                placeholder="Search reports..."
-                                autocomplete="off"
-                                aria-label="Search reports"
-                            >
-                        </label>
-
-                        <select
-                            id="reportFilter"
-                            class="rp-filter"
-                            aria-label="Filter reports by category"
-                        >
-                            <option value="all">All categories</option>
-                            <option value="employees">Employees</option>
-                            <option value="attendance">Attendance</option>
-                            <option value="leave">Leave</option>
-                            <option value="payroll">Payroll</option>
-                            <option value="recruitment">Recruitment</option>
-                            <option value="organization">Organization</option>
-                            <option value="performance">Performance</option>
-                            <option value="training">Training</option>
-                            <option value="assets">Assets</option>
-                        </select>
-                    </div>
+                    <span
+                        class="rp-stat-icon rp-<%= metric.color %>"
+                        aria-hidden="true"
+                    ><%= metric.icon %></span>
                 </div>
 
-                <p class="rp-results" id="reportResults" aria-live="polite">
-                    Showing all 9 reports
-                </p>
+                <div
+                    class="rp-stat-value"
+                    data-metric="<%= metric.key %>"
+                ><%= formatNumber(reportStats[metric.key]) %></div>
 
-                <div id="reportLibrary">
+                <div class="rp-stat-caption">
+                    <%= metric.caption %>
+                </div>
+            </article>
+        <% }); %>
+    </section>
 
-                    <% reportGroups.forEach((group, groupIndex) => { %>
+    <section class="rp-library" aria-labelledby="rpLibraryTitle">
+        <div class="rp-library-header">
+            <div>
+                <h2 id="rpLibraryTitle">Report library</h2>
+                <p>Find and open the report you need.</p>
+            </div>
 
-                        <section
-                            class="rp-section"
-                            data-report-group="<%= groupIndex %>"
-                        >
-                            <div class="rp-section-heading">
-                                <div>
-                                    <h3><%= group.title %></h3>
-                                    <p><%= group.subtitle %></p>
+            <div class="rp-tools">
+                <label class="rp-search">
+                    <span class="rp-search-icon" aria-hidden="true">⌕</span>
+
+                    <input
+                        type="search"
+                        id="rpSearch"
+                        placeholder="Search reports..."
+                        autocomplete="off"
+                        aria-label="Search reports"
+                    >
+                </label>
+
+                <select
+                    id="rpFilter"
+                    class="rp-filter"
+                    aria-label="Filter reports by category"
+                >
+                    <option value="all">All categories</option>
+                    <% allReports.forEach((report) => { %>
+                        <option value="<%= report.category %>">
+                            <%= report.title.replace(" Report", "") %>
+                        </option>
+                    <% }); %>
+                </select>
+            </div>
+        </div>
+
+        <div class="rp-results-row">
+            <p class="rp-results" id="rpResults" aria-live="polite">
+                Showing <strong><%= allReports.length %></strong> reports
+            </p>
+
+            <button type="button" class="rp-clear" id="rpClear">
+                Clear filters
+            </button>
+        </div>
+
+        <div id="rpReportLibrary">
+            <% reportGroups.forEach((group, groupIndex) => { %>
+                <section
+                    class="rp-section"
+                    data-report-group="<%= groupIndex %>"
+                >
+                    <div class="rp-section-heading">
+                        <div>
+                            <h3><%= group.title %></h3>
+                            <p><%= group.subtitle %></p>
+                        </div>
+
+                        <span class="rp-count" data-group-count>
+                            <%= group.reports.length %>
+                        </span>
+                    </div>
+
+                    <div class="rp-grid">
+                        <% group.reports.forEach((report) => { %>
+                            <article
+                                class="rp-card"
+                                data-category="<%= report.category %>"
+                                data-search="<%= (report.title + ' ' + report.description + ' ' + report.badge + ' ' + report.type).toLowerCase() %>"
+                            >
+                                <div class="rp-card-top">
+                                    <div
+                                        class="rp-card-icon rp-<%= report.color %>"
+                                        aria-hidden="true"
+                                    ><%= report.icon %></div>
+
+                                    <span class="rp-category">
+                                        <%= report.badge %>
+                                    </span>
                                 </div>
 
-                                <span class="rp-count" data-group-count>
-                                    <%= group.reports.length %>
-                                </span>
-                            </div>
+                                <h4><%= report.title %></h4>
 
-                            <div class="rp-grid">
+                                <p class="rp-card-description">
+                                    <%= report.description %>
+                                </p>
 
-                                <% group.reports.forEach((report) => { %>
+                                <div class="rp-card-footer">
+                                    <span class="rp-card-type">
+                                        <%= report.type %>
+                                    </span>
 
-                                    <article
-                                        class="rp-card"
-                                        data-category="<%= report.category %>"
-                                        data-search="<%= (report.title + ' ' + report.description + ' ' + report.badge + ' ' + report.type).toLowerCase() %>"
-                                    >
-                                        <div class="rp-card-top">
-                                            <div class="rp-card-icon <%= report.color %>" aria-hidden="true">
-                                                <%= report.icon %>
-                                            </div>
+                                    <a class="rp-open" href="<%= report.url %>">
+                                        Open report <span aria-hidden="true">→</span>
+                                    </a>
+                                </div>
+                            </article>
+                        <% }); %>
+                    </div>
+                </section>
+            <% }); %>
+        </div>
 
-                                            <span class="rp-category">
-                                                <%= report.badge %>
-                                            </span>
-                                        </div>
+        <div class="rp-empty" id="rpEmpty" role="status">
+            <div class="rp-empty-icon" aria-hidden="true">⌕</div>
+            <h3>No reports found</h3>
+            <p>Try another keyword or choose a different category.</p>
 
-                                        <h4><%= report.title %></h4>
+            <button type="button" class="rp-btn" id="rpClearEmpty">
+                Clear filters
+            </button>
+        </div>
+    </section>
 
-                                        <p class="rp-card-description">
-                                            <%= report.description %>
-                                        </p>
+    <aside class="rp-note">
+        <span class="rp-note-icon" aria-hidden="true">ⓘ</span>
 
-                                        <div class="rp-card-footer">
-                                            <span class="rp-card-type">
-                                                <%= report.type %>
-                                            </span>
+        <div>
+            <strong>Reporting information</strong><br>
+            Summary metrics are supplied by the reports controller.
+            Each detailed report must have a working backend route and
+            organization-scoped database query. Sensitive payroll and
+            employee information should only be available to authorized roles.
+        </div>
+    </aside>
 
-                                            <a
-                                                class="rp-open"
-                                                href="<%= report.url %>"
-                                            >
-                                                Open report
-                                                <span aria-hidden="true">→</span>
-                                            </a>
-                                        </div>
-                                    </article>
+    <footer class="rp-footer">
+        <span>Gyansify HRMS · Reports &amp; Analytics</span>
+        <span>Internal workforce reporting</span>
+    </footer>
 
-                                <% }); %>
-
-                            </div>
-                        </section>
-
-                    <% }); %>
-
-                </div>
-
-                <!-- Empty state -->
-                <div class="rp-empty" id="reportEmpty">
-                    <div class="rp-empty-icon" aria-hidden="true">⌕</div>
-                    <h3>No reports found</h3>
-                    <p>Try another keyword or select a different category.</p>
-                    <button type="button" class="rp-btn" id="clearReportFilters" style="margin-top:16px;">
-                        Clear filters
-                    </button>
-                </div>
-
-            </section>
-
-            <aside class="rp-note">
-                <span class="rp-note-icon" aria-hidden="true">ⓘ</span>
-                <div>
-                    <strong>Reporting information</strong><br>
-                    Summary values are supplied by the reports controller.
-                    Detailed reports require their corresponding backend routes
-                    and database queries. Access to sensitive payroll and employee
-                    data should be restricted to authorized roles.
-                </div>
-            </aside>
-
-        </section>
-    </main>
-</div>
+</section>
 
 <script>
 (function () {
     "use strict";
 
-    const searchInput = document.getElementById("reportSearch");
-    const filterSelect = document.getElementById("reportFilter");
-    const cards = Array.from(document.querySelectorAll(".rp-card"));
-    const groups = Array.from(document.querySelectorAll("[data-report-group]"));
-    const emptyState = document.getElementById("reportEmpty");
-    const resultsLabel = document.getElementById("reportResults");
-    const clearButton = document.getElementById("clearReportFilters");
+    const root = document.querySelector(".reports-page");
+    if (!root) return;
+
+    const searchInput = root.querySelector("#rpSearch");
+    const filterSelect = root.querySelector("#rpFilter");
+    const cards = Array.from(root.querySelectorAll(".rp-card"));
+    const groups = Array.from(root.querySelectorAll("[data-report-group]"));
+    const emptyState = root.querySelector("#rpEmpty");
+    const resultsLabel = root.querySelector("#rpResults");
+
+    const clearButton = root.querySelector("#rpClear");
+    const clearEmptyButton = root.querySelector("#rpClearEmpty");
 
     function filterReports() {
         const query = searchInput.value.trim().toLowerCase();
@@ -981,10 +1096,12 @@
         let visibleCount = 0;
 
         cards.forEach(function (card) {
-            const text = card.dataset.search || "";
+            const searchableText = card.dataset.search || "";
             const cardCategory = card.dataset.category || "";
 
-            const matchesSearch = !query || text.includes(query);
+            const matchesSearch =
+                !query || searchableText.includes(query);
+
             const matchesCategory =
                 category === "all" || cardCategory === category;
 
@@ -992,9 +1109,7 @@
 
             card.hidden = !visible;
 
-            if (visible) {
-                visibleCount++;
-            }
+            if (visible) visibleCount++;
         });
 
         groups.forEach(function (group) {
@@ -1014,8 +1129,7 @@
         emptyState.classList.toggle("visible", visibleCount === 0);
 
         resultsLabel.textContent =
-            "Showing " + visibleCount +
-            " of " + cards.length + " reports";
+            "Showing " + visibleCount + " of " + cards.length + " reports";
     }
 
     function clearFilters() {
@@ -1028,43 +1142,42 @@
     searchInput.addEventListener("input", filterReports);
     filterSelect.addEventListener("change", filterReports);
     clearButton.addEventListener("click", clearFilters);
+    clearEmptyButton.addEventListener("click", clearFilters);
 
-    document.getElementById("printReports").addEventListener("click", function () {
+    root.querySelector("#rpPrint").addEventListener("click", function () {
         window.print();
     });
 
-    document.getElementById("exportReports").addEventListener("click", function () {
-        /*
-         * Export only the summary metrics rendered by the server.
-         * Values are inserted as JSON strings to avoid unsafe JS interpolation.
-         */
+    root.querySelector("#rpExport").addEventListener("click", function () {
         const rows = [
-            ["Metric", "Value"],
-            ["Employees", <%- JSON.stringify(safeNumber(reportStats.employees)) %>],
-            ["Attendance", <%- JSON.stringify(safeNumber(reportStats.attendance)) %>],
-            ["Leave", <%- JSON.stringify(safeNumber(reportStats.leave)) %>],
-            ["Payroll", <%- JSON.stringify(safeNumber(reportStats.payroll)) %>],
-            ["Recruitment", <%- JSON.stringify(safeNumber(reportStats.recruitment)) %>]
+            ["Metric", "Value"]
         ];
+
+        root.querySelectorAll("[data-metric]").forEach(function (element) {
+            rows.push([
+                element.closest(".rp-stat")
+                    .querySelector(".rp-stat-label")
+                    .textContent.trim(),
+                element.textContent.trim()
+            ]);
+        });
 
         function escapeCSV(value) {
             return '"' + String(value).replace(/"/g, '""') + '"';
         }
 
-        const csv = rows
-            .map(function (row) {
-                return row.map(escapeCSV).join(",");
-            })
-            .join("\r\n");
+        const csv = rows.map(function (row) {
+            return row.map(escapeCSV).join(",");
+        }).join("\r\n");
 
         const blob = new Blob(["\uFEFF" + csv], {
             type: "text/csv;charset=utf-8;"
         });
 
-        const url = URL.createObjectURL(blob);
+        const objectUrl = URL.createObjectURL(blob);
         const link = document.createElement("a");
 
-        link.href = url;
+        link.href = objectUrl;
         link.download = "gyansify-hrms-report-summary.csv";
 
         document.body.appendChild(link);
@@ -1072,13 +1185,10 @@
         link.remove();
 
         window.setTimeout(function () {
-            URL.revokeObjectURL(url);
+            URL.revokeObjectURL(objectUrl);
         }, 1000);
     });
 
     filterReports();
 })();
 </script>
-
-</body>
-</html>

@@ -5,81 +5,49 @@ const express = require("express");
 const router = express.Router();
 
 const leaveController = require("../controllers/leaveController");
+const {
+    requireAuth,
+    requireRole
+} = require("../middleware/authMiddleware");
 
-// =====================================================
-// LEAVE DASHBOARD
-// GET /leave
-// =====================================================
+// All leave routes require login.
+router.use(requireAuth);
 
-router.get(
-    "/",
-    leaveController.getLeaveDashboard
+// HR-only access for reviewing requests.
+const hrAccess = requireRole(
+    "SUPER_ADMIN",
+    "HR_ADMIN",
+    "HR_EXECUTIVE"
 );
 
-// =====================================================
-// APPLY LEAVE
-// GET  /leave/apply
-// POST /leave/apply
-// =====================================================
+// Employee leave dashboard.
+router.get("/", leaveController.getLeaveDashboard);
 
-router.get(
-    "/apply",
-    leaveController.getApplyLeave
-);
+// Apply for leave.
+router.get("/apply", leaveController.getApplyLeave);
+router.post("/apply", leaveController.applyLeave);
 
-router.post(
-    "/apply",
-    leaveController.applyLeave
-);
+// Employee leave history and cancellation.
+router.get("/my", leaveController.getMyLeaves);
+router.post("/my/:id/cancel", leaveController.cancelLeave);
 
-// =====================================================
-// MY LEAVES
-// GET /leave/my
-// POST /leave/my/:id/cancel
-// =====================================================
-
-router.get(
-    "/my",
-    leaveController.getMyLeaves
-);
-
-router.post(
-    "/my/:id/cancel",
-    leaveController.cancelLeave
-);
-
-// =====================================================
-// HR - ALL LEAVE REQUESTS
-// GET /leave/requests
-// =====================================================
-
+// HR leave management.
 router.get(
     "/requests",
+    hrAccess,
     leaveController.getAllLeaveRequests
 );
 
-// =====================================================
-// APPROVE LEAVE
-// POST /leave/requests/:id/approve
-// =====================================================
-
 router.post(
     "/requests/:id/approve",
+    hrAccess,
     leaveController.approveLeave
 );
 
-// =====================================================
-// REJECT LEAVE
-// POST /leave/requests/:id/reject
-// =====================================================
-
 router.post(
     "/requests/:id/reject",
+    hrAccess,
     leaveController.rejectLeave
 );
-
-// =====================================================
-// EXPORT
-// =====================================================
 
 module.exports = router;

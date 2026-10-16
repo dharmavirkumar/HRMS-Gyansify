@@ -4,275 +4,715 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f8fafc">
+    <meta name="description" content="View asset inventory, assignments, availability and maintenance analytics in Gyansify HRMS.">
 
-    <title>
-        <%= typeof title !== "undefined" ? title : "Assets Report" %>
-        - Gyansify HRMS
-    </title>
+    <title><%= typeof title !== "undefined" && title ? title : "Assets Report" %> | Gyansify HRMS</title>
 
     <link rel="stylesheet" href="/css/dashboard.css">
 
     <style>
+        :root {
+            --ar-primary: #4f46e5;
+            --ar-primary-dark: #4338ca;
+            --ar-primary-soft: #eef2ff;
+            --ar-text: #111827;
+            --ar-muted: #64748b;
+            --ar-subtle: #94a3b8;
+            --ar-border: #e5e7eb;
+            --ar-bg: #f8fafc;
+            --ar-white: #ffffff;
+            --ar-green: #059669;
+            --ar-orange: #d97706;
+            --ar-red: #dc2626;
+            --ar-cyan: #0891b2;
+            --ar-radius: 16px;
+        }
+
+        .assets-report,
+        .assets-report * {
+            box-sizing: border-box;
+        }
+
         .assets-report {
-            max-width: 1400px;
+            width: 100%;
+            max-width: 1600px;
             margin: 0 auto;
-            padding: 30px;
-            color: #1e293b;
+            padding: 28px 30px 42px;
+            color: var(--ar-text);
         }
 
-        .assets-header {
+        .assets-report button,
+        .assets-report input,
+        .assets-report select {
+            font: inherit;
+        }
+
+        /* Header */
+
+        .ar-heading {
             display: flex;
+            align-items: flex-start;
             justify-content: space-between;
+            gap: 22px;
+            margin-bottom: 27px;
+        }
+
+        .ar-eyebrow {
+            display: inline-flex;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 18px;
-            margin-bottom: 28px;
+            gap: 9px;
+            margin-bottom: 12px;
+            color: var(--ar-primary);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
         }
 
-        .assets-header h1 {
-            margin: 0 0 8px;
-            font-size: 28px;
-            font-weight: 700;
+        .ar-eyebrow-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 0 4px #d1fae5;
         }
 
-        .assets-header p {
+        .ar-heading h1 {
             margin: 0;
-            color: #64748b;
-            font-size: 14px;
+            color: var(--ar-text);
+            font-size: clamp(26px, 3vw, 35px);
+            font-weight: 800;
+            letter-spacing: -1.1px;
+            line-height: 1.2;
         }
 
-        .assets-actions {
+        .ar-heading p {
+            max-width: 660px;
+            margin: 11px 0 0;
+            color: var(--ar-muted);
+            font-size: 13px;
+            line-height: 1.8;
+        }
+
+        .ar-actions {
             display: flex;
-            gap: 10px;
             flex-wrap: wrap;
+            gap: 10px;
         }
 
-        .assets-btn {
+        .ar-btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 11px 16px;
-            border-radius: 8px;
-            border: 1px solid #dbe3ef;
-            background: #ffffff;
-            color: #334155;
+            gap: 8px;
+            min-height: 42px;
+            padding: 0 15px;
+            border: 1px solid var(--ar-border);
+            border-radius: 10px;
+            background: #fff;
+            color: #374151;
+            font-size: 12px;
+            font-weight: 700;
             text-decoration: none;
-            font-size: 14px;
-            font-weight: 600;
             cursor: pointer;
+            transition: .2s ease;
         }
 
-        .assets-btn-primary {
-            background: #2563eb;
-            border-color: #2563eb;
-            color: #ffffff;
+        .ar-btn:hover {
+            border-color: #c7d2fe;
+            background: #f8faff;
         }
 
-        .assets-stats {
+        .ar-btn-primary {
+            border-color: var(--ar-primary);
+            background: var(--ar-primary);
+            color: #fff;
+        }
+
+        .ar-btn-primary:hover {
+            border-color: var(--ar-primary-dark);
+            background: var(--ar-primary-dark);
+            color: #fff;
+        }
+
+        .ar-btn:focus-visible,
+        .ar-search:focus-visible,
+        .ar-filter:focus-visible {
+            outline: 3px solid #c7d2fe;
+            outline-offset: 3px;
+        }
+
+        /* Summary cards */
+
+        .ar-stats {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 18px;
+            gap: 15px;
             margin-bottom: 28px;
         }
 
-        .assets-stat-card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 14px;
-            padding: 22px;
-            box-shadow: 0 3px 12px rgba(15, 23, 42, 0.03);
+        .ar-stat {
+            min-width: 0;
+            padding: 20px;
+            border: 1px solid var(--ar-border);
+            border-radius: var(--ar-radius);
+            background: #fff;
+            box-shadow: 0 3px 10px rgba(15, 23, 42, .025);
+            transition: transform .2s, box-shadow .2s;
         }
 
-        .assets-stat-label {
-            margin: 0 0 12px;
-            color: #64748b;
-            font-size: 14px;
+        .ar-stat:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 26px rgba(15, 23, 42, .06);
         }
 
-        .assets-stat-value {
-            margin: 0;
-            font-size: 30px;
-            font-weight: 750;
-            color: #0f172a;
+        .ar-stat-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
         }
 
-        .assets-stat-note {
+        .ar-stat-label {
+            color: var(--ar-muted);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .7px;
+        }
+
+        .ar-stat-icon {
+            display: grid;
+            width: 42px;
+            height: 42px;
+            flex: 0 0 42px;
+            place-items: center;
+            border-radius: 13px;
+            font-size: 20px;
+        }
+
+        .ar-blue { background: #eff6ff; color: #2563eb; }
+        .ar-green { background: #ecfdf5; color: #059669; }
+        .ar-orange { background: #fffbeb; color: #d97706; }
+        .ar-purple { background: #f5f3ff; color: #7c3aed; }
+        .ar-cyan { background: #ecfeff; color: #0891b2; }
+        .ar-red { background: #fef2f2; color: #dc2626; }
+
+        .ar-stat-value {
+            margin: 17px 0 0;
+            color: var(--ar-text);
+            font-size: clamp(25px, 2.4vw, 32px);
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -1px;
+            overflow-wrap: anywhere;
+        }
+
+        .ar-stat-note {
             display: block;
             margin-top: 8px;
-            color: #94a3b8;
+            color: var(--ar-subtle);
+            font-size: 11px;
+            line-height: 1.6;
+        }
+
+        /* Inventory panel */
+
+        .ar-panel {
+            overflow: hidden;
+            border: 1px solid var(--ar-border);
+            border-radius: 17px;
+            background: #fff;
+            box-shadow: 0 4px 15px rgba(15, 23, 42, .025);
+        }
+
+        .ar-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 22px 23px;
+            border-bottom: 1px solid var(--ar-border);
+        }
+
+        .ar-panel-title h2 {
+            margin: 0;
+            color: var(--ar-text);
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: -.4px;
+        }
+
+        .ar-panel-title p {
+            margin: 6px 0 0;
+            color: var(--ar-muted);
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        .ar-tools {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .ar-search {
+            width: 240px;
+            min-height: 42px;
+            padding: 0 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            outline: none;
+            background: #fff;
+            color: var(--ar-text);
             font-size: 12px;
         }
 
-        .assets-panel {
-            margin-bottom: 26px;
-            overflow: hidden;
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 14px;
+        .ar-search:focus {
+            border-color: #a5b4fc;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, .08);
         }
 
-        .assets-panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-            padding: 20px 22px;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .assets-panel-header h2 {
-            margin: 0;
-            font-size: 18px;
-            font-weight: 700;
-        }
-
-        .assets-search {
-            width: 260px;
-            max-width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 14px;
+        .ar-filter {
+            width: 165px;
+            min-height: 42px;
+            padding: 0 11px;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
             outline: none;
+            background: #fff;
+            color: #374151;
+            font-size: 12px;
+            cursor: pointer;
         }
 
-        .assets-search:focus {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        .ar-table-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 15px 23px;
+            border-bottom: 1px solid #f1f5f9;
         }
 
-        .assets-table-wrap {
+        .ar-result-count {
+            margin: 0;
+            color: var(--ar-muted);
+            font-size: 11px;
+        }
+
+        .ar-result-count strong {
+            color: var(--ar-text);
+        }
+
+        .ar-clear {
+            padding: 0;
+            border: 0;
+            background: transparent;
+            color: var(--ar-primary);
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .ar-clear:hover {
+            text-decoration: underline;
+        }
+
+        /* Table */
+
+        .ar-table-wrap {
             width: 100%;
             overflow-x: auto;
         }
 
-        .assets-table {
+        .ar-table {
             width: 100%;
+            min-width: 850px;
             border-collapse: collapse;
-            white-space: nowrap;
+            text-align: left;
         }
 
-        .assets-table th {
+        .ar-table th {
             padding: 15px 18px;
             background: #f8fafc;
             color: #64748b;
-            text-align: left;
-            font-size: 12px;
-            font-weight: 700;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .7px;
             text-transform: uppercase;
-            letter-spacing: 0.04em;
+            white-space: nowrap;
         }
 
-        .assets-table td {
+        .ar-table td {
             padding: 16px 18px;
             border-top: 1px solid #f1f5f9;
-            color: #334155;
-            font-size: 14px;
-        }
-
-        .assets-table tbody tr:hover {
-            background: #f8fafc;
-        }
-
-        .assets-badge {
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 999px;
+            color: #475569;
             font-size: 12px;
+            vertical-align: middle;
+        }
+
+        .ar-table tbody tr {
+            transition: background .15s;
+        }
+
+        .ar-table tbody tr:hover {
+            background: #f8faff;
+        }
+
+        .ar-table tbody tr[hidden] {
+            display: none !important;
+        }
+
+        .ar-asset-name {
+            display: block;
+            max-width: 240px;
+            overflow-wrap: anywhere;
+            color: var(--ar-text);
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .ar-asset-sub {
+            display: block;
+            margin-top: 5px;
+            color: var(--ar-subtle);
+            font-size: 10px;
+        }
+
+        .ar-code {
+            display: inline-block;
+            padding: 5px 8px;
+            border: 1px solid #e5e7eb;
+            border-radius: 7px;
+            background: #f9fafb;
+            color: #475569;
+            font-size: 10px;
             font-weight: 700;
+        }
+
+        .ar-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 9px;
+            border-radius: 999px;
             background: #f1f5f9;
             color: #475569;
+            font-size: 10px;
+            font-weight: 800;
+            white-space: nowrap;
         }
 
-        .assets-badge-active,
-        .assets-badge-assigned {
+        .ar-badge::before {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            content: "";
+        }
+
+        .ar-badge-assigned {
             background: #dcfce7;
             color: #166534;
         }
 
-        .assets-badge-available {
+        .ar-badge-available {
             background: #dbeafe;
             color: #1d4ed8;
         }
 
-        .assets-badge-maintenance {
+        .ar-badge-maintenance {
             background: #fef3c7;
             color: #92400e;
         }
 
-        .assets-badge-retired,
-        .assets-badge-inactive {
+        .ar-badge-retired {
             background: #fee2e2;
             color: #991b1b;
         }
 
-        .assets-empty {
-            padding: 42px 20px !important;
-            text-align: center;
-            color: #64748b !important;
+        .ar-badge-unknown {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .ar-person {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            min-width: 150px;
+        }
+
+        .ar-avatar {
+            display: grid;
+            width: 32px;
+            height: 32px;
+            flex: 0 0 32px;
+            place-items: center;
+            border-radius: 10px;
+            background: #eef2ff;
+            color: #4338ca;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .ar-person-name {
+            color: #334155;
+            font-size: 11px;
+            font-weight: 700;
             white-space: normal;
         }
 
-        .assets-empty strong {
+        .ar-category {
+            display: inline-block;
+            max-width: 160px;
+            overflow-wrap: anywhere;
+        }
+
+        .ar-empty {
+            display: none;
+            padding: 45px 20px;
+            text-align: center;
+        }
+
+        .ar-empty.visible {
+            display: table-row;
+        }
+
+        .ar-empty td {
+            padding: 45px 20px;
+            white-space: normal;
+        }
+
+        .ar-empty-icon {
+            display: grid;
+            width: 53px;
+            height: 53px;
+            margin: 0 auto 13px;
+            place-items: center;
+            border-radius: 15px;
+            background: #eef2ff;
+            color: var(--ar-primary);
+            font-size: 23px;
+        }
+
+        .ar-empty strong {
             display: block;
-            margin-bottom: 8px;
-            color: #334155;
+            margin-bottom: 7px;
+            color: var(--ar-text);
+            font-size: 14px;
+        }
+
+        .ar-empty p {
+            margin: 0;
+            color: var(--ar-muted);
+            font-size: 11px;
+            line-height: 1.7;
+        }
+
+        /* Bottom note */
+
+        .ar-note {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-top: 22px;
+            padding: 17px 19px;
+            border: 1px solid #dbeafe;
+            border-radius: 12px;
+            background: #f8fbff;
+            color: #475569;
+            font-size: 11px;
+            line-height: 1.8;
+        }
+
+        .ar-note-icon {
+            display: grid;
+            width: 30px;
+            height: 30px;
+            flex: 0 0 30px;
+            place-items: center;
+            border-radius: 9px;
+            background: #e0e7ff;
+            color: var(--ar-primary);
             font-size: 16px;
         }
 
-        .assets-footer {
+        .ar-note strong {
+            color: #1e40af;
+        }
+
+        .ar-footer {
             display: flex;
             justify-content: space-between;
             flex-wrap: wrap;
-            gap: 12px;
-            color: #64748b;
-            font-size: 13px;
-            margin-top: 18px;
+            gap: 10px;
+            margin-top: 22px;
+            padding-top: 17px;
+            border-top: 1px solid var(--ar-border);
+            color: var(--ar-subtle);
+            font-size: 10px;
         }
 
-        @media (max-width: 1000px) {
-            .assets-stats {
+        /* Responsive */
+
+        @media (max-width: 1150px) {
+            .ar-stats {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
+
+            .ar-heading {
+                flex-direction: column;
+            }
         }
 
-        @media (max-width: 600px) {
+        @media (max-width: 760px) {
             .assets-report {
-                padding: 18px 12px;
+                padding: 22px 16px 32px;
             }
 
-            .assets-stats {
-                grid-template-columns: 1fr;
-            }
-
-            .assets-header h1 {
-                font-size: 23px;
-            }
-
-            .assets-panel-header {
+            .ar-panel-header {
                 align-items: stretch;
+                flex-direction: column;
+                padding: 18px;
             }
 
-            .assets-search {
+            .ar-tools {
                 width: 100%;
             }
+
+            .ar-search {
+                flex: 1;
+                width: auto;
+            }
+
+            .ar-filter {
+                flex: 0 0 150px;
+            }
+
+            .ar-table-meta {
+                padding: 13px 18px;
+            }
         }
 
+        @media (max-width: 500px) {
+            .assets-report {
+                padding: 18px 12px 28px;
+            }
+
+            .ar-heading h1 {
+                font-size: 27px;
+            }
+
+            .ar-actions {
+                width: 100%;
+            }
+
+            .ar-actions .ar-btn {
+                flex: 1;
+                padding: 0 9px;
+                font-size: 11px;
+            }
+
+            .ar-stats {
+                gap: 10px;
+            }
+
+            .ar-stat {
+                padding: 15px;
+            }
+
+            .ar-stat-value {
+                font-size: 27px;
+            }
+
+            .ar-tools {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .ar-search,
+            .ar-filter {
+                width: 100%;
+                flex: auto;
+            }
+
+            .ar-table-meta {
+                align-items: flex-start;
+            }
+        }
+
+        /* Print / Save as PDF */
+
         @media print {
-            .no-print {
+            body {
+                background: #fff !important;
+            }
+
+            .sidebar,
+            .header,
+            .no-print,
+            .ar-note {
                 display: none !important;
             }
 
+            .app,
+            .main,
             .assets-report {
-                max-width: none;
-                padding: 0;
+                width: 100% !important;
+                max-width: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-shadow: none !important;
             }
 
-            .assets-panel,
-            .assets-stat-card {
-                break-inside: avoid;
+            .ar-stats {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+                gap: 8px;
+            }
+
+            .ar-stat,
+            .ar-panel {
                 box-shadow: none;
+                break-inside: avoid;
+            }
+
+            .ar-panel {
+                overflow: visible;
+            }
+
+            .ar-table-wrap {
+                overflow: visible;
+            }
+
+            .ar-table {
+                min-width: 0;
+            }
+
+            .ar-table th,
+            .ar-table td {
+                padding: 8px 6px;
+                font-size: 9px;
+                white-space: normal;
+            }
+
+            .ar-table tr[hidden],
+            .ar-empty[hidden] {
+                display: none !important;
+            }
+
+            .ar-footer {
+                margin-top: 15px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .assets-report *,
+            .assets-report *::before,
+            .assets-report *::after {
+                transition: none !important;
+                animation: none !important;
             }
         }
     </style>
@@ -289,34 +729,94 @@
             ? assets
             : [];
 
-    const totalAssets = Number(
-        reportStats.totalAssets ?? assetRecords.length
+    const validCount = function(value, fallback) {
+        if (value === undefined || value === null || value === "") {
+            return fallback;
+        }
+
+        const number = Number(value);
+
+        return Number.isFinite(number) && number >= 0
+            ? Math.floor(number)
+            : fallback;
+    };
+
+    const readStatus = function(asset) {
+        return String(
+            asset.status ||
+            asset.assetStatus ||
+            asset.assignmentStatus ||
+            "Unknown"
+        ).trim();
+    };
+
+    const normalizeStatus = function(status) {
+        const value = String(status || "").toLowerCase();
+
+        if (
+            value.includes("maintenance") ||
+            value.includes("repair")
+        ) {
+            return "maintenance";
+        }
+
+        if (
+            value.includes("retired") ||
+            value.includes("disposed") ||
+            value.includes("inactive")
+        ) {
+            return "retired";
+        }
+
+        if (
+            value.includes("assign") ||
+            value.includes("in use") ||
+            value.includes("in-use")
+        ) {
+            return "assigned";
+        }
+
+        if (
+            value.includes("available") ||
+            value.includes("in stock") ||
+            value.includes("in-stock")
+        ) {
+            return "available";
+        }
+
+        return "unknown";
+    };
+
+    const totalAssets = validCount(
+        reportStats.totalAssets,
+        assetRecords.length
     );
 
-    const assignedAssets = Number(
-        reportStats.assignedAssets ??
-        assetRecords.filter(a =>
-            /assigned|in use/i.test(String(a.status || a.assignmentStatus || ""))
-        ).length
+    const assignedAssets = validCount(
+        reportStats.assignedAssets,
+        assetRecords.filter(a => normalizeStatus(readStatus(a)) === "assigned").length
     );
 
-    const availableAssets = Number(
-        reportStats.availableAssets ??
-        assetRecords.filter(a =>
-            /available|in stock/i.test(String(a.status || ""))
-        ).length
+    const availableAssets = validCount(
+        reportStats.availableAssets,
+        assetRecords.filter(a => normalizeStatus(readStatus(a)) === "available").length
     );
 
-    const maintenanceAssets = Number(
-        reportStats.maintenanceAssets ??
-        assetRecords.filter(a =>
-            /maintenance|repair/i.test(String(a.status || ""))
-        ).length
+    const maintenanceAssets = validCount(
+        reportStats.maintenanceAssets,
+        assetRecords.filter(a => normalizeStatus(readStatus(a)) === "maintenance").length
     );
 
     const formatCurrency = function(value) {
+        if (value === null || value === undefined || value === "") {
+            return "—";
+        }
+
         const amount = Number(value);
-        if (!Number.isFinite(amount)) return "—";
+
+        if (!Number.isFinite(amount)) {
+            return "—";
+        }
 
         return new Intl.NumberFormat("en-IN", {
             style: "currency",
@@ -326,104 +826,205 @@
     };
 
     const getAssetStatusClass = function(status) {
-        const value = String(status || "").toLowerCase();
+        const normalized = normalizeStatus(status);
 
-        if (value.includes("assign") || value.includes("active") || value.includes("in use")) {
-            return "assets-badge-assigned";
+        if (normalized === "assigned") return "ar-badge-assigned";
+        if (normalized === "available") return "ar-badge-available";
+        if (normalized === "maintenance") return "ar-badge-maintenance";
+        if (normalized === "retired") return "ar-badge-retired";
+
+        return "ar-badge-unknown";
+    };
+
+    const getAssetName = function(asset) {
+        return asset.name ||
+            asset.assetName ||
+            asset.title ||
+            "Unnamed Asset";
+    };
+
+    const getAssetCode = function(asset) {
+        return asset.assetCode ||
+            asset.code ||
+            asset.serialNumber ||
+            "—";
+    };
+
+    const getAssetCategory = function(asset) {
+        const category = asset.category;
+
+        if (category && typeof category === "object") {
+            return category.name || category.title || category.code || "—";
         }
 
-        if (value.includes("available") || value.includes("stock")) {
-            return "assets-badge-available";
-        }
+        return asset.categoryName || category || "—";
+    };
 
-        if (value.includes("maintenance") || value.includes("repair")) {
-            return "assets-badge-maintenance";
-        }
+    const getEmployeeName = function(asset) {
+        const employee =
+            asset.employee ||
+            asset.assignedTo ||
+            asset.assignedEmployee ||
+            null;
 
-        if (value.includes("retired") || value.includes("inactive") || value.includes("disposed")) {
-            return "assets-badge-retired";
-        }
+        if (!employee) return "Unassigned";
 
-        return "";
+        if (typeof employee === "string") return employee;
+
+        return employee.fullName ||
+            [employee.firstName, employee.lastName].filter(Boolean).join(" ") ||
+            employee.name ||
+            employee.employeeCode ||
+            "Assigned";
+    };
+
+    const getEmployeeInitials = function(name) {
+        if (!name || name === "Unassigned") return "—";
+
+        return String(name)
+            .trim()
+            .split(/\s+/)
+            .slice(0, 2)
+            .map(part => part.charAt(0))
+            .join("")
+            .toUpperCase();
     };
 %>
+
 <%- include('../partials/navbar') %>
+
 <main class="assets-report">
 
-    <header class="assets-header">
+    <!-- Page heading -->
+    <header class="ar-heading">
         <div>
+            <div class="ar-eyebrow">
+                <span class="ar-eyebrow-dot"></span>
+                Inventory intelligence
+            </div>
+
             <h1>Assets Report</h1>
-            <p>Track company assets, assignments and availability.</p>
+
+            <p>
+                Monitor company inventory, employee assignments,
+                asset availability and maintenance requirements.
+            </p>
         </div>
 
-        <div class="assets-actions no-print">
-            <a href="/reports" class="assets-btn">
-                &larr; Back to Reports
+        <div class="ar-actions no-print">
+            <a href="/reports" class="ar-btn">
+                <span aria-hidden="true">←</span>
+                Back to Reports
             </a>
 
-            <button
-                type="button"
-                class="assets-btn assets-btn-primary"
-                onclick="window.print()"
-            >
-                Print / Save PDF
+            <button type="button" class="ar-btn" id="resetAssetFilters">
+                Reset filters
+            </button>
+
+            <button type="button" class="ar-btn ar-btn-primary" id="exportAssets">
+                <span aria-hidden="true">↓</span>
+                Export CSV
+            </button>
+
+            <button type="button" class="ar-btn" id="printAssets">
+                <span aria-hidden="true">⎙</span>
+                Print / PDF
             </button>
         </div>
     </header>
 
-    <section class="assets-stats">
+    <!-- KPI cards -->
+    <section class="ar-stats" aria-label="Asset inventory summary">
 
-        <article class="assets-stat-card">
-            <p class="assets-stat-label">Total Assets</p>
-            <h2 class="assets-stat-value"><%= totalAssets %></h2>
-            <span class="assets-stat-note">Assets in inventory</span>
+        <article class="ar-stat">
+            <div class="ar-stat-top">
+                <span class="ar-stat-label">TOTAL ASSETS</span>
+                <span class="ar-stat-icon ar-blue" aria-hidden="true">▦</span>
+            </div>
+            <h2 class="ar-stat-value"><%= totalAssets.toLocaleString("en-IN") %></h2>
+            <span class="ar-stat-note">Assets reported in inventory</span>
         </article>
 
-        <article class="assets-stat-card">
-            <p class="assets-stat-label">Assigned Assets</p>
-            <h2 class="assets-stat-value"><%= assignedAssets %></h2>
-            <span class="assets-stat-note">Assets assigned or in use</span>
+        <article class="ar-stat">
+            <div class="ar-stat-top">
+                <span class="ar-stat-label">ASSIGNED</span>
+                <span class="ar-stat-icon ar-green" aria-hidden="true">✓</span>
+            </div>
+            <h2 class="ar-stat-value"><%= assignedAssets.toLocaleString("en-IN") %></h2>
+            <span class="ar-stat-note">Assets assigned or in use</span>
         </article>
 
-        <article class="assets-stat-card">
-            <p class="assets-stat-label">Available Assets</p>
-            <h2 class="assets-stat-value"><%= availableAssets %></h2>
-            <span class="assets-stat-note">Ready for assignment</span>
+        <article class="ar-stat">
+            <div class="ar-stat-top">
+                <span class="ar-stat-label">AVAILABLE</span>
+                <span class="ar-stat-icon ar-cyan" aria-hidden="true">○</span>
+            </div>
+            <h2 class="ar-stat-value"><%= availableAssets.toLocaleString("en-IN") %></h2>
+            <span class="ar-stat-note">Ready for assignment</span>
         </article>
 
-        <article class="assets-stat-card">
-            <p class="assets-stat-label">Under Maintenance</p>
-            <h2 class="assets-stat-value"><%= maintenanceAssets %></h2>
-            <span class="assets-stat-note">Assets needing attention</span>
+        <article class="ar-stat">
+            <div class="ar-stat-top">
+                <span class="ar-stat-label">MAINTENANCE</span>
+                <span class="ar-stat-icon ar-orange" aria-hidden="true">⚒</span>
+            </div>
+            <h2 class="ar-stat-value"><%= maintenanceAssets.toLocaleString("en-IN") %></h2>
+            <span class="ar-stat-note">Assets needing attention</span>
         </article>
 
     </section>
 
-    <section class="assets-panel">
+    <!-- Inventory -->
+    <section class="ar-panel" aria-labelledby="assetInventoryTitle">
 
-        <div class="assets-panel-header">
-            <h2>Asset Inventory</h2>
+        <div class="ar-panel-header">
+            <div class="ar-panel-title">
+                <h2 id="assetInventoryTitle">Asset Inventory</h2>
+                <p>Search, filter and export the assets supplied by your report controller.</p>
+            </div>
 
-            <input
-                type="search"
-                id="assetSearch"
-                class="assets-search no-print"
-                placeholder="Search assets..."
-                aria-label="Search asset inventory"
-            >
+            <div class="ar-tools no-print">
+                <input
+                    type="search"
+                    id="assetSearch"
+                    class="ar-search"
+                    placeholder="Search assets, codes, employees..."
+                    aria-label="Search asset inventory"
+                    autocomplete="off"
+                >
+
+                <select id="assetStatusFilter" class="ar-filter" aria-label="Filter by asset status">
+                    <option value="all">All statuses</option>
+                    <option value="assigned">Assigned</option>
+                    <option value="available">Available</option>
+                    <option value="maintenance">Maintenance</option>
+                    <option value="retired">Retired / disposed</option>
+                    <option value="unknown">Other statuses</option>
+                </select>
+            </div>
         </div>
 
-        <div class="assets-table-wrap">
-            <table class="assets-table" id="assetsTable">
+        <div class="ar-table-meta">
+            <p class="ar-result-count" id="assetResultCount" aria-live="polite">
+                Showing <strong><%= assetRecords.length %></strong> of
+                <strong><%= assetRecords.length %></strong> records
+            </p>
 
+            <button type="button" class="ar-clear no-print" id="clearAssetFilters">
+                Clear filters
+            </button>
+        </div>
+
+        <div class="ar-table-wrap">
+            <table class="ar-table" id="assetsTable">
                 <thead>
                     <tr>
-                        <th>Asset</th>
-                        <th>Asset Code</th>
-                        <th>Category</th>
-                        <th>Assigned To</th>
-                        <th>Purchase Value</th>
-                        <th>Status</th>
+                        <th scope="col">Asset details</th>
+                        <th scope="col">Asset code</th>
+                        <th scope="col">Category</th>
+                        <th scope="col">Assigned to</th>
+                        <th scope="col">Purchase value</th>
+                        <th scope="col">Status</th>
                     </tr>
                 </thead>
 
@@ -431,44 +1032,12 @@
                     <% if (assetRecords.length > 0) { %>
 
                         <% assetRecords.forEach(function(asset) {
-                            const employee =
-                                asset.employee ||
-                                asset.assignedTo ||
-                                asset.assignedEmployee ||
-                                null;
-
-                            const employeeName =
-                                typeof employee === "string"
-                                    ? employee
-                                    : employee
-                                        ? (
-                                            employee.fullName ||
-                                            [employee.firstName, employee.lastName]
-                                                .filter(Boolean).join(" ") ||
-                                            employee.name ||
-                                            employee.employeeCode ||
-                                            "Assigned"
-                                        )
-                                        : "Unassigned";
-
-                            const assetName =
-                                asset.name ||
-                                asset.assetName ||
-                                asset.title ||
-                                "Unnamed Asset";
-
-                            const assetCode =
-                                asset.assetCode ||
-                                asset.code ||
-                                asset.serialNumber ||
-                                "—";
-
-                            const category =
-                                asset.category?.name ||
-                                asset.categoryName ||
-                                (typeof asset.category === "string"
-                                    ? asset.category
-                                    : "—");
+                            const assetName = getAssetName(asset);
+                            const assetCode = getAssetCode(asset);
+                            const category = getAssetCategory(asset);
+                            const employeeName = getEmployeeName(asset);
+                            const status = readStatus(asset);
+                            const statusKey = normalizeStatus(status);
 
                             const purchaseValue =
                                 asset.purchasePrice ??
@@ -476,21 +1045,58 @@
                                 asset.cost ??
                                 asset.value;
 
-                            const status =
-                                asset.status ||
-                                asset.assetStatus ||
-                                asset.assignmentStatus ||
-                                "Unknown";
+                            const searchableText = [
+                                assetName,
+                                assetCode,
+                                category,
+                                employeeName,
+                                status,
+                                asset.serialNumber || "",
+                                asset.manufacturer || "",
+                                asset.model || ""
+                            ].join(" ").toLowerCase();
                         %>
 
-                            <tr class="asset-row">
-                                <td><strong><%= assetName %></strong></td>
-                                <td><%= assetCode %></td>
-                                <td><%= category %></td>
-                                <td><%= employeeName %></td>
-                                <td><%= purchaseValue == null ? "—" : formatCurrency(purchaseValue) %></td>
+                            <tr
+                                class="ar-asset-row"
+                                data-search="<%= searchableText %>"
+                                data-status="<%= statusKey %>"
+                            >
                                 <td>
-                                    <span class="assets-badge <%= getAssetStatusClass(status) %>">
+                                    <span class="ar-asset-name"><%= assetName %></span>
+                                    <% if (asset.serialNumber) { %>
+                                        <span class="ar-asset-sub">
+                                            Serial: <%= asset.serialNumber %>
+                                        </span>
+                                    <% } %>
+                                </td>
+
+                                <td>
+                                    <span class="ar-code"><%= assetCode %></span>
+                                </td>
+
+                                <td>
+                                    <span class="ar-category"><%= category %></span>
+                                </td>
+
+                                <td>
+                                    <div class="ar-person">
+                                        <span class="ar-avatar" aria-hidden="true">
+                                            <%= getEmployeeInitials(employeeName) %>
+                                        </span>
+
+                                        <span class="ar-person-name">
+                                            <%= employeeName %>
+                                        </span>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <strong><%= formatCurrency(purchaseValue) %></strong>
+                                </td>
+
+                                <td>
+                                    <span class="ar-badge <%= getAssetStatusClass(status) %>">
                                         <%= status %>
                                     </span>
                                 </td>
@@ -498,59 +1104,190 @@
 
                         <% }); %>
 
+                        <tr class="ar-empty" id="assetNoMatches" hidden>
+                            <td colspan="6">
+                                <div class="ar-empty-icon" aria-hidden="true">⌕</div>
+                                <strong>No matching assets</strong>
+                                <p>Try a different search term or clear your filters.</p>
+                            </td>
+                        </tr>
+
                     <% } else { %>
 
-                        <tr id="emptyAssetsRow">
-                            <td colspan="6" class="assets-empty">
+                        <tr>
+                            <td colspan="6">
+                                <div class="ar-empty-icon" aria-hidden="true">▦</div>
                                 <strong>No asset records found</strong>
-                                Asset records will appear here once the report route
-                                supplies the assets array from your database.
+                                <p>
+                                    Asset records will appear here when your
+                                    report controller supplies the assets array.
+                                </p>
                             </td>
                         </tr>
 
                     <% } %>
                 </tbody>
-
             </table>
         </div>
-
     </section>
 
-    <footer class="assets-footer">
-        <span>
-            Showing <strong id="visibleAssetCount"><%= assetRecords.length %></strong>
-            asset record(s)
-        </span>
+    <!-- Reporting note -->
+    <aside class="ar-note">
+        <span class="ar-note-icon" aria-hidden="true">ⓘ</span>
+        <div>
+            <strong>About this report</strong><br>
+            Inventory totals use the summary supplied by the controller when available.
+            Search and status filters work on the asset records currently loaded on this page.
+            For organization-level accuracy, ensure your backend scopes asset queries to the
+            authenticated user's organization.
+        </div>
+    </aside>
 
-        <span>Gyansify HRMS &copy; <%= new Date().getFullYear() %></span>
+    <footer class="ar-footer">
+        <span>Gyansify HRMS · Assets Report</span>
+        <span>© <%= new Date().getFullYear() %> Gyansify</span>
     </footer>
 
 </main>
 
 <script>
-    (function () {
-        const searchInput = document.getElementById("assetSearch");
-        const rows = Array.from(
-            document.querySelectorAll("#assetsTable tbody .asset-row")
-        );
-        const count = document.getElementById("visibleAssetCount");
+(function () {
+    "use strict";
 
-        if (!searchInput) return;
+    const searchInput = document.getElementById("assetSearch");
+    const statusFilter = document.getElementById("assetStatusFilter");
+    const rows = Array.from(document.querySelectorAll(".ar-asset-row"));
+    const resultCount = document.getElementById("assetResultCount");
+    const noMatches = document.getElementById("assetNoMatches");
 
-        searchInput.addEventListener("input", function () {
-            const query = this.value.trim().toLowerCase();
-            let visible = 0;
+    const clearButton = document.getElementById("clearAssetFilters");
+    const resetButton = document.getElementById("resetAssetFilters");
+    const exportButton = document.getElementById("exportAssets");
+    const printButton = document.getElementById("printAssets");
 
-            rows.forEach(function (row) {
-                const matches = row.textContent.toLowerCase().includes(query);
-                row.style.display = matches ? "" : "none";
+    function applyFilters() {
+        const query = searchInput.value.trim().toLowerCase();
+        const selectedStatus = statusFilter.value;
 
-                if (matches) visible++;
-            });
+        let visibleCount = 0;
 
-            if (count) count.textContent = visible;
+        rows.forEach(function (row) {
+            const text = row.dataset.search || "";
+            const status = row.dataset.status || "unknown";
+
+            const matchesText = !query || text.includes(query);
+            const matchesStatus =
+                selectedStatus === "all" || status === selectedStatus;
+
+            const visible = matchesText && matchesStatus;
+
+            row.hidden = !visible;
+
+            if (visible) {
+                visibleCount++;
+            }
         });
-    })();
+
+        if (noMatches) {
+            noMatches.hidden = visibleCount !== 0 || rows.length === 0;
+        }
+
+        if (resultCount) {
+            resultCount.textContent =
+                "Showing " + visibleCount + " of " + rows.length + " records";
+        }
+    }
+
+    function clearFilters() {
+        searchInput.value = "";
+        statusFilter.value = "all";
+        applyFilters();
+    }
+
+    function escapeCSV(value) {
+        let text = String(value == null ? "" : value);
+
+        // Prevent spreadsheet formula injection in exported cells.
+        if (/^[\s]*[=+\-@]/.test(text)) {
+            text = "'" + text;
+        }
+
+        return '"' + text.replace(/"/g, '""') + '"';
+    }
+
+    function exportVisibleAssets() {
+        const visibleRows = rows.filter(function (row) {
+            return !row.hidden;
+        });
+
+        if (visibleRows.length === 0) {
+            window.alert("There are no matching assets to export.");
+            return;
+        }
+
+        const data = [
+            [
+                "Asset",
+                "Asset Code",
+                "Category",
+                "Assigned To",
+                "Purchase Value",
+                "Status"
+            ]
+        ];
+
+        visibleRows.forEach(function (row) {
+            const cells = row.querySelectorAll("td");
+
+            data.push([
+                cells[0]?.innerText.trim() || "",
+                cells[1]?.innerText.trim() || "",
+                cells[2]?.innerText.trim() || "",
+                cells[3]?.innerText.trim() || "",
+                cells[4]?.innerText.trim() || "",
+                cells[5]?.innerText.trim() || ""
+            ]);
+        });
+
+        const csv = data
+            .map(function (row) {
+                return row.map(escapeCSV).join(",");
+            })
+            .join("\r\n");
+
+        const blob = new Blob(["\uFEFF" + csv], {
+            type: "text/csv;charset=utf-8;"
+        });
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.download = "gyansify-assets-report.csv";
+
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        window.setTimeout(function () {
+            URL.revokeObjectURL(url);
+        }, 1000);
+    }
+
+    searchInput.addEventListener("input", applyFilters);
+    statusFilter.addEventListener("change", applyFilters);
+
+    clearButton.addEventListener("click", clearFilters);
+    resetButton.addEventListener("click", clearFilters);
+
+    exportButton.addEventListener("click", exportVisibleAssets);
+
+    printButton.addEventListener("click", function () {
+        window.print();
+    });
+
+    applyFilters();
+})();
 </script>
 
 </body>

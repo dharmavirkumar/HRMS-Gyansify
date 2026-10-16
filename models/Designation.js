@@ -1,18 +1,24 @@
+
 const mongoose = require("mongoose");
 
 const designationSchema = new mongoose.Schema(
     {
+        organizationId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Organization",
+            required: true,
+            index: true
+        },
+
         name: {
             type: String,
             required: true,
-            unique: true,
             trim: true
         },
 
         code: {
             type: String,
             required: true,
-            unique: true,
             uppercase: true,
             trim: true
         },
@@ -33,7 +39,8 @@ const designationSchema = new mongoose.Schema(
 
         description: {
             type: String,
-            trim: true
+            trim: true,
+            default: ""
         },
 
         status: {
@@ -45,6 +52,17 @@ const designationSchema = new mongoose.Schema(
     {
         timestamps: true
     }
+);
+
+// Same designation name/code can exist in different organizations.
+designationSchema.index(
+    { organizationId: 1, name: 1 },
+    { unique: true }
+);
+
+designationSchema.index(
+    { organizationId: 1, code: 1 },
+    { unique: true }
 );
 
 module.exports = mongoose.model(

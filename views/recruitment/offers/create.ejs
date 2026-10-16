@@ -1,0 +1,98 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - Gyansify HRMS</title>
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+<main class="container" style="max-width:1000px;margin:32px auto;padding:24px;">
+    <div style="margin-bottom:24px;">
+        <a href="/recruitment/offers">← Back to Offers</a>
+        <h1 style="margin-top:16px;">Create Offer Letter</h1>
+        <p>Prepare an employment offer for your selected candidate.</p>
+    </div>
+
+    <% if (error) { %>
+        <div role="alert" style="padding:14px;margin-bottom:20px;background:#fff1f2;color:#9f1239;border-radius:8px;">
+            <%= error %>
+        </div>
+    <% } %>
+
+    <form action="/recruitment/offers/create" method="POST">
+        <fieldset style="border:1px solid #ddd;border-radius:12px;padding:20px;margin-bottom:20px;">
+            <legend>Candidate Details</legend>
+
+            <label for="candidateName">Candidate name *</label>
+            <input id="candidateName" name="candidateName" required maxlength="120"
+                   value="<%= formData.candidateName %>"
+                   style="display:block;width:100%;padding:10px;margin:8px 0 16px;">
+
+            <label for="candidateEmail">Candidate email *</label>
+            <input id="candidateEmail" name="candidateEmail" type="email" required maxlength="254"
+                   value="<%= formData.candidateEmail %>"
+                   style="display:block;width:100%;padding:10px;margin:8px 0 16px;">
+        </fieldset>
+
+        <fieldset style="border:1px solid #ddd;border-radius:12px;padding:20px;margin-bottom:20px;">
+            <legend>Employment Details</legend>
+
+            <label for="jobTitle">Job title *</label>
+            <input id="jobTitle" name="jobTitle" required maxlength="150"
+                   value="<%= formData.jobTitle %>"
+                   style="display:block;width:100%;padding:10px;margin:8px 0 16px;">
+
+            <label for="department">Department *</label>
+            <input id="department" name="department" required maxlength="100"
+                   value="<%= formData.department %>"
+                   style="display:block;width:100%;padding:10px;margin:8px 0 16px;">
+
+            <label for="employmentType">Employment type *</label>
+            <select id="employmentType" name="employmentType" required
+                    style="display:block;width:100%;padding:10px;margin:8px 0 16px;">
+                <% const employmentTypes = [
+                    ["FULL_TIME", "Full Time"],
+                    ["PART_TIME", "Part Time"],
+                    ["CONTRACT", "Contract"],
+                    ["INTERN", "Intern"]
+                ]; %>
+                <% employmentTypes.forEach(function(type) { %>
+                    <option value="<%= type[0] %>"
+                        <%= formData.employmentType === type[0] ? "selected" : "" %>>
+                        <%= type[1] %>
+                    </option>
+                <% }); %>
+            </select>
+
+            <label for="offeredSalary">Offered salary (annual) *</label>
+            <input id="offeredSalary" name="offeredSalary" type="number"
+                   min="0" step="0.01" required
+                   value="<%= formData.offeredSalary %>"
+                   style="display:block;width:100%;padding:10px;margin:8px 0 16px;">
+
+            <label for="joiningDate">Joining date *</label>
+            <input id="joiningDate" name="joiningDate" type="date" required
+                   value="<%= formData.joiningDate %>"
+                   style="display:block;width:100%;padding:10px;margin:8px 0 16px;">
+
+            <label for="offerExpiryDate">Offer expiry date</label>
+            <input id="offerExpiryDate" name="offerExpiryDate" type="date"
+                   value="<%= formData.offerExpiryDate %>"
+                   style="display:block;width:100%;padding:10px;margin:8px 0 16px;">
+
+            <label for="notes">Additional notes</label>
+            <textarea id="notes" name="notes" rows="4" maxlength="3000"
+                      style="display:block;width:100%;padding:10px;margin:8px 0 16px;"><%= formData.notes %></textarea>
+        </fieldset>
+
+        <button type="submit" style="padding:12px 20px;cursor:pointer;">
+            Validate Offer
+        </button>
+
+        <a href="/recruitment/offers" style="margin-left:12px;">Cancel</a>
+    </form>
+</main>
+</body>
+</html>

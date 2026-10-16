@@ -1,4 +1,3 @@
-
 "use strict";
 
 const express = require("express");
@@ -14,14 +13,15 @@ const {
 } = require("../middleware/authMiddleware");
 
 // =====================================================
-// AUTHENTICATION
-// Every employee route requires authentication.
+// GYANSIFY HRMS
+// EMPLOYEE ROUTES
 // =====================================================
 
+// All employee routes require an authenticated user.
 router.use(requireAuth);
 
 // =====================================================
-// ROLE ACCESS
+// ROLE-BASED ACCESS CONTROL
 // =====================================================
 
 const hrAccess = requireRole(
@@ -39,19 +39,44 @@ const validateEmployeeId = (req, res, next) => {
 
     if (
         typeof id !== "string" ||
-        !mongoose.isValidObjectId(id) ||
-        !/^[a-fA-F0-9]{24}$/.test(id)
+        !/^[a-fA-F0-9]{24}$/.test(id) ||
+        !mongoose.isValidObjectId(id)
     ) {
-        return res.status(400).send("Invalid employee ID.");
+        return res.status(400).send(
+            "Invalid employee ID."
+        );
     }
 
     return next();
 };
 
 // =====================================================
+// CONTROLLER VALIDATION
+// Fail clearly if a required controller method is missing.
+// =====================================================
+
+const requiredHandlers = [
+    "getEmployees",
+    "getEmployee",
+    "getCreateEmployee",
+    "createEmployee",
+    "getEditEmployee",
+    "updateEmployee",
+    "deleteEmployee"
+];
+
+for (const handler of requiredHandlers) {
+    if (typeof employeeController[handler] !== "function") {
+        throw new TypeError(
+            `Employee controller method "${handler}" is missing or is not a function.`
+        );
+    }
+}
+
+// =====================================================
 // EMPLOYEE DIRECTORY
 // GET /employees
-// HR ONLY
+// HR ROLES ONLY
 // =====================================================
 
 router.get(
@@ -61,21 +86,10 @@ router.get(
 );
 
 // =====================================================
-// CURRENT EMPLOYEE PROFILE
-// GET /employees/me
-// Controller verifies the linked employee account.
-// =====================================================
-
-router.get(
-    "/me",
-    employeeController.getEmployee
-);
-
-// =====================================================
 // CREATE EMPLOYEE
 // GET  /employees/create
 // POST /employees/create
-// HR ONLY
+// HR ROLES ONLY
 // =====================================================
 
 router.get(
@@ -91,10 +105,21 @@ router.post(
 );
 
 // =====================================================
+// CURRENT EMPLOYEE PROFILE
+// GET /employees/me
+// Authenticated employee; controller checks account linkage.
+// =====================================================
+
+router.get(
+    "/me",
+    employeeController.getEmployee
+);
+
+// =====================================================
 // EDIT EMPLOYEE
 // GET  /employees/:id/edit
 // POST /employees/:id/edit
-// HR ONLY
+// HR ROLES ONLY
 // =====================================================
 
 router.get(
@@ -112,9 +137,9 @@ router.post(
 );
 
 // =====================================================
-// EXIT EMPLOYEE — SOFT DELETE
+// SOFT DELETE / EMPLOYEE EXIT
 // POST /employees/:id/delete
-// HR ONLY
+// HR ROLES ONLY
 // =====================================================
 
 router.post(
@@ -127,7 +152,7 @@ router.post(
 // =====================================================
 // VIEW EMPLOYEE PROFILE
 // GET /employees/:id
-// Controller checks HR/profile ownership permissions.
+// Controller must enforce profile ownership and HR access.
 // =====================================================
 
 router.get(
@@ -135,5 +160,9 @@ router.get(
     validateEmployeeId,
     employeeController.getEmployee
 );
+
+// =====================================================
+// EXPORT ROUTER
+// =====================================================
 
 module.exports = router;

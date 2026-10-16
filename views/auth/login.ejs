@@ -131,31 +131,45 @@
 
         }
 
-        .brand-logo {
 
-            width: 52px;
+/* COMPANY LOGO */
+.login-brand-logo {
+    width: 76px;
+    height: 76px;
+    margin: 0 auto 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 16px;
+    background: #ffffff;
+    text-decoration: none;
+}
 
-            height: 52px;
+.login-brand-logo img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
 
-            margin: 0 auto 15px;
+.login-brand-fallback {
+    display: none;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    background: #111827;
+    color: #ffffff;
+    font-size: 34px;
+    font-weight: 700;
+}
 
-            border-radius: 12px;
+.brand h1 span {
+    color: #f4971e;
+}
 
-            background: #111827;
-
-            color: white;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            font-size: 24px;
-
-            font-weight: 700;
-
-        }
 
         .brand h1 {
 
@@ -163,7 +177,7 @@
 
             letter-spacing: -0.5px;
 
-            color: #111827;
+            color: #00488b;
 
         }
 
@@ -482,21 +496,27 @@
 
             <!-- BRAND -->
 
-            <div class="brand">
+<!-- BRAND -->
+<div class="brand">
 
-                <div class="brand-logo">
-                    G
-                </div>
+    <a href="/" class="login-brand-logo" aria-label="Gyansify">
+        <img
+            src="<%= typeof navbarLogo !== 'undefined' && navbarLogo ? navbarLogo : '/images/gyansify-logo.png' %>"
+            alt="Gyansify Company Logo"
+            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+        >
 
-                <h1>
-                    Gyansify
-                </h1>
+        <span class="login-brand-fallback" aria-hidden="true">G</span>
+    </a>
 
-                <p>
-                    Human Resource Management System
-                </p>
+    <h1>
+        Gyans<span>ify</span>
+    </h1>
 
-            </div>
+    <p>Human Resource Management System</p>
+
+</div>
+
 
 
             <!-- HEADING -->

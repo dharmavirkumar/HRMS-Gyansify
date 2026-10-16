@@ -20,32 +20,28 @@ const LEAVE_STATUSES = [
     "Cancelled"
 ];
 
-const isValidObjectId = (value) => {
-    if (
-        typeof value !== "string" &&
-        !(value instanceof mongoose.Types.ObjectId)
-    ) {
-        return false;
-    }
-
-    return mongoose.Types.ObjectId.isValid(String(value));
+const ACTIVE_EMPLOYEE_FILTER = {
+    status: { $ne: "Exited" }
 };
+
+// =====================================================
+// GENERAL HELPERS
+// =====================================================
+
+const getSessionUser = (req) => req.session?.user || null;
 
 const normalizeId = (value) => {
     if (!value) return null;
 
-    if (typeof value === "object" && value._id) {
+    if (value._id) {
         return String(value._id);
     }
 
     return String(value);
 };
 
-const getSessionUser = (req) => req.session?.user || null;
-
 const getUserId = (req) => {
     const user = getSessionUser(req);
-
     return normalizeId(user?._id || user?.id);
 };
 
@@ -55,53 +51,14 @@ const getOrganizationId = (req) => {
     return normalizeId(
         user?.organizationId ||
         user?.organizationID ||
+        user?.organization?._id ||
         user?.organization
     );
 };
 
-// =====================================================
-// SCHEMA HELPERS
-// =====================================================
-
-const schemaHasPath = (Model, path) =>
-    Boolean(Model.schema.path(path));
-
-const getFirstSchemaPath = (Model, paths) =>
-    paths.find((path) => schemaHasPath(Model, path)) || null;
-
-const getOrganizationField = (Model) =>
-    getFirstSchemaPath(Model, [
-        "organization",
-        "organizationId",
-        "organizationID"
-    ]);
-
-const getEmployeeField = (Model) =>
-    getFirstSchemaPath(Model, [
-        "employee",
-        "employeeId"
-    ]);
-
-const getUserEmployeeField = () =>
-    getFirstSchemaPath(User, [
-        "employee",
-        "employeeId"
-    ]);
-
-const getUserOrganizationField = () =>
-    getOrganizationField(User);
-
-const getOrganizationFilter = (Model, organizationId) => {
-    const field = getOrganizationField(Model);
-
-    if (!field) {
-        throw new Error(
-            `${Model.modelName} schema has no organization field.`
-        );
-    }
-
-    return { [field]: organizationId };
-};
+const isValidObjectId = (value) =>
+    typeof value === "string" &&
+    mongoose.isValidObjectId(value);
 
 const requireOrganization = (req, res) => {
     const organizationId = getOrganizationId(req);
@@ -115,7 +72,7 @@ const requireOrganization = (req, res) => {
 
     if (!isValidObjectId(organizationId)) {
         res.status(400).send(
-            "Invalid organization information. Please contact your administrator."
+            "Invalid organization information. Please log in again."
         );
         return null;
     }
@@ -123,67 +80,40 @@ const requireOrganization = (req, res) => {
     return organizationId;
 };
 
+const handleControllerError = (label, error, res, message) => {
+    console.error(`[Leave] ${label}:`, error);
+
+    if (res.headersSent) return;
+
+    return res.status(500).send(message);
+};
+
 // =====================================================
 // LEAVE TYPE HELPERS
-// Supports isActive and status-based schemas.
+// Your LeaveType schema uses status: Active / Inactive.
 // =====================================================
-
-const getActiveLeaveTypeFilter = () => {
-    const hasIsActive = schemaHasPath(
-        LeaveType,
-        "isActive"
-    );
-
-    const hasStatus = schemaHasPath(
-        LeaveType,
-        "status"
-    );
-
-    if (hasIsActive && hasStatus) {
-        return {
-            $or: [
-                { isActive: true },
-                {
-                    status: {
-                        $in: ["Active", "ACTIVE", "active"]
-                    }
-                }
-            ]
-        };
-    }
-
-    if (hasIsActive) {
-        return { isActive: true };
-    }
-
-    if (hasStatus) {
-        return {
-            status: {
-                $in: ["Active", "ACTIVE", "active"]
-            }
-        };
-    }
-
-    throw new Error(
-        "LeaveType must define an isActive or status field."
-    );
-};
 
 const findActiveLeaveTypes = (organizationId) =>
     LeaveType.find({
-        ...getOrganizationFilter(LeaveType, organizationId),
-        ...getActiveLeaveTypeFilter()
+        organization: organizationId,
+        status: "Active"
     }).sort({ name: 1 });
 
 const findActiveLeaveType = (organizationId, leaveTypeId) =>
     LeaveType.findOne({
         _id: leaveTypeId,
-        ...getOrganizationFilter(LeaveType, organizationId),
-        ...getActiveLeaveTypeFilter()
+        organization: organizationId,
+        status: "Active"
     });
 
 // =====================================================
 // CURRENT EMPLOYEE
+//
+// 1. Load the real User record.
+// 2. Verify the session organization.
+// 3. Try User.employee reference.
+// 4. Fall back to organization + email.
+// 5. Repair the User.employee link when possible.
 // =====================================================
 
 const getCurrentEmployee = async (req) => {
@@ -201,95 +131,107 @@ const getCurrentEmployee = async (req) => {
         return null;
     }
 
-    const dbUser = await User.findById(userId).lean();
+    const dbUser = await User.findById(userId).select(
+        "_id email organization employee status"
+    );
 
     if (!dbUser) return null;
 
-    const userOrganizationField = getUserOrganizationField();
+    const organizationId = normalizeId(dbUser.organization);
 
-    if (!userOrganizationField) {
-        throw new Error(
-            "User schema has no organization field."
-        );
-    }
-
-    const databaseOrganizationId = normalizeId(
-        dbUser[userOrganizationField]
-    );
-
-    if (
-        !databaseOrganizationId ||
-        !isValidObjectId(databaseOrganizationId)
-    ) {
+    if (!organizationId || !isValidObjectId(organizationId)) {
         return null;
     }
 
-    // Do not allow cross-organization access.
+    // Prevent a session from switching organizations.
     if (
         sessionOrganizationId &&
-        sessionOrganizationId !== databaseOrganizationId
+        sessionOrganizationId !== organizationId
     ) {
+        console.warn("[Leave] Session organization mismatch.", {
+            userId
+        });
+
         return null;
     }
 
-    const organizationId = databaseOrganizationId;
-    const employeeField = getUserEmployeeField();
+    // Do not link employees to disabled login accounts.
+    if (dbUser.status && dbUser.status !== "ACTIVE") {
+        return null;
+    }
 
-    // 1. Try the employee reference on the User document.
+    // First choice: explicit employee reference.
     if (
-        employeeField &&
-        dbUser[employeeField] &&
-        isValidObjectId(normalizeId(dbUser[employeeField]))
+        dbUser.employee &&
+        mongoose.isValidObjectId(String(dbUser.employee))
     ) {
-        const employee = await Employee.findOne({
-            _id: normalizeId(dbUser[employeeField]),
-            ...getOrganizationFilter(Employee, organizationId)
+        const linkedEmployee = await Employee.findOne({
+            _id: dbUser.employee,
+            organization: organizationId,
+            ...ACTIVE_EMPLOYEE_FILTER
         });
 
-        if (employee) {
-            return employee;
+        if (linkedEmployee) {
+            if (req.session?.user) {
+                req.session.user.employee =
+                    String(linkedEmployee._id);
+            }
+
+            return linkedEmployee;
         }
     }
 
-    // 2. Fall back to email matching.
+    // Fallback: match email only inside this organization.
     const email = String(dbUser.email || "")
         .trim()
         .toLowerCase();
 
-    if (!email || !schemaHasPath(Employee, "email")) {
-        return null;
-    }
+    if (!email) return null;
 
     const employee = await Employee.findOne({
-        ...getOrganizationFilter(Employee, organizationId),
-        email
+        organization: organizationId,
+        email,
+        ...ACTIVE_EMPLOYEE_FILTER
     }).collation({
         locale: "en",
         strength: 2
     });
 
     if (!employee) {
-        console.warn(
-            "No employee profile matched the logged-in user.",
-            { userId, organizationId }
-        );
+        console.warn("[Leave] Employee profile not found.", {
+            userId,
+            organizationId
+        });
 
         return null;
     }
 
-    // 3. Link the employee to the User only if the field exists.
-    if (employeeField) {
+    // Repair the reference only when the employee is not
+    // already linked to a different login account.
+    const existingLink = await User.findOne({
+        employee: employee._id,
+        _id: { $ne: dbUser._id }
+    }).select("_id");
+
+    if (!existingLink) {
         await User.updateOne(
             {
-                _id: userId,
-                [userOrganizationField]: organizationId
+                _id: dbUser._id,
+                organization: organizationId,
+                $or: [
+                    { employee: null },
+                    { employee: { $exists: false } },
+                    { employee: employee._id }
+                ]
             },
             {
                 $set: {
-                    [employeeField]: employee._id
+                    employee: employee._id
                 }
             },
-            { runValidators: true }
+            {
+                runValidators: true
+            }
         );
     }
 
@@ -298,85 +240,6 @@ const getCurrentEmployee = async (req) => {
     }
 
     return employee;
-};
-
-// =====================================================
-// DATE HELPERS
-// =====================================================
-
-const parseDateOnly = (value) => {
-    if (
-        typeof value !== "string" ||
-        !/^\d{4}-\d{2}-\d{2}$/.test(value)
-    ) {
-        return null;
-    }
-
-    const [year, month, day] = value.split("-").map(Number);
-
-    const date = new Date(year, month - 1, day);
-
-    if (
-        date.getFullYear() !== year ||
-        date.getMonth() !== month - 1 ||
-        date.getDate() !== day
-    ) {
-        return null;
-    }
-
-    date.setHours(0, 0, 0, 0);
-
-    return date;
-};
-
-const calculateLeaveDays = (fromDate, toDate) => {
-    const start = new Date(fromDate);
-    const end = new Date(toDate);
-
-    start.setHours(0, 0, 0, 0);
-    end.setHours(0, 0, 0, 0);
-
-    return (
-        Math.floor(
-            (end.getTime() - start.getTime()) /
-            (24 * 60 * 60 * 1000)
-        ) + 1
-    );
-};
-
-const getLeaveSummary = (requests = []) => {
-    const summary = {
-        pending: 0,
-        approved: 0,
-        rejected: 0,
-        cancelled: 0,
-        total: requests.length
-    };
-
-    for (const request of requests) {
-        const status = String(request.status || "")
-            .toLowerCase();
-
-        if (Object.prototype.hasOwnProperty.call(
-            summary,
-            status
-        ) && status !== "total") {
-            summary[status]++;
-        }
-    }
-
-    return summary;
-};
-
-const getAvailableBalance = (balance) => {
-    if (!balance) return 0;
-
-    return (
-        Number(balance.allocated || 0) +
-        Number(balance.carriedForward || 0) +
-        Number(balance.adjustment || 0) -
-        Number(balance.used || 0)
-    );
 };
 
 const getEmployeeForRequest = async (req, res) => {
@@ -394,6 +257,91 @@ const getEmployeeForRequest = async (req, res) => {
 };
 
 // =====================================================
+// DATE HELPERS
+// Use UTC date-only values to avoid server timezone shifts.
+// =====================================================
+
+const parseDateOnly = (value) => {
+    if (
+        typeof value !== "string" ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(value)
+    ) {
+        return null;
+    }
+
+    const [year, month, day] = value.split("-").map(Number);
+
+    const date = new Date(Date.UTC(year, month - 1, day));
+
+    if (
+        date.getUTCFullYear() !== year ||
+        date.getUTCMonth() !== month - 1 ||
+        date.getUTCDate() !== day
+    ) {
+        return null;
+    }
+
+    return date;
+};
+
+const calculateLeaveDays = (fromDate, toDate) => {
+    const start = Date.UTC(
+        fromDate.getUTCFullYear(),
+        fromDate.getUTCMonth(),
+        fromDate.getUTCDate()
+    );
+
+    const end = Date.UTC(
+        toDate.getUTCFullYear(),
+        toDate.getUTCMonth(),
+        toDate.getUTCDate()
+    );
+
+    return Math.round(
+        (end - start) / (24 * 60 * 60 * 1000)
+    ) + 1;
+};
+
+const getAvailableBalance = (balance) => {
+    if (!balance || balance.status === "Inactive") {
+        return 0;
+    }
+
+    const available =
+        Number(balance.allocated || 0) +
+        Number(balance.carriedForward || 0) +
+        Number(balance.adjustment || 0) -
+        Number(balance.used || 0);
+
+    return Math.max(0, available);
+};
+
+const getLeaveSummary = (requests = []) => {
+    const summary = {
+        pending: 0,
+        approved: 0,
+        rejected: 0,
+        cancelled: 0,
+        total: requests.length
+    };
+
+    for (const request of requests) {
+        const status = String(request.status || "").toLowerCase();
+
+        if (
+            Object.prototype.hasOwnProperty.call(summary, status) &&
+            status !== "total"
+        ) {
+            summary[status] += 1;
+        }
+    }
+
+    return summary;
+};
+
+const getCurrentYear = () => new Date().getFullYear();
+
+// =====================================================
 // GET /leave
 // LEAVE DASHBOARD
 // =====================================================
@@ -401,11 +349,10 @@ const getEmployeeForRequest = async (req, res) => {
 exports.getLeaveDashboard = async (req, res) => {
     try {
         const organizationId = requireOrganization(req, res);
-
         if (!organizationId) return;
 
         const employee = await getCurrentEmployee(req);
-        const currentYear = new Date().getFullYear();
+        const currentYear = getCurrentYear();
 
         const leaveTypes = await findActiveLeaveTypes(
             organizationId
@@ -415,24 +362,27 @@ exports.getLeaveDashboard = async (req, res) => {
         let requests = [];
 
         if (employee) {
-            balances = await LeaveBalance.find({
-                ...getOrganizationFilter(
-                    LeaveBalance,
-                    organizationId
+            [
+                balances,
+                requests
+            ] = await Promise.all([
+                LeaveBalance.find({
+                    organization: organizationId,
+                    employee: employee._id,
+                    year: currentYear,
+                    status: "Active"
+                }).populate(
+                    "leaveType",
+                    "name code isPaid"
                 ),
-                [getEmployeeField(LeaveBalance)]: employee._id,
-                year: currentYear
-            }).populate("leaveType", "name code isPaid");
 
-            requests = await LeaveRequest.find({
-                ...getOrganizationFilter(
-                    LeaveRequest,
-                    organizationId
-                ),
-                [getEmployeeField(LeaveRequest)]: employee._id
-            })
-                .populate("leaveType", "name code isPaid")
-                .sort({ createdAt: -1 });
+                LeaveRequest.find({
+                    organization: organizationId,
+                    employee: employee._id
+                })
+                    .populate("leaveType", "name code isPaid")
+                    .sort({ createdAt: -1 })
+            ]);
         }
 
         return res.render("leave/index", {
@@ -446,9 +396,10 @@ exports.getLeaveDashboard = async (req, res) => {
             currentYear
         });
     } catch (error) {
-        console.error("Leave dashboard error:", error);
-
-        return res.status(500).send(
+        return handleControllerError(
+            "Dashboard",
+            error,
+            res,
             "Unable to load the leave dashboard."
         );
     }
@@ -461,11 +412,9 @@ exports.getLeaveDashboard = async (req, res) => {
 exports.getApplyLeave = async (req, res) => {
     try {
         const organizationId = requireOrganization(req, res);
-
         if (!organizationId) return;
 
         const employee = await getEmployeeForRequest(req, res);
-
         if (!employee) return;
 
         const leaveTypes = await findActiveLeaveTypes(
@@ -479,9 +428,10 @@ exports.getApplyLeave = async (req, res) => {
             leaveTypes
         });
     } catch (error) {
-        console.error("Apply leave page error:", error);
-
-        return res.status(500).send(
+        return handleControllerError(
+            "Apply page",
+            error,
+            res,
             "Unable to load the apply leave page."
         );
     }
@@ -494,11 +444,9 @@ exports.getApplyLeave = async (req, res) => {
 exports.applyLeave = async (req, res) => {
     try {
         const organizationId = requireOrganization(req, res);
-
         if (!organizationId) return;
 
         const employee = await getEmployeeForRequest(req, res);
-
         if (!employee) return;
 
         const {
@@ -555,26 +503,16 @@ exports.applyLeave = async (req, res) => {
             );
         }
 
-        const employeeField = getEmployeeField(LeaveRequest);
-
-        if (!employeeField) {
-            throw new Error(
-                "LeaveRequest schema has no employee reference."
-            );
-        }
-
-        const requestOrganizationFilter =
-            getOrganizationFilter(LeaveRequest, organizationId);
-
+        // This form currently supports full-day date ranges.
+        // Half-day requests need an explicit half-day field in
+        // the form and a corresponding calculation policy.
         const overlappingRequest = await LeaveRequest.findOne({
-            ...requestOrganizationFilter,
-            [employeeField]: employee._id,
-            status: {
-                $in: ["Pending", "Approved"]
-            },
+            organization: organizationId,
+            employee: employee._id,
+            status: { $in: ["Pending", "Approved"] },
             fromDate: { $lte: end },
             toDate: { $gte: start }
-        });
+        }).select("_id");
 
         if (overlappingRequest) {
             return res.status(400).send(
@@ -582,29 +520,23 @@ exports.applyLeave = async (req, res) => {
             );
         }
 
-        const currentYear = start.getFullYear();
-
-        // Leave requests spanning multiple calendar years need
-        // a year-by-year balance policy. Do not silently charge
-        // the entire request to the starting year.
-        if (end.getFullYear() !== currentYear) {
+        // This implementation uses a calendar-year balance.
+        // Requests spanning two years must be split.
+        if (start.getUTCFullYear() !== end.getUTCFullYear()) {
             return res.status(400).send(
                 "Please submit separate leave requests for different calendar years."
             );
         }
 
+        // Check paid leave availability at application time.
+        // Approval checks it again to protect against stale balances.
         if (selectedLeaveType.isPaid) {
-            const balanceEmployeeField =
-                getEmployeeField(LeaveBalance);
-
             const balance = await LeaveBalance.findOne({
-                ...getOrganizationFilter(
-                    LeaveBalance,
-                    organizationId
-                ),
-                [balanceEmployeeField]: employee._id,
+                organization: organizationId,
+                employee: employee._id,
                 leaveType: selectedLeaveType._id,
-                year: currentYear
+                year: start.getUTCFullYear(),
+                status: "Active"
             });
 
             if (!balance) {
@@ -623,8 +555,8 @@ exports.applyLeave = async (req, res) => {
         }
 
         await LeaveRequest.create({
-            ...requestOrganizationFilter,
-            [employeeField]: employee._id,
+            organization: organizationId,
+            employee: employee._id,
             leaveType: selectedLeaveType._id,
             fromDate: start,
             toDate: end,
@@ -635,65 +567,83 @@ exports.applyLeave = async (req, res) => {
 
         return res.redirect("/leave/my");
     } catch (error) {
-        console.error("Apply leave error:", error);
+        // MongoDB duplicate-key errors should not be exposed
+        // as raw database messages.
+        if (error?.code === 11000) {
+            return res.status(400).send(
+                "A conflicting leave record already exists. Please refresh and try again."
+            );
+        }
 
-        return res.status(500).send(
+        return handleControllerError(
+            "Apply leave",
+            error,
+            res,
             "Unable to submit your leave request."
         );
     }
 };
 
+// =====================================================
+// GET /leave/my
+// MY LEAVE HISTORY + REAL LEAVE BALANCES
+// =====================================================
 
-/**
- * GET /leave/my
- * Display the logged-in employee's leave history and balances.
- */
 exports.getMyLeaves = async (req, res) => {
     try {
         const organizationId = requireOrganization(req, res);
-
         if (!organizationId) return;
 
         const employee = await getEmployeeForRequest(req, res);
-
         if (!employee) return;
 
-        const employeeField = getEmployeeField(LeaveRequest);
+        const currentYear = getCurrentYear();
 
-        const requests = await LeaveRequest.find({
-            ...getOrganizationFilter(
-                LeaveRequest,
-                organizationId
-            ),
-            [employeeField]: employee._id
-        })
-            .populate("leaveType", "name code isPaid")
-            .sort({ createdAt: -1 })
-            .lean();
+        const [requests, leaveBalances] = await Promise.all([
+            LeaveRequest.find({
+                organization: organizationId,
+                employee: employee._id
+            })
+                .populate("leaveType", "name code isPaid")
+                .sort({ createdAt: -1 })
+                .lean(),
 
-        // Pass the existing requests using the variable names
-        // expected by views/leave/my-leaves.ejs.
+            LeaveBalance.find({
+                organization: organizationId,
+                employee: employee._id,
+                year: currentYear,
+                status: "Active"
+            })
+                .populate("leaveType", "name code isPaid")
+                .sort({ createdAt: 1 })
+                .lean()
+        ]);
+
+        // Calculate available explicitly because lean() does not
+        // apply Mongoose virtuals.
+        const balancesWithAvailable = leaveBalances.map((balance) => ({
+            ...balance,
+            available: getAvailableBalance(balance)
+        }));
+
         return res.render("leave/my-leaves", {
             title: "My Leaves",
             user: getSessionUser(req),
             employee,
-
-            // EJS page expects "leaves", not just "requests".
             leaves: requests,
             requests,
-
-            // Prevent EJS from crashing while the actual balance
-            // query/model fields are being confirmed.
-            leaveBalances: [],
-
+            leaveBalances: balancesWithAvailable,
+            balances: balancesWithAvailable,
             summary: getLeaveSummary(requests),
+            currentYear,
             success: req.query.success || null,
             error: req.query.error || null
         });
     } catch (error) {
-        console.error("My leaves error:", error);
-
-        return res.status(500).send(
+        return handleControllerError(
+            "My leaves",
+            error,
+            res,
             "Unable to load your leave requests."
         );
     }
@@ -707,26 +657,22 @@ exports.getMyLeaves = async (req, res) => {
 exports.getAllLeaveRequests = async (req, res) => {
     try {
         const organizationId = requireOrganization(req, res);
-
         if (!organizationId) return;
-
-        const allowedStatuses = [
-            ...LEAVE_STATUSES,
-            "All"
-        ];
 
         const requestedStatus = String(
             req.query.status || "Pending"
         );
 
-        const status = allowedStatuses.includes(requestedStatus)
+        const status = [
+            ...LEAVE_STATUSES,
+            "All"
+        ].includes(requestedStatus)
             ? requestedStatus
             : "Pending";
 
-        const query = getOrganizationFilter(
-            LeaveRequest,
-            organizationId
-        );
+        const query = {
+            organization: organizationId
+        };
 
         if (status !== "All") {
             query.status = status;
@@ -735,7 +681,7 @@ exports.getAllLeaveRequests = async (req, res) => {
         const requests = await LeaveRequest.find(query)
             .populate(
                 "employee",
-                "firstName lastName employeeId email"
+                "firstName lastName employeeId email department designation"
             )
             .populate("leaveType", "name code isPaid")
             .populate("reviewedBy", "name email")
@@ -749,9 +695,10 @@ exports.getAllLeaveRequests = async (req, res) => {
             currentStatus: status
         });
     } catch (error) {
-        console.error("All leave requests error:", error);
-
-        return res.status(500).send(
+        return handleControllerError(
+            "All leave requests",
+            error,
+            res,
             "Unable to load leave requests."
         );
     }
@@ -759,15 +706,25 @@ exports.getAllLeaveRequests = async (req, res) => {
 
 // =====================================================
 // POST /leave/requests/:id/approve
+//
+// Prevent duplicate approvals by changing Pending -> Approved
+// with a conditional update. For paid leave, deduct the balance
+// atomically and compensate by restoring Pending if deduction
+// cannot be completed.
 // =====================================================
 
 exports.approveLeave = async (req, res) => {
-    try {
-        const organizationId = requireOrganization(req, res);
+    let organizationId;
+    let requestId;
+    let reservedRequest = false;
+    let deductedBalanceId = null;
+    let deductedDays = 0;
 
+    try {
+        organizationId = requireOrganization(req, res);
         if (!organizationId) return;
 
-        const requestId = String(req.params.id || "");
+        requestId = String(req.params.id || "");
 
         if (!isValidObjectId(requestId)) {
             return res.status(400).send(
@@ -777,10 +734,7 @@ exports.approveLeave = async (req, res) => {
 
         const request = await LeaveRequest.findOne({
             _id: requestId,
-            ...getOrganizationFilter(
-                LeaveRequest,
-                organizationId
-            ),
+            organization: organizationId,
             status: "Pending"
         }).populate("leaveType", "name code isPaid");
 
@@ -796,70 +750,175 @@ exports.approveLeave = async (req, res) => {
             );
         }
 
-        const requestedDays = Number(request.totalDays || 0);
+        const requestedDays = Number(request.totalDays);
 
-        if (!Number.isFinite(requestedDays) || requestedDays <= 0) {
+        if (
+            !Number.isFinite(requestedDays) ||
+            requestedDays <= 0
+        ) {
             return res.status(400).send(
                 "The requested leave duration is invalid."
             );
         }
 
+        // Atomically reserve the request for approval.
+        const approvalUpdate = {
+            status: "Approved"
+        };
+
+        if (getUserId(req) && isValidObjectId(getUserId(req))) {
+            approvalUpdate.reviewedBy = getUserId(req);
+        }
+
+        approvalUpdate.reviewedAt = new Date();
+
+        const updatedRequest = await LeaveRequest.findOneAndUpdate(
+            {
+                _id: requestId,
+                organization: organizationId,
+                status: "Pending"
+            },
+            {
+                $set: approvalUpdate
+            },
+            {
+                new: true,
+                runValidators: true
+            }
+        );
+
+        if (!updatedRequest) {
+            return res.status(409).send(
+                "This leave request has already been processed. Refresh the page."
+            );
+        }
+
+        reservedRequest = true;
+
         if (request.leaveType.isPaid) {
-            const currentYear = new Date(
-                request.fromDate
-            ).getFullYear();
+            const year = new Date(request.fromDate).getUTCFullYear();
 
-            const balanceEmployeeField =
-                getEmployeeField(LeaveBalance);
-
-            const balance = await LeaveBalance.findOne({
-                ...getOrganizationFilter(
-                    LeaveBalance,
-                    organizationId
-                ),
-                [balanceEmployeeField]: request.employee,
-                leaveType: request.leaveType._id,
-                year: currentYear
-            });
+            // One atomic operation prevents two simultaneous
+            // approvals from overspending the same balance.
+            const balance = await LeaveBalance.findOneAndUpdate(
+                {
+                    organization: organizationId,
+                    employee: request.employee,
+                    leaveType: request.leaveType._id,
+                    year,
+                    status: "Active",
+                    $expr: {
+                        $gte: [
+                            {
+                                $subtract: [
+                                    {
+                                        $add: [
+                                            { $ifNull: ["$allocated", 0] },
+                                            { $ifNull: ["$carriedForward", 0] },
+                                            { $ifNull: ["$adjustment", 0] }
+                                        ]
+                                    },
+                                    { $ifNull: ["$used", 0] }
+                                ]
+                            },
+                            requestedDays
+                        ]
+                    }
+                },
+                {
+                    $inc: {
+                        used: requestedDays
+                    }
+                },
+                {
+                    new: true,
+                    runValidators: true
+                }
+            );
 
             if (!balance) {
+                // Restore the request so HR can resolve the
+                // missing/inactive/insufficient balance.
+                await LeaveRequest.updateOne(
+                    {
+                        _id: requestId,
+                        organization: organizationId,
+                        status: "Approved"
+                    },
+                    {
+                        $set: { status: "Pending" },
+                        $unset: {
+                            reviewedBy: 1,
+                            reviewedAt: 1
+                        }
+                    }
+                );
+
+                reservedRequest = false;
+
                 return res.status(400).send(
-                    "Leave balance not found for this employee."
+                    "Leave balance is missing, inactive, or insufficient. The request remains pending."
                 );
             }
 
-            const available = getAvailableBalance(balance);
-
-            if (requestedDays > available) {
-                return res.status(400).send(
-                    `Insufficient leave balance. Available: ${available} day(s).`
-                );
-            }
-
-            balance.used =
-                Number(balance.used || 0) + requestedDays;
-
-            await balance.save();
+            deductedBalanceId = balance._id;
+            deductedDays = requestedDays;
         }
-
-        request.status = "Approved";
-
-        if (schemaHasPath(LeaveRequest, "reviewedBy")) {
-            request.reviewedBy = getUserId(req);
-        }
-
-        if (schemaHasPath(LeaveRequest, "reviewedAt")) {
-            request.reviewedAt = new Date();
-        }
-
-        await request.save();
 
         return res.redirect("/leave/requests");
     } catch (error) {
-        console.error("Approve leave error:", error);
+        console.error("[Leave] Approve leave:", error);
+
+        // Best-effort compensation if an error occurs after
+        // a balance deduction. A database transaction is the
+        // stronger option for replica-set deployments.
+        if (deductedBalanceId && deductedDays > 0) {
+            try {
+                await LeaveBalance.updateOne(
+                    {
+                        _id: deductedBalanceId,
+                        organization: organizationId
+                    },
+                    {
+                        $inc: { used: -deductedDays }
+                    }
+                );
+            } catch (compensationError) {
+                console.error(
+                    "[Leave] CRITICAL: balance compensation failed:",
+                    compensationError
+                );
+            }
+        }
+
+        if (reservedRequest && requestId && organizationId) {
+            try {
+                await LeaveRequest.updateOne(
+                    {
+                        _id: requestId,
+                        organization: organizationId,
+                        status: "Approved"
+                    },
+                    {
+                        $set: { status: "Pending" },
+                        $unset: {
+                            reviewedBy: 1,
+                            reviewedAt: 1
+                        }
+                    }
+                );
+            } catch (rollbackError) {
+                console.error(
+                    "[Leave] CRITICAL: approval rollback failed:",
+                    rollbackError
+                );
+            }
+        }
+
+        if (res.headersSent) return;
 
         return res.status(500).send(
-            "Unable to approve the leave request."
+            "Unable to approve the leave request. Please verify the request and balance before retrying."
         );
     }
 };
@@ -871,7 +930,6 @@ exports.approveLeave = async (req, res) => {
 exports.rejectLeave = async (req, res) => {
     try {
         const organizationId = requireOrganization(req, res);
-
         if (!organizationId) return;
 
         const requestId = String(req.params.id || "");
@@ -882,47 +940,50 @@ exports.rejectLeave = async (req, res) => {
             );
         }
 
-        const request = await LeaveRequest.findOne({
-            _id: requestId,
-            ...getOrganizationFilter(
-                LeaveRequest,
-                organizationId
-            ),
-            status: "Pending"
-        });
+        const remark =
+            typeof req.body?.remark === "string"
+                ? req.body.remark.trim().slice(0, 2000)
+                : "";
+
+        const update = {
+            status: "Rejected",
+            reviewedAt: new Date(),
+            reviewRemark: remark
+        };
+
+        const userId = getUserId(req);
+
+        if (userId && isValidObjectId(userId)) {
+            update.reviewedBy = userId;
+        }
+
+        const request = await LeaveRequest.findOneAndUpdate(
+            {
+                _id: requestId,
+                organization: organizationId,
+                status: "Pending"
+            },
+            {
+                $set: update
+            },
+            {
+                new: true,
+                runValidators: true
+            }
+        );
 
         if (!request) {
             return res.status(404).send(
-                "Pending leave request not found."
+                "Pending leave request not found or already processed."
             );
         }
 
-        const remark =
-            typeof req.body?.remark === "string"
-                ? req.body.remark.trim()
-                : "";
-
-        request.status = "Rejected";
-
-        if (schemaHasPath(LeaveRequest, "reviewedBy")) {
-            request.reviewedBy = getUserId(req);
-        }
-
-        if (schemaHasPath(LeaveRequest, "reviewedAt")) {
-            request.reviewedAt = new Date();
-        }
-
-        if (schemaHasPath(LeaveRequest, "reviewRemark")) {
-            request.reviewRemark = remark;
-        }
-
-        await request.save();
-
         return res.redirect("/leave/requests");
     } catch (error) {
-        console.error("Reject leave error:", error);
-
-        return res.status(500).send(
+        return handleControllerError(
+            "Reject leave",
+            error,
+            res,
             "Unable to reject the leave request."
         );
     }
@@ -935,11 +996,9 @@ exports.rejectLeave = async (req, res) => {
 exports.cancelLeave = async (req, res) => {
     try {
         const organizationId = requireOrganization(req, res);
-
         if (!organizationId) return;
 
         const employee = await getEmployeeForRequest(req, res);
-
         if (!employee) return;
 
         const requestId = String(req.params.id || "");
@@ -950,17 +1009,23 @@ exports.cancelLeave = async (req, res) => {
             );
         }
 
-        const employeeField = getEmployeeField(LeaveRequest);
-
-        const request = await LeaveRequest.findOne({
-            _id: requestId,
-            ...getOrganizationFilter(
-                LeaveRequest,
-                organizationId
-            ),
-            [employeeField]: employee._id,
-            status: "Pending"
-        });
+        const request = await LeaveRequest.findOneAndUpdate(
+            {
+                _id: requestId,
+                organization: organizationId,
+                employee: employee._id,
+                status: "Pending"
+            },
+            {
+                $set: {
+                    status: "Cancelled"
+                }
+            },
+            {
+                new: true,
+                runValidators: true
+            }
+        );
 
         if (!request) {
             return res.status(404).send(
@@ -968,15 +1033,12 @@ exports.cancelLeave = async (req, res) => {
             );
         }
 
-        request.status = "Cancelled";
-
-        await request.save();
-
         return res.redirect("/leave/my");
     } catch (error) {
-        console.error("Cancel leave error:", error);
-
-        return res.status(500).send(
+        return handleControllerError(
+            "Cancel leave",
+            error,
+            res,
             "Unable to cancel the leave request."
         );
     }
