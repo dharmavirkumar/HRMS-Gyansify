@@ -917,24 +917,37 @@ exports.createEmployee = asyncHandler(async (req, res) => {
                 </div>
             `;
 
-            try {
-                await sendEmail({
-                    to: data.email,
-                    subject,
-                    text,
-                    html
-                });
+           
+try {
+    const result = await sendEmail({
+        to: data.email,
+        subject,
+        text,
+        html
+    });
 
-                invitationSent = true;
-            } catch (emailError) {
-                console.error(
-                    `Invitation email failed for user ${user._id}:`,
-                    emailError.message
-                );
+    invitationSent = true;
 
-                setupWarning =
-                    "Employee and login account created, but the invitation email could not be sent. Check EMAIL_* settings and SMTP logs, then resend the invitation.";
-            }
+    console.log("EMPLOYEE INVITATION EMAIL SENT", {
+        userId: String(user._id),
+        employeeId: String(employee._id),
+        messageId: result.messageId
+    });
+
+} catch (emailError) {
+    console.error("EMPLOYEE INVITATION EMAIL FAILED", {
+        userId: String(user._id),
+        employeeId: String(employee._id),
+        error: emailError.message,
+        code: emailError.code || null,
+        responseCode: emailError.responseCode || null,
+        command: emailError.command || null
+    });
+
+    setupWarning =
+        "Employee and login account created, but the invitation email failed. Please contact HR to resend the invitation.";
+}
+
         } catch (accountError) {
             console.error(
                 `Employee login account setup failed for ${employee._id}:`,
